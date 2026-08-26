@@ -1,0 +1,164 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["イフォーニア通常1（道中）"]
+#Text["イフォーニア通常1（道中）"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(20);		}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_IPHONEA);	//ボスセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	SetEnemyVisible(objEnemy, true);
+	if (GetPlayMode() == GAME_SPELL || GetPlayMode() == GAME_NONE)
+	{
+		// スペプラ用
+		ObjMove_SetPosition(objEnemy, CenX-64, 140);
+	}
+	wait(60);
+	
+	let speed = [1, 1.75, 2, 2][Difficult];
+	
+	let speed2 = [1.25, 1, 1, 1][Difficult];
+	let count = [2, 2, 2, 3][Difficult];
+	let space_size = [0.2, 0.2, 0.2, 0.2][Difficult];
+	let dec_speed = [0.1, 0.2, 0.8, 0.8][Difficult];
+
+	let wt = [90, 60, 60, 60][Difficult];
+
+	let muki = 1;
+	let t = 0;
+	while(eAlive)
+	{
+		if (t%2 == 1)
+		{
+			HyoutanShotgun_Set(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed, GetAngleToPlayer(objEnemy), BGW_ICE_GREEN, 15, muki);
+			SetAction(objEnemy, ACT_SHOT1, 120);
+			wait(150);
+			muki = -muki;
+		}
+		else
+		{
+			let sa = GetAngleToPlayer(objEnemy);
+			ascent(j in 0 .. count)
+			{
+				let ss = speed2*(1-j/count*dec_speed);
+				let sr = space_size * (1-(count-j-1)*0.2);
+				FlowerShot(sa, ss, sr);
+			}
+			SetAction(objEnemy, ACT_SHOT1, 60);
+			wait(60);
+		}
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 140, 64);
+		wait(wt);
+		t++;
+	}
+}
+
+// おはな
+task FlowerShot(base_angle, speed_rate, space_rate)
+{
+	let speed = [0.5, 0.75, 1, 1.25][Difficult];
+	let graphic = BGW_BALL_BS_WHITE;
+	let count = 16;
+	let wt = 2;
+	
+	speed *= speed_rate;
+	
+//	let base_angle = GetAngleToPlayer(objEnemy);
+	let muki = 1;
+
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i+0.5)/count;
+		if (absolute(tmp-0.5) > space_rate)
+		{
+			let sx = ObjMove_GetX(objEnemy);
+			let sy = ObjMove_GetY(objEnemy);
+			let ss = speed * (1+tmp);
+			let sr = 0 - tmp*64;
+			loop(2)
+			{
+				let sa = base_angle + tmp*36*muki;
+				CreateShotCircle(sx, sy, ss, sa, graphic, 15, 5, sr);
+				muki = -muki;
+			}
+		}
+		CallSound(sndShot2);
+		wait(wt);
+	}
+}
+
+// ルナティックガン的な
+task HyoutanShotgun_Set(x, y, speed, angle, graphic, delay, muki)
+{
+	let set_count = [3, 4, 7, 9][Difficult];
+	let way_angle = [60, 50, 30, 30][Difficult];
+	let wt = [10, 12, 6, 5][Difficult];
+	
+	let way2 = 27;
+//	let way_angle2 = 10;
+	
+	ascent(i in 0 .. set_count)
+	{
+		if (!eAlive) { return; }
+		let sa = angle + (i-(set_count-1)/2)*way_angle*muki;
+		GourdShotGun(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			speed, sa, graphic, 15, way2, way2*0.33, 0.2, 0.33);
+		CallSound(sndShot1);
+		wait(wt);
+	}
+	wait(wt);
+	ascent(i in 0 .. set_count-1)
+	{
+		if (!eAlive) { return; }
+		let sa = angle - (i+0.5-(set_count-1)/2)*way_angle*muki;
+		GourdShotGun(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			speed*0.75, sa, graphic, 15, way2, way2*0.33, 0.2, 0.33);
+		CallSound(sndShot1);
+		wait(wt*2);
+	}
+}
+
+
+task GourdShotGun(x, y, speed, angle, graphic, delay, way, way_angle, space_size, speed_rate)
+{
+	let sc = [(way-1)/2, 0][way < 2];
+	ascent(i in 0 .. way)
+	{
+		let tmp = (i-sc)/way*2;
+		if (absolute(absolute(tmp)-0.5) > space_size)
+		{
+			let ss = speed * (1-absolute(tmp)*speed_rate);
+			let sa = angle + tmp*way_angle;
+			let objShot = CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				ss*3, sa, -ss/5, ss, graphic, 0);
+			My_RaiseShotEffectA(objShot, delay);
+		}
+	}
+}

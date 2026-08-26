@@ -1,0 +1,122 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["3面　会話後半"]
+#Text["3面　会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let objEnemy2;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SHELIA);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SHELIA, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinBoss1, I_BORO2);
+	SetImageFoward(cutinBoss1, true);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "あ～、だから私を倒しても[r]意味無いんだってばぁ");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "勿体付けずに黒幕言いなよ。推理ゲームに[r]付き合ってる場合じゃないんだよ");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "空に願いを誘導したのは山の神社。けれど[r]その力を横取りして何かを企む者がいる。");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "催涙雨の檻を解く条件は、[r]人の願いを止めさせるか、その者を倒す事");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "黒幕だって？　居場所は？");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "小さな地上の密室を作り、雨を防いで[r]いる場所。貴方達の言葉で迷いの竹林？");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "今幻想郷は何重の結界に覆われているのだ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

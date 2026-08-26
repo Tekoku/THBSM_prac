@@ -1,0 +1,284 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["フェイルノート"]
+#Text["フェイルノート"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Shelia.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(650);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(45);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 20;		//ダメージ透過率
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_SHELIA);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(22), [3,3,4,5][Difficult], 
+			GetCurrentScriptDirectory()~"03a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60+150);
+	wait(60);
+	
+	BossCharge(objEnemy);
+	wait(60);
+	ArrowFirst();
+	wait(75);
+	CallSpellCard(true);	//スペカ起動
+	wait(30);
+	
+	if (Difficult <= D_NORM)
+	{
+		Arrow02();
+		wait(360);
+		
+		let muki = 1;
+		while(eAlive)
+		{
+			BossCharge(objEnemy);
+			wait(90);
+			if (!eAlive) { return; }
+			Arrow01(muki);
+			muki = -muki;
+			wait(180);
+		}
+	}
+	else
+	{
+		let wt = [60, 60, 210, 180][Difficult];
+		let wt_min = [60, 60, 120, 90][Difficult];
+		
+		BossCharge(objEnemy);
+		Arrow01_Hard();
+	}
+}
+
+task Arrow01_Hard()
+{
+	let count = [99, 99, 12, 14][Difficult];
+	let base_wt = [1, 1, 1.25, 1][Difficult];
+	
+	let offset_angle = 5;
+	
+	let shot_speed = [1.5, 2, 1.75, 2][Difficult];
+	let shot_graphic = [BGW_FUGU_YELLOW, BGW_FUGU_WHITE];
+	let shot_way = [2, 3, 4, 4][Difficult];
+	let way_angle = [30, 30, 45, 40][Difficult];
+	
+	if (Difficult <= D_HARD)
+	{
+		shot_graphic = [BGW_FUGU_GREEN, BGW_FUGU_SKY];
+	}
+	
+	let from_angle = atan2(GetPlayerY-(MinY-16), GetPlayerX-(CenX));
+	let to_angle = atan2(GetPlayerY-(MinY-16), GetPlayerX-(CenX));
+	
+	let to_x = GetPlayerX;
+	let to_y = GetPlayerY;
+	let loop_count = 0;
+	while(eAlive)
+	{
+		ascent(t in 0 .. count)
+		{
+			if (!eAlive) { return; }
+			let st = t;
+			if (loop_count%2 == 0) { st = count-t-1; }
+			
+			// ホーミング角度計算
+			let ta = atan2(GetPlayerY-(MinY-16), GetPlayerX-(CenX));
+			to_angle = GetHormingAngleToAngle(to_angle, ta, 1.5);
+			
+			let tmp = st/(count-1);
+			let tmp2 = t/(count-1);
+			let wt = ceil(base_wt*max(1,1.5-(loop_count+tmp2)*0.25)*(tmp*15+1));
+			let ba = from_angle*(1-tmp2) + to_angle*tmp2;
+			
+			let muki = 1;
+			let lc = [2, 1][t==0];
+			ascent(i in 0 .. lc)
+			{
+				let sx = CenX + CenX*tmp*1.1*muki;
+				let sy = MinY-16;
+				let sa = ba + 90*tmp^1.5*muki;
+				ArrowLaser(sx, sy, sa, 48, 320, 90, true);
+				CreateShotWayA2(sx, sy, shot_speed/8, sa, shot_speed/450, shot_speed, shot_graphic[t%2], 30, shot_way, way_angle, 0);
+				muki = -muki;
+			}
+			CallSound(sndBulletBreak);
+			wait(wt);
+		}
+		loop_count++;
+		from_angle = to_angle;
+	}
+}
+
+function GetHormingAngleToAngle(angle, to_angle, horming_power)
+{
+	let tmp = (angle-to_angle+720)%360;
+	if (tmp > 180) { tmp -= 360; }
+	if (tmp < -horming_power) { return(angle+horming_power); }
+	else if (tmp > horming_power) { return(angle-horming_power); }
+	else { return(to_angle); }
+}
+
+task ArrowFirst()
+{
+	ascent(t in 0 .. 30)
+	{
+		if (!eAlive) { return; }
+		let sa = -90 + rand(-75, 75)*((t+1)/30)^0.5;
+		ArrowLaser(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), sa, 48, 320, 120, false);
+		wait(2);
+	}
+}
+
+task Arrow01(muki)
+{
+	let count = 8;
+	let wt = 2;
+	
+	let offset_angle = 5;
+	
+	let to_x = GetPlayerX;
+	let to_y = GetPlayerY;
+	ascent(t in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let sx = CenX + CenX*1.1*((t+1+rand(-1,1))/count-0.5)*2*muki;
+		let sy = MinY-16;
+		let sa = atan2(to_y-sy,to_x-sx) + rand(0,offset_angle)*(sx-CenX)/CenX;
+		ArrowLaser(sx, sy, sa, 48, 320, 90, true);
+		CallSound(sndBulletBreak);
+		wait(wt);
+		wt += 0.5;
+	}
+//	Arrow01();
+}
+
+task Arrow02()
+{
+	let wt = [12, 8, 8, 6][Difficult];
+	
+	let shot_speed = [1.5, 2, 2.5, 3][Difficult];
+	let shot_graphic = [BGW_STAR_S_BLUE, BGW_STAR_S_BLUE, BGW_FUGU_YELLOW, BGW_STAR_M_YELLOW][Difficult];
+	let shot_way = [2, 3, 2, 2][Difficult];
+	let way_angle = [30, 30, 30, 45][Difficult];
+	
+	let laser_way = [1, 1, 2, 3][Difficult];
+	let laser_wa = [1, 1, 18, 18][Difficult];
+	let l_length = 320;
+	let max_way = [10, 10, 15, 15][Difficult];
+	
+	let tmp_wt = wt*2.5;
+	let t = 0;
+	while(eAlive)
+	{
+		let way = [max_way-1, max_way][t%2];
+		let muki = [1, -1][t%2];
+		ascent(i in 0 .. way)
+		{
+			if (!eAlive) { return; }
+			let tmp = ((i+0.5)/way-0.5)*2 * muki * way/max_way;
+			let sx = CenX + CenX*tmp*0.9;
+			let sy = MinY-16;
+			let ba = 90 - 45*tmp;
+			ascent(j in 0 .. laser_way)
+			{
+				let sa = ba + (j-(laser_way-1)/2)*laser_wa;
+				ArrowLaser(sx, sy, sa, 48, l_length, 90, true);
+			}
+			CreateShotWayA2(sx, sy, shot_speed/8, ba, shot_speed/450, shot_speed, shot_graphic, 90, shot_way, way_angle, 0);
+			CallSound(sndBulletBreak);
+			wait(tmp_wt);
+			tmp_wt = max(tmp_wt*0.95, wt);
+		}
+		t++;
+	//	wait(tmp_wt);
+	}
+//	Arrow01();
+}
+
+task ArrowLaser(x, y, angle, l_width, l_length, delay, isDummy)
+{
+	let graphic = [BGW_FUGU_BLUE, BGW_FUGU_BLUE, BGW_FUGU_GREEN, BGW_FUGU_RED][Difficult];
+	let cr = [64, 64, 100, 100][Difficult];
+	let cg = [64, 64, 100, 100][Difficult];
+	let cb = [220, 220, 0, 0][Difficult];
+	let speed = 24;
+
+	let dummy_len = 600;
+	let l_graphic = BGW_BEAM_RED + (graphic-1)%16;
+	// 予告線
+	let objDummy = -1;
+	if (isDummy)
+	{
+		objDummy = CreateStraightLaserA1(x, y, angle, 0, 4, 36000, l_graphic, 0);
+		ObjStLaser_SetSource(objDummy, false);
+		ObjShot_SetAutoDelete(objDummy, false);
+		ObjShot_SetItemChange(objDummy, false);
+		ObjShot_SetIntersectionEnable(objDummy, false);
+		ObjRender_SetColor(objDummy, cr, cg, cb);
+		// ディレイえへくと
+		LaserDelayEffect(objDummy, 16, delay);
+		
+		// 発射予告
+		ascent(i in 0 .. 20)
+		{
+			if (Obj_IsDeleted(objDummy)) { return; }
+			let ll = (i+1)/20 * dummy_len;
+			ObjLaser_SetLength(objDummy, ll);
+			yield;
+		}
+		ascent(i in 0 .. delay-20)
+		{
+			if (Obj_IsDeleted(objDummy) || !eAlive) { return; }
+			let tmp = ((i+1)/(delay-20))^2;
+			ObjRender_SetColor(objDummy, cr+tmp*(255-cr), cg+tmp*(255-cg), cb+tmp*(255-cb));
+			yield;
+		}
+	}
+	CallSound(sndShot6);
+	FadeLaser(objDummy, 30);
+	ascent(i in 0 .. 10)
+	{
+		if (!eAlive) { return; }
+		let tmp_len = l_length * (i/10*0.25+0.75);
+		let tmp_wid = l_width * (1-i/10*0.9);
+		let obj = CreateLooseLaserA1(x, y, speed, angle, tmp_len, tmp_wid, graphic, 0);
+		ObjLaser_SetIntersectionWidth(obj, tmp_wid/4);
+		if (i != 0) { ObjShot_SetItemChange(obj, false); }
+		yield;
+	}
+
+	task FadeLaser(objDummy, timer)
+	{
+		ascent(i in 0 .. timer)
+		{
+			if (Obj_IsDeleted(objDummy)) { break; }
+			ObjRender_SetAlpha(objDummy, (timer-i)/timer*255);
+			yield;
+		}
+		Obj_Delete(objDummy);
+	}
+}

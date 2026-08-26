@@ -1,0 +1,187 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["3面　会話前半"]
+#Text["3面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_TOBIKO);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SHELIA);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SHELIA, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+	SetImageFoward(cutinPlayer1, true);
+	SetImageVisible(cutinBoss1, false);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "天の川の橋が通じそうだぜ。[r]いよいよ私も天帝に御目通りか。");
+		}
+		case(1)
+		{
+			SetImageVisible(cutinBoss1, false);	// ボス画像出現フラグ
+			
+			SetTalkEx2(cutinBoss1, "あ～[ruby rb=\"死兆星\" rt=\"　アルコル\"]が急に光り出したね～", -32, -280);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinBoss1, "");
+			EnterBoss();
+			wait(90);
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "人間に取ってはそれすら破格の待遇。");
+			SetBossName(cutinBoss1);	// ボスネーム表示
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "あんたが取るに足らぬ小悪党ってのは[r]三尸から聞いてるのよね");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "私は天帝宮に用の無いただの[r]天体マニアだ。どうか見逃してくれ給え");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "あ～面倒。あんた達が余計な知恵を[r]つけたせいでこっちは大迷惑。");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "さっさと地上へ帰って、他の人間にも[r]そうやって願いの[ruby rb=\"質的低下\" rt=\"ダウングレード\"]を促しなさい");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "おかしいぜ、七夕だから[r]奮発して願いを書いて来たのだが");
+		}
+		case(8)
+		{
+			SetTalkEx(cutinPlayer1, "健康長寿、合格祈願、商売繁盛、[r]IT情報安全祈願…");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "天帝宮も太陽暦を採用したのよ。");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "人は欲を持つ生き物だ。[r]今さら七夕中止なんて無しだぜ。");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "では北斗星に乗り、[r]恐怖の天帝が地上に降り立ちます。");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "[ruby rb=\"恐怖の大王\" rt=\"アンゴルモア\"]はもう時効だろ");
+		}
+		case(13)
+		{
+			//BGM
+			PlayMusicWithName(7, 180, 30);
+
+			ChangeTalkTexture(cutinBoss1, I_WORRY);
+			SetTalkEx(cutinBoss1, "天の川の橋が開きかけた今、[r]地上を覆う催涙雨の檻が最後の頼み。");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "年に二度目の七夕を成し、[r]神々の怒りを買ったならば…");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "この程度の仕置きでは済まないわ！");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	EffectEntryBoss(objEnemy, [EFF_SKY, EFF_BLUE, EFF_PURPLE], [CenX, 140]);
+}

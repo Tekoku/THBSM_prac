@@ -1,0 +1,188 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["シェリア通常１"]
+#Text["シェリア通常１"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Shelia.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(35);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_SHELIA);	//ボスセット
+	
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	wait(60);
+	
+	BossCharge(objEnemy);
+	wait(60);
+	
+	let t = 0;
+	let muki = 1;
+	while(eAlive)
+	{
+		if (!eAlive) { return; }
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy)-32, 90, 1);
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy)-32, 90, -1);
+		wait(90);
+		if (!eAlive) { return; }
+		if (t > 0) { ShotString(muki); }
+		wait(90);
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 140, 48);
+		wait(150);
+		muki = -muki;
+		t++;
+	}
+}
+
+task ShotString(muki)
+{
+	let speed = 3;
+	let count = 15;
+	let x_count = [5, 5, 7, 7][Difficult];
+
+	StringSet(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), speed, GetAngleToPlayer(objEnemy),
+		ADD_BGW_ICE_WHITE, 15, count, x_count, muki);
+	CallSound(sndShot7);
+}
+
+task StringSet(x, y, speed, angle, graphic, delay, count, x_count, muki)
+{
+	ascent(i in 0 .. x_count)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i-(x_count-1)/2);
+		let x_wid = CenX*2 / x_count * tmp;
+		let sx = x + cos(angle+90*muki)*x_wid;
+		let sy = y + sin(angle+90*muki)*x_wid;
+		StringShot(sx, sy, speed, angle, graphic, delay, count);
+		wait(5);
+	}
+}
+task StringShot(x, y, speed, angle, graphic, delay, count)
+{
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let ss = speed * (0.1+i/(count-1));
+		let ss2 = speed * (2-i/(count-1));
+		let timer = 120 + i*2;
+		let obj = CreateShotA1(x, y, ss, angle, graphic, delay);
+		ObjMove_AddPatternA2(obj, timer, NO_CHANGE, NO_CHANGE, (ss2-ss)/30, 0, ss2);
+		wait(2);
+	}
+}
+
+
+
+
+// 使い魔
+task SetFamilier01(iniX, iniY, iniAngle, iniValue)
+{
+	let eSize = ENEMY_S;
+	let eColor = EFF_PURPLE;
+	let item_count = 0;
+	let item_star = 0;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 300, eSize);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawStarEnemy(objFamilier, 3, 1.5);
+//	DrawSheliaCircle(objFamilier, iniValue);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TShot();
+		TMove();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		let muki = iniValue;
+		let move_angle = iniAngle - muki*135;
+		
+		let timer = 300;
+		ascent(i in 0 .. timer)
+		{
+			if (!CanShotBullet(objFamilier)) { return; }
+			let tmp = (i+1)/timer;
+			ObjMove_SetAngle(objFamilier, move_angle);
+			ObjMove_SetSpeed(objFamilier, (1-tmp)^0.5*2);
+			move_angle += sin(tmp*360)*1.6*muki;
+			yield;
+		}
+		wait(60);
+		EraseEnemy(objFamilier);
+	}
+	
+	// ショット
+	task TShot()
+	{
+		wait(5);
+		
+		let timer = 300;
+		
+		let speed = [1.25, 1.5, 1.75, 2][Difficult];
+		let way = [2, 2, 2, 2][Difficult];
+		let way_angle = [90, 90, 90, 90][Difficult];
+		let wt = [15, 12, 8, 8][Difficult];
+		
+		let graphic = [ADD_BGW_NOTE_BLUE, ADD_BGW_NOTE_SKY];
+		let graphic2 = [BGW_NOTE_BLUE, BGW_NOTE_SKY];
+		let shot_delay = timer*0.5;
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier) && t < timer)
+		{
+			let ba = ObjMove_GetAngle(objFamilier);
+			let wc = 0;
+			if (way > 1) { wc = (way-1)/2; }
+			ascent(i in 0 .. way)
+			{
+				let sa = ba + (i-wc)*way_angle;
+				SheliaNoteShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					speed, sa, graphic[0], 15, graphic2[0], shot_delay);
+				SheliaNoteShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					speed, sa+180, graphic[1], 15, graphic2[1], shot_delay);
+			}
+			CallSound(sndShot2);
+			wait(wt);
+			t += wt;
+			shot_delay -= wt/3;
+		}
+	}
+}
+
+task SheliaNoteShot(x, y, speed, angle, graphic, delay, graphic2, timer)
+{
+	let obj = CreateShotA2(x, y, 2, angle, -2/delay, 0.25, graphic, 0);
+	ObjMove_AddPatternA3(obj, timer, NO_CHANGE, NO_CHANGE, speed/90, 0, speed, graphic2);
+	My_RaiseShotEffectA(obj, delay);
+}

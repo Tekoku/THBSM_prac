@@ -1,0 +1,340 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["雨の空の七線譜"]
+#Text["雨の空の七線譜"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Shelia.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(650);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(45);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 20;		//ダメージ透過率
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_SHELIA);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(24), [9,9,10,11][Difficult], 
+			GetCurrentScriptDirectory()~"03a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60+150);
+	wait(60);
+	
+	BossCharge(objEnemy);
+	wait(90);
+//	BossCharge(objEnemy);
+//	TFirst();
+	
+	CallSpellCard(true);	//スペカ起動
+	
+	TMove();
+	
+	let timer = [450, 360, 300, 240][Difficult];
+	
+	let t = 0;
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		let by = MinY - 192 + rand(-32,32);
+		if (t > 0) { CallSound(sndLaser1); }
+		ascent(i in 0 .. 7)
+		{
+			if (!eAlive) { return; }
+			let ey =  by + i*24;
+			let add_ey = 48 + i*16;
+			SetFamilier01(ObjMove_GetX(objEnemy), ey, add_ey, muki, i);
+			wait(8);
+		}
+		wait(timer-8*7);
+		t++;
+		muki = -muki;
+	}
+}
+
+task TMove()
+{
+	wait(300);
+	while(eAlive)
+	{
+		EnemyRandomMove(objEnemy, 140, 48);
+		wait(240);
+	}
+}
+
+// 使い魔
+task SetFamilier01(iniX, iniY, iniMoveY, iniMuki, iniValue)
+{
+	let timer = [180, 150, 120, 120][Difficult];
+	let ref_count = 0;
+	
+	let eSize = ENEMY_S;
+	let eColor = EFF_PURPLE;
+	let item_count = 0;
+	let item_star = 0;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 300, eSize);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawStarEnemy(objFamilier, 3, 1.5);
+//	DrawSheliaCircle(objFamilier, iniMuki);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TShot();
+		TMove();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		let muki = iniMuki;
+		let moveY = iniMoveY;
+		
+		while(CanShotBullet(objFamilier) && ObjMove_GetY(objFamilier) < MaxY+32)
+		{
+			let baseY = ObjMove_GetY(objFamilier);
+			ascent(i in 0 .. timer)
+			{
+				if (!CanShotBullet(objFamilier)) { break; }
+				let tmp = (i+1)/timer;
+				let ex = CenX + (tmp^1.5*2-1)*CenX*1.05 * muki;
+				let ey = baseY + tmp*moveY;
+				ObjMove_SetPosition(objFamilier, ex, ey);
+				yield;
+			}
+			moveY += 48;
+			ref_count++;
+			muki = -muki;
+			CallSound(sndShot5);
+		}
+		EraseEnemy(objFamilier);
+	}
+	
+	// ショット
+	task TShot()
+	{
+		wait(10);
+
+		if (Difficult >= D_LUNA)
+		{
+			let speed = 2.5;
+			let wt = [99, 99, 3, 3][Difficult];
+			speed *= (1 + iniValue*0.05);
+			
+			let graphic = ADD_BGW_NEEDLE_WHITE;
+			let graphic2 = [BGW_WATER_RED, BGW_WATER_ORANGE, BGW_WATER_YELLOW, BGW_WATER_GREEN, BGW_WATER_SKY, BGW_WATER_BLUE, BGW_WATER_PURPLE][iniValue%7];
+			let graphic3 = [BGW_STAR_M_RED, BGW_STAR_M_ORANGE, BGW_STAR_M_YELLOW, BGW_STAR_M_GREEN, BGW_STAR_M_SKY, BGW_STAR_M_BLUE, BGW_STAR_M_PURPLE][iniValue%7];
+			let shot_delay = 30;
+
+			let st = 0;
+			let before_x = ObjMove_GetX(objFamilier);
+			let before_y = ObjMove_GetY(objFamilier);
+			
+			wait(3);
+			while(CanShotBullet(objFamilier))
+			{
+				let sa = ObjMove_GetAngle(objFamilier) + 90 + st*180 + rand(-15,15);
+				let ba = atan2(before_y-ObjMove_GetY(objFamilier), before_x-ObjMove_GetX(objFamilier));
+				let l_len = 6 * (((before_y-ObjMove_GetY(objFamilier))^2+(before_x-ObjMove_GetX(objFamilier))^2)^0.5);
+				SheliaNoteShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					speed, ba, graphic, 15, l_len, sa, graphic2, shot_delay);
+				if (ref_count < 2 && st%wt == 0)
+				{
+					let rand_angle = 12;
+					let sa = GetAngleToPlayer(objFamilier) + rand(-rand_angle,rand_angle);
+					My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0, sa, speed/90, speed, graphic2, 30);
+					My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0, -90-iniMuki*30, speed/90, speed, graphic3, 30);
+				}
+				before_x = ObjMove_GetX(objFamilier);
+				before_y = ObjMove_GetY(objFamilier);
+				st++;
+				wait(3);
+			}
+		}
+		else if (Difficult >= D_HARD)
+		{
+			let speed = 2.5;
+			let wt = [99, 99, 3, 3][Difficult];
+			speed *= (1 + iniValue*0.05);
+			
+			let graphic = ADD_BGW_NEEDLE_WHITE;
+			let graphic2 = [BGW_STAR_M_RED, BGW_STAR_M_ORANGE, BGW_STAR_M_YELLOW, BGW_STAR_M_GREEN, BGW_STAR_M_SKY, BGW_STAR_M_BLUE, BGW_STAR_M_PURPLE][iniValue%7];
+			let shot_delay = 30;
+
+			let st = 0;
+			let before_x = ObjMove_GetX(objFamilier);
+			let before_y = ObjMove_GetY(objFamilier);
+			
+			wait(3);
+			while(CanShotBullet(objFamilier))
+			{
+				let sa = ObjMove_GetAngle(objFamilier) + 90 + st*180 + rand(-15,15);
+				let ba = atan2(before_y-ObjMove_GetY(objFamilier), before_x-ObjMove_GetX(objFamilier));
+				let l_len = 6 * (((before_y-ObjMove_GetY(objFamilier))^2+(before_x-ObjMove_GetX(objFamilier))^2)^0.5);
+				SheliaNoteShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					speed, ba, graphic, 15, l_len, sa, graphic2, shot_delay);
+				if (ref_count < 2 && st%wt == 0)
+				{
+					let sa = GetAngleToPlayer(objFamilier) - (iniValue-3)*2*iniMuki;
+					My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0, sa, speed/90, speed, graphic2, 30);
+				//	CallSound(sndShot2);
+				}
+				before_x = ObjMove_GetX(objFamilier);
+				before_y = ObjMove_GetY(objFamilier);
+				st++;
+				wait(3);
+			}
+		}
+		else
+		{
+			let speed = 0.75;
+			let wt = [30, 12, 99, 99][Difficult];
+			speed *= (1 + iniValue*0.15);
+			
+			let graphic = [ADD_BGW_NEEDLE_RED, ADD_BGW_NEEDLE_ORANGE, ADD_BGW_NEEDLE_YELLOW, ADD_BGW_NEEDLE_GREEN, ADD_BGW_NEEDLE_SKY, ADD_BGW_NEEDLE_BLUE, ADD_BGW_NEEDLE_PURPLE][iniValue%7];
+			let graphic2 = [BGW_WATER_SKY, BGW_WATER_BLUE][iniValue%2];
+			let shot_delay = 45;
+
+			let st = 0;
+			let before_x = ObjMove_GetX(objFamilier);
+			let before_y = ObjMove_GetY(objFamilier);
+			
+			wait(3);
+			while(CanShotBullet(objFamilier))
+			{
+				let sa = ObjMove_GetAngle(objFamilier) + 90 + st*180 + rand(-15,15);
+				let ba = atan2(before_y-ObjMove_GetY(objFamilier), before_x-ObjMove_GetX(objFamilier));
+				let l_len = 6 * (((before_y-ObjMove_GetY(objFamilier))^2+(before_x-ObjMove_GetX(objFamilier))^2)^0.5);
+				SheliaNoteShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					speed, ba, graphic, 15, l_len, sa, graphic2, shot_delay);
+				if (ref_count < 2 && st%wt == 0)
+				{
+					let sa = 90 + rand(15,45)*iniMuki;
+					My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0, sa, speed/90, speed, graphic2, 30);
+				//	CallSound(sndShot2);
+				}
+				before_x = ObjMove_GetX(objFamilier);
+				before_y = ObjMove_GetY(objFamilier);
+				st++;
+				wait(3);
+			}
+		}
+	}
+}
+
+task SheliaNoteShot(x, y, speed, angle, graphic, delay, l_len, angle2, graphic2, timer)
+{
+	wait(5);
+	if (!eAlive) { return; }
+	let obj = CreateStraightLaserA1(x+l_len*cos(angle)/2, y+l_len*sin(angle)/2, angle+180, l_len, 24, timer+30, graphic, 0);
+	ObjStLaser_SetSource(obj, false);
+	ObjLaser_SetIntersectionWidth(obj, 4);
+	ObjLaser_SetGrazeInvalidFrame(obj, 1200);
+	ObjShot_SetItemChange(obj, false);
+	wait(timer);
+	descent(i in 0 .. 60)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		let tmp = (i+1)/60;
+		ObjLaser_SetRenderWidth(obj, tmp*24);
+		if (i < 30) { ObjShot_SetIntersectionEnable(obj, false); }
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+// 開幕えへくと
+task TFirst()
+{
+	let muki = 1;
+	loop(5)
+	{
+		let ba = rand(0, 360);
+		ascent(i in 0 .. 3)
+		{
+			SetFamilier02(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), ba+i*360/3, muki);
+		}
+		muki = -muki;
+		wait(10);
+	}
+}
+// 使い魔（開幕モーション用）
+task SetFamilier02(iniX, iniY, iniAngle, iniMuki)
+{
+	let eSize = ENEMY_S;
+	let eColor = EFF_YELLOW;
+	let item_count = 0;
+	let item_star = 0;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 300, eSize);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawStarEnemy(objFamilier, 3, 1.5);
+//	DrawSheliaCircle(objFamilier, iniMuki);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		let speed = 2;
+		let wt = 15;
+		let graphic = [ADD_BGW_STAR_S_SKY, ADD_BGW_STAR_S_YELLOW, ADD_BGW_STAR_S_BLUE, ADD_BGW_STAR_M_YELLOW, ADD_BGW_STAR_S_BLUE];
+		
+		let st = 0;
+		let bx = iniX;
+		let by = iniY;
+		ascent(i in 0 .. 150)
+		{
+			let tmp = (i+1)/150;
+			let tmp2 =  (1-cos(max(0, i+1-90)/60*90));
+			let ea = iniAngle + tmp*360;
+			let er = tmp*240;
+			let ex = cos(ea)*er;
+			let ey = sin(ea)*er/3;
+			let rotate_a = (30-60*tmp)*iniMuki;
+			let tmp_xy = Rotate2D_XY(ex, ey, rotate_a);
+			ObjMove_SetPosition(objFamilier, bx+tmp_xy[0], by+tmp_xy[1]-tmp2*320);
+			
+			if (i > 0 && i%wt == 0)
+			{
+				let sa = 90 + (1+tmp*1.5)*90*iniMuki;
+				let ss = speed * (1+tmp);
+				My_CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0, sa, ss/90, ss, graphic[st%5], 30);
+				st++;
+			}
+			
+			yield;
+		}
+		EraseEnemy(objFamilier);
+	}
+}
+

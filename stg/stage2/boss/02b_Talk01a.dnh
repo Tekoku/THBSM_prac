@@ -1,0 +1,172 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["2面　会話前半"]
+#Text["2面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_TOBIKO);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_TOBIKO);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_TOBIKO, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+	SetImageFoward(cutinPlayer1, true);
+	SetImageVisible(cutinBoss1, false);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "それにしても見事な夕焼けね");
+		}
+		case(1)
+		{
+			SetImageVisible(cutinBoss1, false);	// ボス画像出現フラグ
+			
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "トンビが鳴くからかーえろ、[r]とは行かないようだけど");
+		}
+		case(2)
+		{
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+
+			ChangeTalkTexture(cutinBoss1, I_NOTICE);
+			SetTalkEx(cutinBoss1, "ほう！　ほう！");
+			SetBossName(cutinBoss1);	// ボスネーム表示
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "僕の尾行に気付いていたのかね？[r]いつから？");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx(cutinPlayer1, "いつから？　いつから人前に出て[r]盛大に弾を撃つのが尾行になったのよ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "これは失敬！　[ruby rb=\"河童の光学迷彩マント\" rt=\"てんぐのかくれみの\"]は[r]壊れやすいのが珠に傷だ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "天狗のせこい隠し撮りに[r]付き合ってる暇は無い");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NOTICE);
+			SetTalkEx(cutinBoss1, "言うねえ！[r]では正面から撮らせて貰おう！");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "僕を隠し撮りばかりの[r]卑怯者と思われては困る");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "なるほど、[r]外套の次は写真機を壊されたいか");
+		}
+		case(10)
+		{
+			//BGM
+			PlayMusicWithName(5, 180, 30);
+
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "夕焼けトンビの伝承を知っているかね？[r]夜明けに出会ったら願いを叶えると言う。");
+		}
+		case(11)
+		{
+			SetTalkEx(cutinBoss1, "今はまだ夕刻だが…");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "鷹藤が術中に嵌まった君は、[r]すぐにやめろと懇願する事になろうよ！");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 15, 1, 0.1, 5);
+}

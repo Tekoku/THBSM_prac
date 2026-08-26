@@ -1,0 +1,194 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ソーサームクゲ"]
+#Text["ソーサームクゲ"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(600);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(40);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 20;		//ダメージ透過率
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_FABRITIS);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(1), [0, 0, 1, 2][Difficult], 
+			GetCurrentScriptDirectory()~"01a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	wait(60);
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+	
+	
+	let muki = 1;
+	let t = 0;
+	if (Difficult >= D_LUNA)
+	{
+		while(eAlive)
+		{
+			BossCharge(objEnemy);
+			CallSound(sndPower2);
+			SetAction(objEnemy, ACT_SHOT1, 300);
+			wait(60);
+			if (!eAlive) { return; }
+			let ba = 90+rand(-15,15);
+			ascent(i in 0 .. 7)
+			{
+				if (!eAlive) { return; }
+				MukugeShot_Luna(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), i, muki, ba+i*7*muki, 128+i*16);
+			//	muki = -muki;
+				wait(16);
+			}
+			wait(90);
+			if (!eAlive) { return; }
+			EnemyRandomMove(objEnemy, 140, 64);
+			wait(60);
+			muki = -muki;
+			t++;
+		}
+	}
+	else
+	{
+		while(eAlive)
+		{
+			BossCharge(objEnemy);
+			CallSound(sndPower2);
+			SetAction(objEnemy, ACT_SHOT1, 300);
+			wait(60);
+			if (!eAlive) { return; }
+			let ba = rand(0, 360);
+			MukugeShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), t, muki, ba);
+			if (Difficult >= D_HARD)
+			{
+				if (!eAlive) { return; }
+				wait(120);
+				MukugeShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), t+1, -muki, ba+180*muki);
+			}
+			wait(240);
+			if (!eAlive) { return; }
+			EnemyRandomMove(objEnemy, 140, 64);
+			wait(60);
+			if (Difficult <= D_EASY)
+			{
+				wait(75);
+			}
+			muki = -muki;
+			t++;
+		}
+	}
+}
+
+task MukugeShot(x, y, t, muki, base_angle)
+{
+	let speed = [1.5, 1.75, 2, 3][Difficult];
+	let way = 5;
+	let count = [105, 105, 120, 75][Difficult];
+	let wt = [3, 3, 3, 5][Difficult];
+	let shot_span = [4, 2, 2, 1][Difficult];
+	let graphic = [ADD_BGW_CROSS_RED, ADD_BGW_CROSS_RED][t%2];
+	let graphic2 = [BGW_BALL_BS_PURPLE, BGW_BALL_BS_WHITE][t%2];
+	if (Difficult >= D_HARD)
+	{
+		graphic = [ADD_BGW_CROSS_RED, ADD_BGW_CROSS_RED][t%2];
+		graphic2 = [BGW_ICE_PURPLE, BGW_ICE_WHITE][t%2];
+	}
+	
+	let st = 0;
+	ascent(j in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let tmp = (j+1)/count;
+		let max_r = 64 + tmp*128;
+		let sflg = (j%shot_span == 0);
+		ascent(i in 0 .. way)
+		{
+			let sr = sin(tmp*360*1.5)*max_r;
+			let ss = speed;
+			let ba = base_angle + tmp*360*muki + i*360/way;
+			let sx = x + cos(ba)*sr;
+			let sy = y + sin(ba)*sr;
+			let fsa = ba + 90*muki;
+			let sa = ba + (90 + (1-tmp)^2*360)*muki + st*180;
+			SawShot(sx, sy, speed, fsa, graphic, 30, sa, graphic2, sflg);
+		}
+	//	if (Difficult >= D_HARD) { st++; }
+		if (sflg) { CallSound(sndShot2); }
+		wait(wt);
+	}
+}
+
+task MukugeShot_Luna(x, y, t, muki, base_angle, base_r)
+{
+	let speed = [1.5, 1.75, 2, 1.75][Difficult];
+	let way = 5;
+	let count = [105, 105, 120, 38][Difficult];
+	let wt = [3, 3, 3, 8][Difficult];
+	let shot_span = [4, 2, 2, 1][Difficult];
+	let graphic = [ADD_BGW_CROSS_RED, ADD_BGW_CROSS_ORANGE, ADD_BGW_CROSS_YELLOW, ADD_BGW_CROSS_GREEN, ADD_BGW_CROSS_SKY, ADD_BGW_CROSS_BLUE, ADD_BGW_CROSS_PURPLE][t%7];
+	let graphic2 = [BGW_ICE_RED, BGW_ICE_ORANGE, BGW_ICE_YELLOW, BGW_ICE_GREEN, BGW_ICE_SKY, BGW_ICE_BLUE, BGW_ICE_PURPLE][t%7];
+	
+	speed *= (1+t*0.1);
+	
+	let st = 0;
+	ascent(j in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let tmp = (j+1)/count;
+		let max_r = base_r/3 + tmp*base_r*2/3;
+		let sflg = (j%shot_span == 0);
+		ascent(i in 0 .. way)
+		{
+			let sr = sin(tmp*180)*max_r;
+			let ss = speed * (1-tmp/2);
+			let ba = base_angle + tmp*180*muki + i*360/way;
+			let sx = x + cos(ba)*sr;
+			let sy = y + sin(ba)*sr;
+			let fsa = ba + 90*muki;
+			let sa = ba + (90 + (1-tmp)^2*240)*muki + st*180;
+			SawShot(sx, sy, speed, fsa, graphic, 30, sa, graphic2, sflg);
+		}
+	//	if (Difficult >= D_HARD) { st++; }
+		if (sflg) { CallSound(sndShot2); }
+		wait(wt);
+	}
+}
+
+task SawShot(x, y, speed, angle, graphic, delay, angle2, graphic2, shot_flg)
+{
+	let obj = My_CreateShotA1(x, y, 0.5, angle, graphic, delay);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI()+1);
+//	ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, 0, 30, 0);
+	wait(delay+60);
+	if (!Obj_IsDeleted(obj))
+	{
+		if (shot_flg)
+		{
+			CallSound(sndBulletBreak);
+			CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, angle2, speed/120, speed, graphic2, 15);
+		}
+		DeleteBulletEffect(obj);
+	}
+}

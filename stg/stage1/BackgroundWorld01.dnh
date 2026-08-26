@@ -1,0 +1,174 @@
+//　Stage1
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../lib/wor_function.dnh"
+
+let flagEnd = false;
+let flgScriptValue = 0;
+
+//　ステージの背景テクスチャ
+let world01_path;
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_CloseScript)
+	{
+		//背景削除
+		flagEnd = true;
+		CloseMine(300);
+	}
+}
+
+@Initialize
+{
+	init();	//初期設定
+	
+	// 画像パスをセット
+	world01_path = LoadingImageFile_StgWorld(1);
+
+	// 背景スクリプト起動
+	if (IsDrawBackground() >= 2) { SetWorld01a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task BackGroundLite
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,world_layer);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,world01_path[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	while(alpha<255) {
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task SetWorld01a()
+{
+	let count		= 0;
+	let move1		= 0;
+	let moveA		= 0;
+	let move2		= 0;
+	let moveB		= 0;
+	let move3		= 0;
+	let moveC		= 0;
+	
+	let obj = [
+		CreateTexture01( world01_path[0] ),
+		CreateTexture01( world01_path[1] ),
+		CreateTexture01( world01_path[2] ),
+		CreateTexture01( world01_path[3] ),
+	];
+	
+	ObjRender_SetPosition( obj[0], -512, 0, 0 );
+	ObjRender_SetScaleXYZ( obj[0], 8, 8, 0 );
+	ObjSprite3D_SetBillboard( obj[0], true );
+	
+	ObjRender_SetAlpha( obj[1], 255 );
+	ObjRender_SetPosition( obj[1], 256, 0, 0 );
+	ObjRender_SetAngleXYZ( obj[1], 90, 0, 0 );
+	ObjRender_SetColor( obj[1], 128, 128, 128 );
+	
+	ObjRender_SetAlpha( obj[2], 192 );
+	ObjRender_SetPosition( obj[2], 256-16, 0, 0 );
+	ObjRender_SetAngleXYZ( obj[2], 270, 0, 0 );
+	ObjRender_SetColor( obj[2], 128, 255, 192 );
+	
+	ObjRender_SetPosition( obj[3], 256-32, 0, 0 );
+	ObjRender_SetAngleXYZ( obj[3], 90, 0, 0 );
+	
+	let scrspd;
+	
+	while( !flagEnd ){
+		move1 = 1 * sin( moveA );
+		move2 = 1 * sin( moveB );
+		move3 = 1 * sin( moveC );
+		
+		scrspd = 0.6 + move2*0.4 + move3/2;
+		
+		let fogw = [
+			move1*640,
+			move1*1000 + move3*100,
+		];
+		let fogcl = [
+			160 + move2*32,
+			255 - move2*96,
+			160 + move2*32,
+		];
+		
+		SetFogParam( fogw[0], fogw[1], fogcl[0], fogcl[1], fogcl[2] );
+		SetCameraFocusXYZ( 256, 128 - move2*96, 0 );
+		SetCameraRadius( 640 + move3*256 );
+		SetCameraAzimuthAngle( 0 + 4 * sin( count/4 ) );
+		SetCameraElevationAngle( 80 + 8 * sin( count/2 ) - move3*40 );
+		
+		ObjSprite3D_SetSourceDestRect( obj[1], 0 - count*scrspd, 0, 1024 - count*scrspd, 1024 );
+		ObjSprite3D_SetSourceDestRect( obj[2], 0 - count*scrspd*1.2, 0 + 256*sin(count/16), 1024 - count*scrspd*1.2, 1024 + 256*sin(count/16) );
+		ObjSprite3D_SetSourceDestRect( obj[3], 0 - count*scrspd*1.4, 0, 1024 - count*scrspd*1.4, 1024 );
+		ObjRender_SetAlpha( obj[3], move3*192 + 32*sin(count/8) );
+		
+		if( count%3 == 0 ){
+				CreateFlashLight( [256-randEffect(0,512),randEffect(-512,512),randEffect(-512,512)],
+									[randEffect(0.1,8)+scrspd/10,randEffect(-0.1,0.1),randEffect(-0.2,0.2)],
+									randEffect(0.1,0.2), randEffect(64,255), 60+randEffect(0,240),
+									[128,128,255] );
+		}
+		
+		count++;
+		if( move1 < 1 ){ moveA += 1; }
+		if( move1 >= 1 && move2 < 1 ){ moveB += 0.1; }
+		if( move2 >= 1 && move3 < 1 ){ moveC += 0.1; }
+		
+		yield;
+	}
+	// 暗転
+	ascent( i in 0 .. 120 ){
+		let tmp = sin((i+1)/120*90);
+		
+		scrspd = 0.6 + move2*0.4 + move3/2;
+		
+		let fogw = [
+			640 - tmp*640,
+			1100 - tmp*1100,
+		];
+		let fogcl = [
+			192 - tmp*192,
+			159 - tmp*159,
+			192 - tmp*192,
+		];
+		
+		SetFogParam( fogw[0], fogw[1], fogcl[0], fogcl[1], fogcl[2] );
+		SetCameraFocusXYZ( 256, 128 - move2*96, 0 );
+		SetCameraRadius( 640 + move3*256 );
+		SetCameraAzimuthAngle( 0 + 4 * sin( count/4 ) );
+		SetCameraElevationAngle( 80 + 8 * sin( count/2 ) - move3*40 );
+		
+		ObjSprite3D_SetSourceDestRect( obj[1], 0 - count*scrspd, 0, 1024 - count*scrspd, 1024 );
+		ObjSprite3D_SetSourceDestRect( obj[2], 0 - count*scrspd*1.2, 0 + 256*sin(count/16), 1024 - count*scrspd*1.2, 1024 + 256*sin(count/16) );
+		ObjSprite3D_SetSourceDestRect( obj[3], 0 - count*scrspd*1.4, 0, 1024 - count*scrspd*1.4, 1024 );
+		ObjRender_SetAlpha( obj[3], move3*192 + 32*sin(count/8) );
+		
+		count++;
+		yield;
+	}
+	ascent( let i in 0..length(obj) ){
+		Obj_Delete( obj[i] );
+	}
+}

@@ -1,0 +1,167 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["2面　会話前半"]
+#Text["2面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_TOBIKO);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_TOBIKO);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_TOBIKO, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+	SetImageFoward(cutinPlayer1, true);
+	SetImageVisible(cutinBoss1, false);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetImageVisible(cutinBoss1, false);	// ボス画像出現フラグ
+			
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "蒸し暑いし喉が渇いたなあ。[r]水筒持って来りゃ良かったぜ");
+		}
+		case(1)
+		{
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+
+			ChangeTalkTexture(cutinBoss1, I_NOTICE);
+			SetTalkEx(cutinBoss1, "そこ行く可哀想なお嬢さん。");
+			SetBossName(cutinBoss1);	// ボスネーム表示
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "僕の竹筒をあげよう。[r]両端とも穴が空いておるがね。");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "水中で呼吸するのに使う奴か。[r]妖怪の山なのに忍者が出るのか？");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "闇に生きる忍者は、[r]そのまま現代の闇に死んだのさ。");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "素直に幻想になったって言えんのか。");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NOTICE);
+			SetTalkEx(cutinBoss1, "そもそも僕の解釈では、幻想入りとは[r]この秘境に迷い込む事ではないのだよね");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "会話が成ってないな。[r]忍者のように静かに進ませて貰うぜ");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "残念だがもう逃げられんよ。");
+		}
+		case(9)
+		{
+			//BGM
+			PlayMusicWithName(5, 180, 30);
+
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "僕に呼ばれ足を止めた瞬間、[r]君は僕の[ruby rb=\"　幻想　\" rt=\"イリュージョン\"]に迷い込んだのだ。");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "面白そうな夜に現れた面白い人間。");
+		}
+		case(11)
+		{
+			SetTalkEx(cutinBoss1, "そんな君には鷹藤が術を[r]とくと見て貰うとするか！");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 15, 1, 0.1, 5);
+}

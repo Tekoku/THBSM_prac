@@ -1,0 +1,127 @@
+#include "./../../../lib/lib_Common.dnh"
+#include "./../../../lib/lib_Effect.dnh"
+#include "./../../../lib/loadlib/file_LoadStgImg.dnh"
+
+//----------------------------------------------------
+//”wŒi
+//----------------------------------------------------
+
+let imgBgTexture = [];
+let flagEnd = false;
+
+@Event
+{
+	alternative(GetEventType())
+	case(EV_END_BOSS_STEP)
+	{
+		//”wŒiíœ
+		flagEnd = true;
+		CloseMine(180);
+	}
+}
+
+@Initialize
+{
+	init();	//‰ŠúÝ’è
+	imgBgTexture = LoadingImageFile_SpellBg(BOSS_ID_TOBIKO);
+	TMain;
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+task TMain()
+{
+	if (IsDrawBackground() >= 2) { BackGround1a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+task BackGroundLite
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,prioritySpellBG);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,imgBgTexture[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	while(alpha<255) {
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task BackGround1a
+{
+	BackGround1;
+	BackGround2;
+
+	task BackGround1
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+		ObjRender_SetColor(obj, 255, 255, 255);
+		ObjPrim_SetTexture(obj, imgBgTexture[0]);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 384, 448);
+		ObjSprite2D_SetDestRect(obj, 0, 0, 384, 448);
+		ObjRender_SetColor(obj, 255, 255, 255);
+
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha += 2.5;
+			ObjRender_SetAlpha(obj,alpha);
+			yield;
+		}
+		while(!flagEnd)
+		{
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	task BackGround2
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+		ObjRender_SetColor(obj, 255, 255, 255);
+		ObjPrim_SetTexture(obj, imgBgTexture[1]);
+		ObjSprite2D_SetDestRect(obj, -320, -320, 320, 320);
+		ObjRender_SetBlendType(obj, BLEND_MULTIPLY);
+		ObjRender_SetAngleZ(obj, -30);
+		ObjRender_SetPosition(obj, GetStgFrameWidth/2, GetStgFrameHeight/2, 0);
+
+		ObjShader_SetShaderF(obj, hlslMulti);
+		ObjShader_SetTechnique(obj, "TecMultiAlpha");
+
+		let t = 0;
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha = min(255, alpha+5);
+			ObjSprite2D_SetSourceRect(obj, 0, 0+t, 512, 512+t);
+			ObjShader_SetFloat(obj, "alpha_", alpha/255);
+			t += 0.5;
+			yield;
+		}
+		while(!flagEnd)
+		{
+			ObjSprite2D_SetSourceRect(obj, 0, 0+t, 512, 512+t);
+			t += 0.5;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}

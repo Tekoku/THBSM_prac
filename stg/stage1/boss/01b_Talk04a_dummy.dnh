@@ -1,0 +1,44 @@
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+// 各ボスのオブジェクトID
+let objEnemy2;
+
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 1);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	objEnemy2  = CreateBossTalkEx(BOSS_ID_FABRITIS);
+	objEnemy  = CreateBossTalk(BOSS_ID_IPHONEA);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	wait(30);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy2, CenX+64, 120, 15, 5, 0.1, 12);
+	SetAction(objEnemy2, ACT_MOVE, 600);
+	wait(30);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX-64, 120, 15, 5, 0.1, 12);
+	SetAction(objEnemy, ACT_MOVE, 600);
+	wait(60);
+	Boss_Finalize(objEnemy, false, false);
+	Boss_Finalize(objEnemy2, false, false);
+}

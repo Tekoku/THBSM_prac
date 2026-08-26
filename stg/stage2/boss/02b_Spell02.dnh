@@ -1,0 +1,337 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["インスタント写真機"]
+#Text["インスタント写真機"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Tobiko.dnh"
+
+let THONE_SPLASH = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(450);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(40);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossHitToPlayer = 12;	//体当たり判定小さめ
+	dIni_Shot = 20;		//ダメージ透過率
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_TOBIKO);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(13), [6,6,7,8][Difficult], 
+			GetCurrentScriptDirectory()~"02a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60+60);
+	wait(60);
+	
+	CallSpellCard(true);	//スペカ起動
+	wait(45);
+
+	let t = 0;
+	let MotionX = [MinX+8, MaxX-8];
+	let MotionY = [120, 240, 140, 260];
+	let muki = 1;
+	
+	let wt = [150, 120, 120, 90][Difficult];
+	
+	while(eAlive)
+	{
+		CallSound(sndPower3);
+		wait(60);
+		if (!eAlive) { return; }
+		let to_x = max(96, min(MaxX-96, GetPlayerX));
+		MoveAndShot(to_x+(GetStgFrameWidth*2+96)*muki, MotionY[t%length(MotionY)], 150);
+		SetAction(objEnemy, ACT_MOVE, 150);
+		wait(210);
+		if (!eAlive) { return; }
+		TShutter(muki);
+		wait(60);
+		if (!eAlive) { return; }
+		SetAction(objEnemy, ACT_SHOT2, 75);
+		wait(wt-60);
+		muki = -muki;
+		t++;
+	}
+}
+
+// 移動しつつショット
+task MoveAndShot(to_x, to_y, timer)
+{
+	let speed = 6;
+	let graphics = [BGB_BILL_SKY, BGW_BILL_BLUE];
+	let count = [3, 5, 5, 7][Difficult];
+	let wt = [5, 5, 5, 5][Difficult];
+	
+	let to_speed = [1, 1.25, 1.25, 1.5][Difficult];
+	let to_graphic = BGB_BILL_WHITE;
+	
+	let muki = [1, -1][to_x-ObjMove_GetX(objEnemy) > 0];
+	MoveToSlowdown2_Warp(objEnemy, to_x, to_y, timer);
+	
+	let base_angle = -90+30*muki;
+	let rand_angle = 15;
+	
+	let move_angle = atan2(to_y-ObjMove_GetY(objEnemy), to_x-ObjMove_GetX(objEnemy));
+	TobikoParticleEffect(60, 0.75, move_angle+150*muki);
+	
+	let st = 0;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0)
+		{
+			let tmp = t/timer;
+			ascent(i in 0 .. count)
+			{
+				let ss = speed * rand(0.5, 1) * (1-tmp*0.66);
+				let sa = base_angle + rand(-rand_angle, rand_angle);
+				let g = graphics[rand_int(0,1)];
+				let to_angle = 90 + rand(-10,30)*muki;
+				TakabunShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					ss, sa, g, 15, to_speed, to_angle, to_graphic);
+			}
+			CallSound(sndShot2);
+			st++;
+		}
+		yield;
+	}
+}
+
+task TakabunShot(x, y, speed, angle, graphic, delay, to_speed, to_angle, to_graphic)
+{
+	let obj = CreateShotA2(x+cos(angle)*24, y+sin(angle)*24,
+		speed/2, angle, speed/120, speed, graphic, 0);
+	
+	while(!Obj_IsDeleted(obj))
+	{
+		if (ObjMove_GetY(obj) <= MinY)
+		{
+			CreateShotA2(ObjMove_GetX(obj), MinY, 0, to_angle, to_speed/60, to_speed, to_graphic, delay);
+			CallSound(sndShot3);
+			DeleteBulletEffect(obj);
+		}
+		yield;
+	}
+}
+
+// きゃめら
+task TShutter(muki)
+{
+//	let r = ((ObjMove_GetY(objEnemy)-GetPlayerY)^2+(ObjMove_GetX(objEnemy)-GetPlayerX)^2)^0.5;
+	let r = 180;
+	let a = GetAngleToPlayer(objEnemy);
+	
+	if (Difficult <= D_HARD)
+	{
+		CallSound(sndPower5);
+		ascent(i in 0 .. 5)
+		{
+			if (!eAlive) { return; }
+			let tmp_a = a + (i-2)*60*muki;
+			let timer = 60;
+			_TShutter(ObjMove_GetX(objEnemy)+r*cos(tmp_a), ObjMove_GetY(objEnemy)+r*sin(tmp_a), timer, 0.75);
+			wait(6);
+		}
+	}
+	else
+	{
+		CallSound(sndPower5);
+		TShutter_sub(120, 5, 60, 0.7, muki);
+		wait(30);
+		if (!eAlive) { return; }
+		TShutter_sub(195, 6, 50, 0.6, -muki);
+		wait(30);
+		if (!eAlive) { return; }
+		TShutter_sub(270, 7, 40, 0.5, muki);
+		
+		
+		task TShutter_sub(r, way, way_angle, size, muki)
+		{
+			ascent(i in 0 .. way)
+			{
+				if (!eAlive) { return; }
+				let tmp_a = a + (i-(way-1)/2)*way_angle*muki;
+				let timer = 60;
+				_TShutter(ObjMove_GetX(objEnemy)+r*cos(tmp_a), ObjMove_GetY(objEnemy)+r*sin(tmp_a), timer, size);
+				wait(4);
+			}
+		}
+	}
+}
+task _TShutter(x, y, timer, eff_size)
+{
+//	let timer = 45;
+	let objShutter = CreateShotA1(x, y, 0, 0, BGW_BALL_S_RED, 0);
+	SetShotDisabled(objShutter);
+	ObjShot_SetAutoDelete(objShutter, false);
+	Obj_SetVisible(objShutter, false);
+	ShutterEffect(objShutter, 1*eff_size, 0.75*eff_size, timer);
+//	ShutterEffect(objShutter, 1*0.75, 0.75*0.75, timer);
+	Obj_SetValue(objShutter, "SHUTTER", 1);
+	
+	ascent(i in 0 .. timer)
+	{
+		if (Obj_IsDeleted(objShutter)) { break; }
+//		let ss = (1-(i+1)/timer)^0.5*6;
+		let ss = 0;
+		let r = ((GetPlayerX-ObjMove_GetX(objShutter))^2+(GetPlayerY-ObjMove_GetY(objShutter))^2)^0.5;
+		ss = min(r, ss);
+		
+		ObjMove_SetSpeed(objShutter, ss);
+		ObjMove_SetAngle(objShutter, GetAngleToPlayer(objShutter));
+		yield;
+	}
+	wait(15);
+	Obj_Delete(objShutter);
+}
+
+// 写真えへくと用
+task ShutterEffect(parent, sizeX, sizeY, timer)
+{
+	//初期設定
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, 39);
+	ObjPrim_SetTexture(obj, imgEffectShutter);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 256, 128);
+	ObjSprite2D_SetDestRect(obj, -128, -128, 128, 128);
+	ObjRender_SetBlendType(obj, BLEND_ALPHA);
+
+	let shutter_angle = 0;
+	let t = 0;
+	while(!Obj_IsDeleted(parent) && t < timer)
+	{
+		if (!eAlive) { break; }
+		let tmp = (t+1)/timer;
+		let tmp_s = 3-(tmp^0.5)*2;
+		shutter_angle = atan2(ObjMove_GetY(parent)-ObjMove_GetY(objEnemy), ObjMove_GetX(parent)-ObjMove_GetX(objEnemy)) + 90;
+		ObjRender_SetAlpha(obj, tmp*255);
+		ObjRender_SetAngleZ(obj, shutter_angle);
+		ObjRender_SetPosition(obj, ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+		ObjRender_SetScaleXYZ(obj, tmp_s*sizeX, tmp_s*sizeY, 1);
+		t++;
+		yield;
+	}
+
+	//発光部分
+	let objFlash = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objFlash, 79);
+	ObjPrim_SetTexture(objFlash, imgEffectShutter);
+	ObjSprite2D_SetSourceRect(objFlash, 0, 128, 256, 256);
+	ObjSprite2D_SetDestRect(objFlash, -128, -128, 128, 128);
+	ObjRender_SetBlendType(objFlash, BLEND_ADD_ARGB);
+	
+	ObjRender_SetAngleZ(objFlash, shutter_angle);
+	ObjRender_SetPosition(objFlash, ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+	ObjRender_SetScaleXYZ(objFlash, sizeX, sizeY, 1);
+	
+	//当たり判定部分
+	let objLaser = CreateStraightLaserA1(ObjMove_GetX(parent)-cos(shutter_angle)*sizeX/2*256, ObjMove_GetY(parent)-sin(shutter_angle)*sizeX/2*256,
+		 shutter_angle, sizeX*256, sizeY*256, 36000, BGW_BEAM_RED, 0);
+	ObjStLaser_SetSource(objLaser, false);
+	ObjShot_SetAutoDelete(objLaser, false);
+	ObjShot_SetItemChange(objLaser, false);
+	ObjLaser_SetIntersectionWidth(objLaser, sizeY*256);
+	ObjLaser_SetInvalidLength(objLaser, 0, 0);
+	Obj_SetVisible(objLaser, false);
+	Obj_SetValue(objLaser, "SHUTTER", 1);
+	
+	if (eAlive) { CallSound(sndShutter); }
+	ascent(i in 0 .. 15)
+	{
+		if (!eAlive) { break; }
+		let tmp = (i+1)/15;
+		ObjRender_SetAlpha(objFlash, 255*tmp*sin(tmp*90));
+		ObjRender_SetAlpha(obj, 255*(1-tmp));
+		if (i == 10)
+		{
+			My_DeleteShotRect(ObjMove_GetX(parent), ObjMove_GetY(parent),
+				shutter_angle, sizeX*256, sizeY*256);
+		}
+		if (i >= 10 && i < 12) {
+			ObjShot_SetIntersectionEnable(objLaser, true);
+		} else {
+			ObjShot_SetIntersectionEnable(objLaser, false);
+		}
+		yield;
+	}
+	Obj_Delete(obj);
+	Obj_Delete(objFlash);
+	Obj_Delete(objLaser);
+}
+
+// 四角形内の弾削除
+task My_DeleteShotRect(x, y, angle, sizeX, sizeY)
+{
+	let sizeR = ((sizeX/2)^2 + (sizeY/2)^2)^0.5;
+	
+	// 四角形の各点を計算
+	let posX = [];
+	let posY = [];
+	ascent(i in 0 .. 4)
+	{
+		let px = [-1, 1, 1, -1][i];
+		let py = [-1, -1, 1, 1][i];
+		let tmp_pos = Rotate2D_XY(px*sizeX/2, py*sizeY/2, angle);
+		posX = posX ~ [x+tmp_pos[0]];
+		posY = posY ~ [y+tmp_pos[1]];
+	}
+	
+	let objShots = GetShotIdInCircleA2(x, y, sizeR, TARGET_ENEMY);
+	ascent(i in 0 .. length(objShots))
+	{
+		let tmp_shot = objShots[i];
+		let flg = true;
+		ascent(i in 0 .. 4)
+		{
+			if (CalcCross(posX[i]-ObjMove_GetX(tmp_shot), posY[i]-ObjMove_GetY(tmp_shot),
+				posX[(i+1)%4]-ObjMove_GetX(tmp_shot), posY[(i+1)%4]-ObjMove_GetY(tmp_shot)) < 0)
+			{
+				flg = false;
+				break;
+			}
+		}
+		if (flg && !Obj_GetValueD(tmp_shot, "SHUTTER", 0))
+		{
+			if (Difficult >= D_HARD)
+			{
+				let sa = atan2(ObjMove_GetY(tmp_shot)-ObjMove_GetY(objEnemy),ObjMove_GetX(tmp_shot)-ObjMove_GetX(objEnemy));
+				let ss = 6;
+				KansouShot(ObjMove_GetX(tmp_shot), ObjMove_GetY(tmp_shot), ss,
+					sa, rand_int(45, 75));
+			}
+			DeleteBulletEffect(tmp_shot);
+		}
+	}
+}
+
+task KansouShot(x, y, speed, angle, timer)
+{
+	let sg = [BGW_FUGU_RED, BGW_FUGU_BLUE, BGW_FUGU_PURPLE, BGW_FUGU_SKY][rand_int(0,3)];
+	let obj = CreateShotA2(x, y, -3, angle+180, 3/timer, 0, sg, 0);
+	Obj_SetValue(obj, "SHUTTER", 1);
+	My_RaiseShotEffectA2(obj, timer);
+	wait(timer);
+	
+	let sa = atan2(ObjMove_GetY(objEnemy)-ObjMove_GetY(obj), ObjMove_GetX(objEnemy)-ObjMove_GetX(obj));
+	ObjMove_AddPatternA2(obj, 0, 0, sa, speed/180, 0, speed);
+}

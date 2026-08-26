@@ -1,0 +1,51 @@
+
+
+// -------------------- 魔法陣描画 -------------------- //
+task DrawSheliaCircle(obj, muki)
+{
+	/*
+	let isize = 64;
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityZako-1);
+	ObjRender_SetBlendType(objImg, BLEND_ALPHA);
+//	ObjPrim_SetTexture(objImg, imgEffectStarCircle);
+	ObjSprite2D_SetDestRect(objImg, -isize/2*muki, -isize/2, isize/2*muki, isize/2);
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+
+	Obj_SetValue(obj, "IMAGE_ID", objImg);	//IDを記録
+
+	let ct = 0;
+	let count = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		let ex = round(ObjMove_GetX(obj));
+		let ey = round(ObjMove_GetY(obj));
+		ObjRender_SetPosition(objImg, ex, ey, 0);
+		if (count%4 == 0)
+		{
+			let ix = (trunc(count/4)%2) * 128;
+			let iy = trunc(trunc(count/4)/2) * 128;
+			ObjSprite2D_SetSourceRect(objImg, ix, iy, ix+128, iy+128);
+		}
+		
+		count++;
+		yield;
+	}
+	//撃破後処理（保留）
+	descent(t in 0 .. 15)
+	{
+		let tmp = sin((t+1)/15*90);
+		ObjRender_SetScaleXYZ(objImg, tmp, tmp, 1);
+		if (count%4 == 0)
+		{
+			let ix = (trunc(count/4)%2) * 128;
+			let iy = trunc(trunc(count/4)/2) * 128;
+			ObjSprite2D_SetSourceRect(objImg, ix, iy, ix+128, iy+128);
+		}
+		count++;
+		yield;
+	}
+	Obj_Delete(objImg);
+	*/
+}

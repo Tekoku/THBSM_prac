@@ -1,0 +1,343 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ミサイルゴード"]
+#Text["ミサイルゴード"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(550);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(40);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 20;		//ダメージ透過率
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_IPHONEA);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(2), [3, 3, 4, 5][Difficult], 
+			GetCurrentScriptDirectory()~"01a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	wait(60);
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+	
+	let l_speed = [6, 10, 12, 15][Difficult];
+	let l_len = 128;
+	
+	let missile_way = [3, 5, 7, 9][Difficult];
+	let missile_way_angle = [120, 90, 75, 60][Difficult];
+	
+	let way = [5, 8, 10, 12][Difficult];
+	let way2 = [3, 3, 4, 5][Difficult];
+	
+	let wt1 = [105, 90, 75, 60][Difficult];
+	let wt2 = [180, 165, 150, 120][Difficult];
+	
+	let graphic = [BGW_RICE_M_GREEN, BGW_RICE_M_GREEN, BGW_RICE_M_YELLOW, BGW_RICE_M_YELLOW][Difficult];
+	let graphic2 = [-1, -1, BGW_FUGU_YELLOW, BGW_CROSS_YELLOW][Difficult];
+	let muki = 1;
+	let t = 0;
+
+	BossCharge(objEnemy);
+	wait(90);
+
+	while(eAlive)
+	{
+		let from_x = ObjMove_GetX(objEnemy);
+		let from_y = ObjMove_GetY(objEnemy);
+		GourdMissile(l_speed, l_len, graphic, graphic2, missile_way, missile_way_angle, [1, 1][t > 0]);
+		wait(wt1);
+
+		if (!eAlive) { return; }
+		if (t%2 == 0)
+		{
+			GourdMissile2(l_speed, GetAngleToPlayer(objEnemy), l_len, graphic, graphic2, way, muki);
+			muki = -muki;
+		} else {
+			GourdMissile3(l_speed, GetAngleToPlayer(objEnemy), l_len, graphic, graphic2, way2);
+		}
+		EnemyRandomMove_S02(objEnemy, from_x, from_y, 140, 64);
+		wait(wt2);
+		
+		t++;
+	}
+}
+
+function GourdMissile(speed, l_len, graphic, graphic2, way, way_angle, count)
+{
+	let move_len = (count^0.5/count) * 64;
+	let delay = 45;
+	let from_x = ObjMove_GetX(objEnemy);
+	let from_y = ObjMove_GetY(objEnemy);
+	
+	loop(count)
+	{
+		if (!eAlive) { return; }
+		Gourd_Single();
+		wait(60);
+	}
+//	wait(60);
+//	MoveTo(objEnemy, from_x, from_y, 60);
+	
+	task Gourd_Single()
+	{
+		let angle = GetAngleToPlayer(objEnemy);
+		let to_x = ObjMove_GetX(objEnemy) - move_len*cos(angle);
+		let to_y = ObjMove_GetY(objEnemy) - move_len*sin(angle);
+		MoveTo(objEnemy, to_x, to_y, delay);
+		SetAction(objEnemy, ACT_SHOT1, 60);	//移動モーション
+
+		ascent(i in 0 .. way)
+		{
+			let tmp = (i-(way-1)/2);
+			let sa = angle + tmp*way_angle;
+			let oa = - tmp*way_angle *0.75;
+			let ss = speed * (1-absolute(tmp)/way);
+			_GourdMissile(ss, sa, l_len, graphic, graphic2, delay, oa);
+		}
+		CallSound(sndLaser1);
+	}
+}
+
+task GourdMissile2(speed, angle, l_len, graphic, graphic2, way, muki)
+{
+//	let angle = GetAngleToPlayer(objEnemy);
+	let delay = 45;
+	let timer = 45;
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let sa = angle + (i+1)*360/way*muki;
+		let oa = 0;
+		let ss = speed * (1 - (1-i/way)/3);
+		_GourdMissile(ss, sa, l_len, graphic, graphic2, delay, oa);
+		if (i == 0) { CallSound(sndLaser1); }
+		wait(timer/way);
+	}
+}
+
+
+task GourdMissile3(speed, angle, l_len, graphic, graphic2, way)
+{
+//	let angle = GetAngleToPlayer(objEnemy);
+	let delay = 45;
+	let timer = 30;
+	
+	let lc = 1;
+	let muki = 1;
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		loop(lc)
+		{
+			let sa = angle + i*120/way*muki;
+			let oa = 0;
+			let ss = speed * (1-i/way/2);
+			_GourdMissile(ss, sa, l_len, graphic, graphic2, delay, oa);
+			muki = -muki;
+		}
+		if (i == 0) { CallSound(sndLaser1); }
+		lc = 2;
+		wait(timer/way);
+	}
+}
+
+task _GourdMissile(speed, angle, l_len, graphic, graphic2, delay, offset_angle)
+{
+	let l_wid = 64;
+	// レーザー本体
+	let obj2 = -1;
+	let obj = CreateStraightLaserA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+		angle, 0, 0, 99999, graphic, 0);
+	ObjLaser_SetGrazeInvalidFrame(obj, defaultLaserGraze);
+	ObjStLaser_SetSource(obj, false);
+	ObjMove_AddPatternA1(obj, 0, 0, 0);
+	ObjMove_AddPatternA2(obj, delay, 0, angle+offset_angle, speed/120, 0, speed);
+	if (graphic2 >= 0)
+	{
+		obj2 = CreateStraightLaserA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			angle, 0, 0, 99999, graphic2, 0);
+		SetShotDisabled(obj2);
+		ObjStLaser_SetSource(obj2, false);
+		ObjMove_AddPatternA1(obj2, 0, 0, 0);
+		ObjMove_AddPatternA2(obj2, delay, 0, angle+offset_angle, speed/120, 0, speed);
+		ObjRender_SetColor(obj2, 192, 192, 0);
+	}
+	
+	let t = 0;
+	while(!Obj_IsDeleted(obj) && t < delay)
+	{
+		let tmp = sin((t+1)/delay*90);
+		let lw = tmp*l_wid;
+		let ll = tmp^2*l_len;
+		ObjLaser_SetRenderWidth(obj, lw);
+		ObjLaser_SetIntersectionWidth(obj, lw/3);
+		ObjLaser_SetLength(obj, ll);
+		ObjStLaser_SetAngle(obj, angle+offset_angle*tmp);
+		ObjMove_SetPosition(obj, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy));
+
+		ObjLaser_SetRenderWidth(obj2, lw*2);
+		ObjLaser_SetLength(obj2, ll);
+		ObjStLaser_SetAngle(obj2, angle+offset_angle*tmp);
+		ObjMove_SetPosition(obj2, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy));
+		t++;
+		yield;
+	}
+	
+	if (eAlive)
+	{
+		CallSound(sndShot4);
+
+		let shot_way = [25, 31, 35, 35][Difficult];
+		let shot_way_angle = [12, 14, 15, 15][Difficult];
+		let speed_rate = [0.35, 0.45, 0.5, 0.5][Difficult];
+		let shot_speed = speed / 4;
+		let s_graphic = [BGW_ICE_GREEN, BGW_ICE_GREEN, BGW_NEEDLE_YELLOW, BGW_NEEDLE_YELLOW][Difficult];
+		let space_size = [0.2, 0.15, 0.1, 0.1][Difficult];
+		
+		GourdShotGun(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			shot_speed, angle+offset_angle, s_graphic, 30,
+			shot_way, shot_way_angle, space_size, speed_rate);
+	}
+}
+
+task GourdShotGun(x, y, speed, angle, graphic, delay, way, way_angle, space_size, speed_rate)
+{
+	let sc = [(way-1)/2, 0][way < 2];
+	ascent(i in 0 .. way)
+	{
+		let tmp = (i-sc)/way*2;
+		if (absolute(absolute(tmp)-0.5) > space_size)
+		{
+			let ss = speed * (1-absolute(tmp)*speed_rate);
+			let sa = angle + tmp*way_angle;
+			let objShot = CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				ss*3, sa, -ss/5, ss, graphic, 0);
+			My_RaiseShotEffectA(objShot, delay);
+		}
+	}
+}
+
+
+// 移動用
+function EnemyRandomMove_S02(EnemyID, from_x, from_y, CenterY, MaxDistance)
+{
+	_EnemyRandomMove_S02(EnemyID, from_x, from_y, CenX, CenterY, CenX*0.75, 72, MaxDistance/2, MaxDistance, 0.75);
+}
+function _EnemyRandomMove_S02(EnemyID, from_x, from_y, CenterX, CenterY, RangeWidth, RangeHeight, MinDistance, MaxDistance, ToPlayerRate)
+{
+	let xp = [ CenterX-RangeWidth/2,  CenterX-RangeWidth/4,  CenterX+RangeWidth/4,  CenterX+RangeWidth/2];
+	let yp = [CenterY-RangeHeight/2, CenterY-RangeHeight/4, CenterY+RangeHeight/4, CenterY+RangeHeight/2];
+	let moveangle = 0;
+	let dist = rand(MinDistance, MaxDistance);
+
+	// 最大３回再計算
+	loop(3)
+	{
+		if( from_x < xp[1] )
+		{
+			// A,B,Cの時、右に移動する
+			if( from_y < yp[1] ) { // Aのとき
+				moveangle = rand(0,60);
+			} else if( from_y > yp[2] ) { // Cのとき
+				moveangle = rand(-60,0);
+			} else { // Bのとき
+				moveangle = rand(-60,60);
+			}
+		}
+
+		else if( from_x > xp[2] )
+		{
+			// G,H,Iの時、左に移動する
+			if( from_y < yp[1] ) { // Gのとき
+				moveangle = rand(120,180);
+			} else if( from_y > yp[2] ) { // Iのとき
+				moveangle = rand(180,240);
+			} else { // Hのとき
+				moveangle = rand(120,240);
+			}
+
+		}
+
+		else
+		{
+			// D,E,F,D',E',F'の時、2/3で自機側に、1/3で自機と反対側に移動する
+			if ( from_x < GetPlayerX ) { // 敵が自機より左側(D,E,F)のとき
+				if (rand(0,1) < ToPlayerRate)
+				{
+					// ToPlayerRateで自機側(=右側)に移動
+					if( from_y < yp[1] ) { // Dのとき
+						moveangle = rand(0,60);
+					} else if( from_y > yp[2] ) { // Fのとき
+						moveangle = rand(-60,0);
+					} else { // Eのとき
+						moveangle = rand(-60,60);
+					}
+				}
+				else {
+					// 自機と反対側(=左側)に移動
+					if( from_y < yp[1] ) { // Dのとき
+						moveangle = rand(120,180);
+					} else if( from_y > yp[2] ) { // Fのとき
+						moveangle = rand(180,240);
+					} else { // Eのとき
+						moveangle = rand(120,240);
+					}
+				}
+			} else {
+				// 敵が自機より右側(D',E',F')のとき
+				if (rand(0,1)<1/3) {
+					// 1/3で自機と反対側(=右側)に移動
+					if( from_y < yp[1] ) { // D'のとき
+						moveangle = rand(0,60);
+					} else if( from_y > yp[2] ) { // F'のとき
+						moveangle = rand(-60,0);
+					} else { // E'のとき
+						moveangle = rand(-60,60);
+					}
+				} else {
+					// 1/3で自機側(=左側)に移動
+					if( from_y < yp[1] ) { // D'のとき
+						moveangle = rand(120,180);
+					} else if( from_y > yp[2] ) { // F'のとき
+						moveangle = rand(180,240);
+					} else { // E'のとき
+						moveangle = rand(120,240);
+					}
+				}
+			}
+		}
+
+		if( from_x+cos(moveangle)*dist < xp[3] && from_x+cos(moveangle)*dist > xp[0]
+		 && from_y+sin(moveangle)*dist < yp[3] && from_y+sin(moveangle)*dist > yp[0] ) {
+			break;
+		}
+		// 再抽選
+	}
+	SetAction(EnemyID, ACT_MOVE, 600);	//移動モーション
+	ObjMove_SetDestAtWeightSpeedUp(EnemyID,
+		from_x+cos(moveangle)*dist,
+		from_y+sin(moveangle)*dist,
+		15, 2, 0.1, 12);
+}

@@ -1,0 +1,276 @@
+#東方弾幕風[Stage]
+#ScriptVersion[3]
+#Title["Stage2道中"]
+#Text["Stage2道中"]
+#System["./../../system/System.dnh"]
+
+#include "./../../lib/lib_Common.dnh"
+#include "./../../lib/lib_Stage.dnh"
+#include "./../../lib/lib_Zako.dnh"
+#include "./Road02_Zako.dnh"
+
+
+@Initialize
+{
+	STAGE_ID = 2;		//ステージID記録
+	NEXT_STAGE_ID = 3;	//次のステージIDを記録
+	SetLastWordBorder(777);	//ラスワ条件
+	StageInit();
+	TStage();
+}
+
+@Event()
+{
+	StageEvent();
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+task TStage
+{
+	// 保険
+	yield;
+	
+	let dir = GetCurrentScriptDirectory();
+	let pathBG	= dir ~ "BackgroundWorld02.dnh";	//背景
+	let pathMBoss	= dir ~ "boss/02a_plural.dnh";	//中ボス
+	let pathBoss	= dir ~ "boss/02b_plural.dnh";	//ボス
+
+	//　中ボスロード
+	// practice tool: chapter skip
+	let dest = GetStartChapter(2);
+	if(dest <= 4)
+	{
+		StartScriptInThread(pathMBoss);
+	}
+	else
+	{
+		StartScriptInThread(pathBoss);
+	}
+	
+	//  背景配置
+	SetStageBackGround(pathBG);
+	
+	wait(90);
+	if(dest <= 5)
+	{
+		PlayMusicWithName(4, 120, 90);
+	}
+	else
+	{
+		PlayMusicWithName(5, 30, 30);
+	}
+
+	ChapterStart();
+// ------------------------ 前半
+	if(dest <= 1)
+	{
+		CHAPTER_1();
+	}
+	if(dest <= 2)
+	{
+		CHAPTER_2();
+	}
+
+// ------------------------ 中ボス
+	if(dest <= 4)
+	{
+		CHAPTER_3_MBOSS(pathBoss);
+	}
+
+// ------------------------ 早回し
+	if(dest <= 5)
+	{
+		CHAPTER_4();
+	}
+	
+// ------------------------ ボスだぞー！
+	// practice tool: wait for boss script ready when jumping directly to boss
+	if(dest >= 6){ wait(150); }
+	CallBoss();
+
+	// 待機とロード
+	WaitForBossKilled();
+	wait(30);
+
+	StageEND();
+}
+
+
+
+function CHAPTER_1()
+{
+	WaitRoad(60);
+	F02(MinX-32, 40, 30, 15);
+	WaitRoad(240);
+	F02(MaxX+32, 40, 150, 15);
+	WaitRoad(150);
+	SetEnemyM01(CenX-72, -32, 2, 90, 0, 240);
+	WaitRoad(90);
+	SetEnemyM01(CenX+72, -32, 2, 90, 0, 240);
+	WaitRoad(90);
+	SetEnemyM01(CenX, -32, 2, 90, 0, 240);
+	WaitRoad(150);
+	F02(MinX-32, 40, 30, 12);
+	WaitRoad(120);
+	// タイトル
+	DisplayStage02( 0, 90 );
+	WaitRoad(360);
+
+	ChapterFinish();
+	WaitRoad(180);
+}
+
+function CHAPTER_2()
+{
+	F01(CenX+64, 140, 2, 120);
+	WaitRoad(60);
+	F01(CenX-64, 130, 2, 120);
+	WaitRoad(180);
+	F01(CenX+64, 100, 5, 60);
+	WaitRoad(30);
+	F01(CenX-64, 90, 5, 60);
+	WaitRoad(300);
+	SetEnemyL01(CenX, -32, 2, 90, 0, 360);
+	WaitRoad(240);
+	SetEnemyM01(CenX-72, -32, 2, 90, 0, 180);
+	SetEnemyM01(CenX+72, -32, 2, 90, 0, 180);
+	WaitRoad(60);
+	SetEnemyM01(CenX-102, -32, 2, 90, 0, 180);
+	SetEnemyM01(CenX+102, -32, 2, 90, 0, 180);
+	WaitRoad(240);
+	ChapterFinish();
+	WaitRoad(120);
+}
+
+function CHAPTER_3_MBOSS(pathBoss)
+{
+	let dest = GetStartChapter(2);
+	if(dest <= 2)
+	{
+	F02(MinX-32, 40, 30, 15);
+	WaitRoad(240);
+	F02(MaxX+32, 40, 150, 15);
+	WaitRoad(150);
+	F03(26, 390);
+	WaitRoad(390-60);
+	}
+	// そのまま中ボスへ突入
+	CHAPTER_MBOSS(pathBoss);
+	WaitRoad(1050);
+}
+
+task CHAPTER_MBOSS(pathBoss)
+{
+	// ボスがでたぞー
+	// practice tool: wait for midboss script ready when jumping directly to midboss
+	if(GetStartChapter(2) >= 3){ wait(150); }
+	CallBoss();
+	flgStopSetZako = true;
+	// 中ボスが消えてからボスをロード
+	StartScriptInThreadWaitBoss(pathBoss);
+	
+	// ボス撃破待ち
+	CheckBossKilled();
+	WaitForMiddleBossKilled();
+	
+	WaitRoad(120);
+	flgStopSetZako = false;
+}
+
+
+function CHAPTER_4()
+{
+	let dest = GetStartChapter(2);
+	if(dest < 5)
+	{
+	SetEnemyL01(CenX, -32, 2, 90, 1, 360);
+	WaitRoad(150);
+	SetEnemyL01(CenX-108, -32, 2, 90, 1, 360);
+	WaitRoad(150);
+	SetEnemyL01(CenX+108, -32, 2, 90, 1, 360);
+	WaitRoad(150);
+	SetEnemyL01(CenX, -32, 2, 90, 1, 360);
+	WaitRoad(180);
+	F03(26, 390);
+	WaitRoad(390+60);
+	WaitForMiddleBossKilled();	// 中ボス撃破待ち
+	}
+	F02(MinX-32, 40, 30, 20);
+	WaitRoad(180);
+	SetEnemyM01(CenX+72, -48, 2, 90, 0, 360);
+	WaitRoad(60);
+	SetEnemyM01(CenX+118, -24, 2, 90, 0, 360);
+	WaitRoad(180-60);
+	F02(MaxX+32, 40, 150, 20);
+	WaitRoad(180);
+	SetEnemyM01(CenX-72, -48, 2, 90, 0, 360);
+	WaitRoad(60);
+	SetEnemyM01(CenX-118, -24, 2, 90, 0, 360);
+	WaitRoad(180-60);
+	F02(MinX-32, 40, 30, 12);
+	WaitRoad(60);
+	SetEnemyM01(CenX, -24, 2, 90, 0, 360);
+	WaitRoad(90);
+	F02(MaxX+32, 40, 150, 12);
+	WaitRoad(240);
+	ChapterFinish();
+	WaitRoad(180);
+}
+
+
+// 敵配置用
+task F01(x, y, count, wt)
+{
+	let muki = [1, -1][x<CenX];
+	ascent(i in 0 .. count)
+	{
+		SetEnemyF01(x+randStage(-32,32,i*muki+1), y-i*8, 0, 0, i, 0);
+		wait(wt);
+	}
+}
+
+// 流れ妖精
+task F02(x, y, angle, count)
+{
+	let muki = [1, -1][x<CenX];
+	ascent(i in 0 .. count)
+	{
+		let tmp = randStage(-1, 1, i*muki+400);
+		SetEnemyF02(x, y+16*tmp, 5, angle-5*tmp*muki, i, 0);
+		wait(15);
+	}
+}
+task F02b(x, y, angle, count)
+{
+	let muki = [1, -1][x<CenX];
+	ascent(i in 0 .. count)
+	{
+		let tmp = randStage(-1, 1, i*muki+300);
+		SetEnemyF02(x, y+30*tmp, 5, angle-10*tmp*muki, i, 0);
+		wait(15);
+	}
+}
+
+// 逃げ出す妖精
+task F03(count, timer)
+{
+	ascent(i in 0 .. count)
+	{
+		let va = randStage(0, 360, i+200);
+		let vs = randStage(2, 4, i+300);
+		let vx = cos(va)*vs;
+		let vy = sin(va)*vs + 1.5;
+		let speed = (vx^2+vy^2)^0.5;
+		let angle = atan2(vy, vx);
+		SetEnemyF03(CenX, CenY-128, speed, angle, 0, timer-i*8);
+		wait(10);
+	}
+}

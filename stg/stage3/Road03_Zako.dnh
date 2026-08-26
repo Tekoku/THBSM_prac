@@ -1,0 +1,801 @@
+// -------------- 敵単体の処理 -------------- //
+
+// 加速陰陽玉
+task SetEnemyI01(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	if (flgStopSetZako) { return; }
+	
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = EFF_RED;
+	let emnImage = imgZakoFairyRed;
+	let item_count = 3;
+	let item_star = 1;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 30, eSize);
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawOnmyou(objEnemy, eColor);
+	TAct();
+	WaitForKilledZako(objEnemy);
+
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		// 登場モーション
+		let bx = (iniX+CenX*2)/3;
+		let by = (iniY+128*2)/3;
+		let timer = 90;
+		ZakoEnterEffect_Onmyou(objEnemy, timer);
+		ascent(i in 0 .. timer)
+		{
+			let tmp = sin((i+1)/timer*90);
+			ObjMove_SetPosition(objEnemy, bx*(1-tmp)+iniX*tmp, by*(1-tmp)+iniY*tmp);
+			yield;
+		}
+		TCheckDispINOut(objEnemy, 16);
+		TMove();
+		TShot();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		ObjMove_SetSpeed(objEnemy, iniSpeed/16);
+		ObjMove_SetAngle(objEnemy, iniAngle);
+		ObjMove_SetAcceleration(objEnemy, iniSpeed/240);
+		ObjMove_SetMaxSpeed(objEnemy, iniSpeed);
+	}
+	
+	// ショット
+	task TShot()
+	{
+		if (e_type == 0)
+		{
+			let wt = [999, 5, 5, 5][Difficult];
+			let shot_delay = [999, 180, 165, 150][Difficult];
+			let timer = shot_delay + [999, 15, 20, 45][Difficult];
+			
+			let speed = [2, 2, 3, 5][Difficult];
+			let way = 1;
+			let way_angle = 45;
+			let graphic = BGW_FUGU_RED;
+			
+			let t = shot_delay;
+			wait(shot_delay);
+			while(CanShotBullet(objEnemy) && t < timer)
+			{
+				let sa = GetAngleToPlayer(objEnemy);
+				CreateShotWayA2Ex(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, speed/120, speed, graphic, 30, way, way_angle, 0);
+				CallSound(sndShot2);
+				wait(wt);
+				t += wt;
+			}
+		}
+		else
+		{
+			let wt = [5, 5, 5, 5][Difficult];
+			let shot_delay = [180, 165, 140, 120][Difficult];
+			let timer = shot_delay + [40, 40, 40, 40][Difficult];
+			
+			let speed = [4, 4, 5, 5][Difficult];
+			let way = 2;
+			let way_angle = 15;
+			let graphic = BGW_FUGU_RED;
+			
+			let st = 0;
+			let t = shot_delay;
+			wait(shot_delay);
+			while(CanShotBullet(objEnemy) && t < timer)
+			{
+				let sa = -90;
+				let wa = way_angle * (1 + st);
+				CreateShotWayA2Ex(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, speed/120, speed, graphic, 30, way, wa, 0);
+				CallSound(sndShot2);
+				wait(wt);
+				t += wt;
+				st++;
+			}
+		}
+	}
+}
+
+// 加減速陰陽玉
+task SetEnemyI02(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	if (flgStopSetZako) { return; }
+	
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = EFF_BLUE;
+	let emnImage = imgZakoFairyRed;
+	let item_count = 3;
+	let item_star = 1;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 30, eSize);
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawOnmyou(objEnemy, eColor);
+	TAct();
+	WaitForKilledZako(objEnemy);
+
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		// 登場モーション
+		let bx = (iniX+CenX*4)/5;
+		let by = (iniY+(-64)*2)/3;
+		let timer = 90;
+		ZakoEnterEffect_Onmyou(objEnemy, timer);
+		ascent(i in 0 .. timer)
+		{
+			let tmp = sin((i+1)/timer*90);
+			ObjMove_SetPosition(objEnemy, bx*(1-tmp)+iniX*tmp, by*(1-tmp)+iniY*tmp);
+			yield;
+		}
+		TCheckDispINOut(objEnemy, 16);
+		TMove();
+		TShot();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		ObjMove_SetSpeed(objEnemy, iniSpeed/16);
+		ObjMove_SetAngle(objEnemy, iniAngle);
+		ObjMove_SetAcceleration(objEnemy, iniSpeed/120);
+		ObjMove_SetMaxSpeed(objEnemy, iniSpeed);
+		
+		let StopLineX = CenX;
+		let StopLineY = CenY;
+		if (iniX < 0 || iniX > MaxX) { StopLineY = -1; }
+		if (iniY < 0 || iniY > MaxY) { StopLineX = -1; }
+		
+		let beforeX = ObjMove_GetX(objEnemy);
+		let beforeY = ObjMove_GetY(objEnemy);
+		while(CanShotBullet(objEnemy))
+		{
+			if (((beforeX-StopLineX)*(ObjMove_GetX(objEnemy)-StopLineX) <= 0 && beforeX != ObjMove_GetX(objEnemy) && StopLineX > 0) ||
+				((beforeY-StopLineY)*(ObjMove_GetY(objEnemy)-StopLineY) <= 0 && beforeY != ObjMove_GetY(objEnemy) && StopLineY > 0))
+			{
+				ObjMove_AddPatternA2(objEnemy, 0, NO_CHANGE, NO_CHANGE, -iniSpeed/30, 0, iniSpeed/8);
+				ObjMove_AddPatternA2(objEnemy, 60, NO_CHANGE, NO_CHANGE, iniSpeed/180, 0, iniSpeed);
+				break;
+			}
+			beforeX = ObjMove_GetX(objEnemy);
+			beforeY = ObjMove_GetY(objEnemy);
+			yield;
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		let wt = [20, 15, 15, 15][Difficult];
+		let shot_delay = 10;
+		let timer = [105, 120, 165, 240][Difficult];
+		
+		let speed = [2, 2, 2.5, 3.5][Difficult];
+		let way = 2;
+		let way_angle = 180;
+		let graphic = BGW_FUGU_BLUE;
+		
+		let t = shot_delay;
+		wait(shot_delay);
+		while(CanShotBullet(objEnemy) && t < timer)
+		{
+			let sa = ObjMove_GetAngle(objEnemy);
+			if (Difficult >= D_LUNA)
+			{
+				CreateShotWay(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					speed, sa+5, graphic, 15, way, way_angle, 0);
+				CreateShotWay(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					speed, sa-5, graphic, 15, way, way_angle, 0);
+			}
+			else
+			{
+				CreateShotWay(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					speed, sa, graphic, 15, way, way_angle, 0);
+			}
+			CallSound(sndShot2);
+			wait(wt);
+			t += wt;
+		}
+	}
+}
+
+// おほしさま
+task SetEnemyS02(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = EFF_BLUE;
+	let emnImage = imgZakoFairyRed;
+	let item_count = 0;
+	let item_star = 2;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 30, eSize);
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawStarEnemy(objEnemy, STAR_BLUE, 1);
+	Enemy_WaitForDispOUT(objEnemy, 48, 0);
+	TAct();
+	WaitForKilledZako(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TShot();
+		TMove();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		ZakoEnterEffect_Star(objEnemy);
+		wait(iniWait);
+		ObjMove_AddPatternA2(objEnemy, 0, 0, iniAngle, iniSpeed/120, 0, iniSpeed*3);
+		ObjMove_SetAngle(objEnemy, GetAngleToPlayer(objEnemy));
+	}
+	
+	// ショット
+	task TShot()
+	{
+		let speed = [1, 1, 1, 1.5][Difficult];
+		let graphic = [BGW_STAR_S_BLUE, BGW_STAR_M_BLUE][Difficult >= D_HARD];
+		let graphic2 = BGW_STAR_S_BLUE;
+		let way_base = [5, 5, 5, 7][Difficult];
+		let way = [4, 5, 5, 7][Difficult];
+		let way_angle = 360/way_base/way_base*way;
+		
+		wait(iniWait-60);
+		if (CanShotBullet(objEnemy))
+		{
+			let sa = GetAngleToPlayer(objEnemy)+180;
+			CreateShotWayA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed+3, sa, -3/10, speed, graphic2, 15, way+1, way_angle, 16);
+			CreateShotWayA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed+3, sa, -3/10, speed/2, graphic, 15, way, way_angle, 16);
+			CallSound(sndShot5);
+		}
+	}
+}
+
+// おほしさま
+task SetEnemyS03(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = EFF_RED;
+	let emnImage = imgZakoFairyRed;
+	let item_count = 0;
+	let item_star = 2;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 20, eSize);
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawStarEnemy(objEnemy, STAR_RED, 1);
+	TCheckDispINOut(objEnemy, 16);
+	TAct();
+	WaitForKilledZako(objEnemy);
+	if (CheckKillType(objEnemy) == 2)
+	{
+		// 撃ち返し
+		TShot();
+	}
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		ZakoEnterEffect_Star(objEnemy);
+		wait(30);
+		ObjMove_AddPatternA2(objEnemy, 0, 0, iniAngle, iniSpeed/120, 0, iniSpeed*3);
+		ObjMove_SetAngle(objEnemy, GetAngleToPlayer(objEnemy));
+	}
+	
+	// ショット
+	task TShot()
+	{
+		if (!CheckUchikaeshi(objEnemy, 64)) { return; }
+
+		let ex = ObjMove_GetX(objEnemy);
+		let ey = ObjMove_GetY(objEnemy);
+		let ba = GetAngleToPlayer(objEnemy);
+		
+		let count = [0, 1, 4, 6][Difficult];
+		if (count > 0)
+		{
+			let speed = [1, 1.5, 2.5, 3][Difficult];
+			let graphic = BGW_STAR_M_RED;
+			let graphic2 = BGW_STAR_S_RED;
+			
+			S02_My_CreateShotA2(ex, ey, 0, ba, speed/120, speed, graphic, 15, graphic2, count-1);
+		}
+	}
+	
+	task S02_My_CreateShotA2(x, y, speed, angle, add_speed, max_speed, graphic, delay, graphic2, count)
+	{
+		let obj = CreateShotA1(x, y, 0, angle, graphic, 0);
+		My_RaiseShotEffectA(obj, delay);
+		wait(delay);
+		if (!Obj_IsDeleted(obj))
+		{
+			let sa = atan2(GetPlayerY-y, GetPlayerX-x);
+			ObjMove_AddPatternA2(obj, 0, speed, sa, add_speed, 0, max_speed);
+			
+			descent(i in 0 .. count)
+			{
+				let ss = speed * (1-(i+1)*0.1);
+				let sd = 10 * (i+1);
+				let obj2 = CreateShotA1(x, y, 0, sa, graphic2, 0);
+				ObjMove_AddPatternA2(obj2, sd, ss, sa, add_speed, 0, max_speed);
+				My_RaiseShotEffectA(obj2, delay);
+				Obj_SetRenderPriorityI(obj2, GetShotRenderPriorityI()-1);
+			}
+		}
+	}
+}
+
+// 星座用の星単体
+function SetEnemyS01(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	if (flgStopSetZako) { return(-1); }
+	
+	let eSize = ENEMY_S;
+	let objEnemy = MakeEnemy(iniX, iniY, 20, eSize);
+	_SetEnemyS01(objEnemy, iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait);
+	return(objEnemy);
+}
+task _SetEnemyS01(objEnemy, iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = EFF_YELLOW;
+	let emnImage = imgZakoFairyRed;
+	let item_count = 0;
+	let item_star = 2;
+	
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawStarEnemy(objEnemy, 1, 1);
+	TCheckDispINOut(objEnemy, 16);
+	TAct();
+	WaitForKilledZako(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TShot();
+		TMove();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		ZakoEnterEffect_Star(objEnemy);
+		wait(iniWait);
+		ObjMove_AddPatternA2(objEnemy, 0, 0, iniAngle, iniSpeed/120, 0, iniSpeed*3);
+	}
+	
+	// ショット
+	task TShot()
+	{
+		let speed = [0.75, 0.75, 1, 1][Difficult];
+		let graphic = BGW_STAR_S_YELLOW;
+		let way = [5, 8, 12, 16][Difficult];
+		
+		wait(iniWait-60);
+		if (CanShotBullet(objEnemy))
+		{
+			local
+			{
+				let ba = rand(0, 360);
+				ascent(i in 0 .. 5)
+				{
+					let ia = ba + i/5*360;
+					let is = 1;
+					SetItemEx(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), is, ia, MY_ITEM_WISH);
+				}
+			}
+			let sa =atan2(CenY-ObjMove_GetY(objEnemy), CenX-ObjMove_GetX(objEnemy));
+			CreateShotCircleA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed+3, sa, -3/10, speed, graphic, 15, way, 16);
+			CallSound(sndShot5);
+		}
+	}
+}
+// 星座用レーザー
+task StarLaser(objFrom, objTo, graphic, delay)
+{
+	let timer = 60*60;
+	let obj = My_CreateStraightLaserA1(ObjMove_GetX(objFrom), ObjMove_GetY(objFrom), 0, 0, 8, timer, graphic, delay, true);
+	ObjShot_SetAutoDelete(obj, false);
+
+	let t = 0;
+	while(CanShotBullet(objFrom) && CanShotBullet(objTo))
+	{
+		let lr = ((ObjMove_GetY(objFrom)-ObjMove_GetY(objTo))^2+(ObjMove_GetX(objFrom)-ObjMove_GetX(objTo))^2)^0.5;
+		let la = atan2(ObjMove_GetY(objTo)-ObjMove_GetY(objFrom), ObjMove_GetX(objTo)-ObjMove_GetX(objFrom));
+		if (t < 15)
+		{
+			lr *= (t+1)/15;
+		}
+		ObjMove_SetPosition(obj, ObjMove_GetX(objFrom)+cos(la)*6, ObjMove_GetY(objFrom)+sin(la)*6);
+		ObjLaser_SetLength(obj, max(0, lr-12));
+		ObjStLaser_SetAngle(obj, la);
+		t++;
+		yield;
+	}
+	Obj_Delete(obj);
+}
+// 星座用
+task TSetCon(baseX, baseY, s_type, iniAngle)
+{
+	let objPos = ObjText_Create();	//適当なオブジェクト
+	let delay = 30;
+	let max_delay = 180;
+	let count = 0;
+	let iniSpeed = 1;
+//	let iniAngle = 60;
+	
+	alternative(s_type)
+	case(0)
+	{
+		// --- いて座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[ -21,  16],[  25,   1],[ -26, -36]]);
+		Obj_SetValue(objPos, "POS3", [[-123,  36],[  -8,  36],[  57, -17],[ -10, -47],[ -69, -64]]);
+		Obj_SetValue(objPos, "POS4", [[-101, 113],[ -24, 138],[  75,  21],[  85, -58]]);
+		Obj_SetValue(objPos, "POS5", [[ -71, 167],[ -13, 173],[  71,  62],[ 105,  25]]);
+		Obj_SetValue(objPos, "POS6", [[  86,  84]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2], [0, 3]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 4], [1, 5], [2, 6], [3, 7], [3, 8]]);
+		Obj_SetValue(objPos, "LINE3", [[4, 9], [5, 10], [6, 11], [6, 12]]);
+		Obj_SetValue(objPos, "LINE4", [[9, 13], [10, 14], [11, 15], [11, 16]]);
+		Obj_SetValue(objPos, "LINE5", [[15, 17]]);
+		count = 6;
+	}
+	case(1)
+	{
+		// --- さそり座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[  -1, -25],[  13,  22]]);
+		Obj_SetValue(objPos, "POS3", [[  -7, -91],[  64,  80]]);
+		Obj_SetValue(objPos, "POS4", [[ 105, 103],[ -43, -91],[  31, -76]]);
+		Obj_SetValue(objPos, "POS5", [[ 147, 123]]);
+		Obj_SetValue(objPos, "POS6", [[ 146, 163]]);
+		Obj_SetValue(objPos, "POS7", [[ 129, 212]]);
+		Obj_SetValue(objPos, "POS8", [[  90, 229]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 3], [2, 4]]);
+		Obj_SetValue(objPos, "LINE3", [[4, 5], [3, 6], [3, 7]]);
+		Obj_SetValue(objPos, "LINE4", [[5, 8]]);
+		Obj_SetValue(objPos, "LINE5", [[8, 9]]);
+		Obj_SetValue(objPos, "LINE6", [[9, 10]]);
+		Obj_SetValue(objPos, "LINE7", [[10, 11]]);
+		count = 8;
+	}
+	case(2)
+	{
+		// --- さいだん座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[  56,   9],[ -11,  76],[ -14, -83]]);
+		Obj_SetValue(objPos, "POS3", [[  68,  57],[  58, -31]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2], [0, 3]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 4], [1, 5]]);
+		count = 3;
+	}
+	case(3)
+	{
+		// --- みなみのさんかく座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[ 139, -14]]);
+		Obj_SetValue(objPos, "POS3", [[ 108, 100]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 2]]);
+		Obj_SetValue(objPos, "LINE3", [[2, 0]]);
+		count = 3;
+	}
+	case(4)
+	{
+		// --- りゅうこつ座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[-109,  89]]);
+		Obj_SetValue(objPos, "POS3", [[-153, 118]]);
+		Obj_SetValue(objPos, "POS4", [[-139, 169],[-179, 173]]);
+		Obj_SetValue(objPos, "POS5", [[ -94, 177],[-184, 187]]);
+		Obj_SetValue(objPos, "POS6", [[-121, 208],[-169, 205]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 2]]);
+		Obj_SetValue(objPos, "LINE3", [[2, 3], [2, 4]]);
+		Obj_SetValue(objPos, "LINE4", [[3, 5], [4, 6]]);
+		Obj_SetValue(objPos, "LINE5", [[5, 7], [6, 8]]);
+		Obj_SetValue(objPos, "LINE6", [[7, 8]]);
+		count = 6;
+	}
+	case(5)
+	{
+		// --- おおいぬ座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[ -22, -37],[ -40,  -7]]);
+		Obj_SetValue(objPos, "POS3", [[ -25,   5]]);
+		Obj_SetValue(objPos, "POS4", [[  16,  20],[ -34,  59]]);
+		Obj_SetValue(objPos, "POS5", [[  45,  12],[ -11,  60],[ -46,  80]]);
+		Obj_SetValue(objPos, "POS6", [[ -25,  99],[ -72, 106]]);
+		Obj_SetValue(objPos, "POS7", [[  45, 109],[  -9, 126]]);
+		Obj_SetValue(objPos, "POS8", [[  26, 128]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 2], [2, 3]]);
+		Obj_SetValue(objPos, "LINE3", [[3, 4], [3, 5]]);
+		Obj_SetValue(objPos, "LINE4", [[4, 6], [4, 7], [5, 8]]);
+		Obj_SetValue(objPos, "LINE5", [[7, 9], [8, 9], [8, 10]]);
+		Obj_SetValue(objPos, "LINE6", [[9, 11], [9, 12]]);
+		Obj_SetValue(objPos, "LINE7", [[12, 13]]);
+		count = 8;
+	}
+	case(6)
+	{
+		// --- オリオン座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[  54,  85],[  46, -33],[ -55, -59]]);
+		Obj_SetValue(objPos, "POS3", [[  57, 169],[  78,  -4],[ -44, -67]]);
+		Obj_SetValue(objPos, "POS4", [[ 134, 136],[  75,  65],[ 132, -90],[ -22,-127]]);
+		Obj_SetValue(objPos, "POS5", [[  65,  74],[ 156, -49]]);
+		Obj_SetValue(objPos, "POS6", [[ 162,  20]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2], [0, 3]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 4], [2, 5], [3, 6]]);
+		Obj_SetValue(objPos, "LINE3", [[4, 7], [5, 8], [5, 9], [6, 10]]);
+		Obj_SetValue(objPos, "LINE4", [[7, 8], [9, 12]]);
+		Obj_SetValue(objPos, "LINE5", [[12, 13]]);
+		count = 6;
+	}
+	case(7)
+	{
+		// --- ふたご座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[ -26,  29],[  38,  21]]);
+		Obj_SetValue(objPos, "POS3", [[  21,  86],[  81,  69],[  74,  -6]]);
+		Obj_SetValue(objPos, "POS4", [[   9, 129],[  40, 102],[ 119,  93]]);
+		Obj_SetValue(objPos, "POS5", [[  88, 141],[ 137,  95]]);
+		Obj_SetValue(objPos, "POS6", [[  69, 169],[ 161,  87]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 3], [2, 4], [2, 5]]);
+		Obj_SetValue(objPos, "LINE3", [[3, 6], [3, 7], [4, 8]]);
+		Obj_SetValue(objPos, "LINE4", [[7, 9], [8, 10]]);
+		Obj_SetValue(objPos, "LINE5", [[9, 11], [10, 12]]);
+		count = 6;
+	}
+	case(8)
+	{
+		// --- おうし座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[-149, -34],[  18,   6]]);
+		Obj_SetValue(objPos, "POS3", [[  43,  10]]);
+		Obj_SetValue(objPos, "POS4", [[  89,  38],[  33, -9]]);
+		Obj_SetValue(objPos, "POS5", [[  18, -25],[ 172, 79],[  -5, 36]]);
+		Obj_SetValue(objPos, "POS6", [[ -17, -57],[  25,-51],[  80, 95],[   2, 59]]);
+		Obj_SetValue(objPos, "POS7", [[-120,-104],[  78,-48],[ 140,149],[  49, 72]]);
+		Obj_SetValue(objPos, "POS8", [[ 121, -67]]);
+		Obj_SetValue(objPos, "POS9", [[ 158,  38]]);
+		Obj_SetValue(objPos, "POS10",[[ 167,  65]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2]]);
+		Obj_SetValue(objPos, "LINE2", [[2, 3]]);
+		Obj_SetValue(objPos, "LINE3", [[3, 4], [3, 5]]);
+		Obj_SetValue(objPos, "LINE4", [[4, 7], [5, 6]]);
+		Obj_SetValue(objPos, "LINE5", [[6, 9], [6, 10], [7, 11], [8, 12]]);
+		Obj_SetValue(objPos, "LINE6", [[9, 13], [10, 14], [11, 15], [12, 16]]);
+		Obj_SetValue(objPos, "LINE7", [[14, 17]]);
+		Obj_SetValue(objPos, "LINE8", [[17, 18]]);
+		Obj_SetValue(objPos, "LINE9", [[18, 19]]);
+		count = 10;
+	}
+	case(9)
+	{
+		// --- ペルセウス座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[  11,  18],[ -66, -34]]);
+		Obj_SetValue(objPos, "POS3", [[   0,  77],[ -60, -76],[ -97, -77]]);
+		Obj_SetValue(objPos, "POS4", [[ -26,  58],[ -15,-101],[ -68,-208]]);
+		Obj_SetValue(objPos, "POS5", [[  44, -55],[  92, -63]]);
+		Obj_SetValue(objPos, "POS6", [[  61, -31],[ 116, -73]]);
+		Obj_SetValue(objPos, "POS7", [[  70,  21],[ 121,-105]]);
+		Obj_SetValue(objPos, "POS8", [[  98,  53]]);
+		Obj_SetValue(objPos, "POS9", [[ 150,  62]]);
+		Obj_SetValue(objPos, "POS10", [[ 200,  51]]);
+		Obj_SetValue(objPos, "POS11", [[ 195,  27]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 3], [2, 4], [2, 5]]);
+		Obj_SetValue(objPos, "LINE3", [[3, 6], [4, 7], [5, 8]]);
+		Obj_SetValue(objPos, "LINE4", [[7, 9], [7, 10]]);
+		Obj_SetValue(objPos, "LINE5", [[9, 11], [10, 12]]);
+		Obj_SetValue(objPos, "LINE6", [[11, 13], [12, 14]]);
+		Obj_SetValue(objPos, "LINE7", [[13, 15]]);
+		Obj_SetValue(objPos, "LINE8", [[15, 16]]);
+		Obj_SetValue(objPos, "LINE9", [[16, 17]]);
+		Obj_SetValue(objPos, "LINE10", [[17, 18]]);
+		count = 11;
+	}
+	case(10)
+	{
+		// --- アンドロメダ座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[ -55, -13],[ -51, -34]]);
+		Obj_SetValue(objPos, "POS3", [[ -69,  41],[-104, -52],[ -20, -75]]);
+		Obj_SetValue(objPos, "POS4", [[-141,-102],[ -82, -74],[  37,-117]]);
+		Obj_SetValue(objPos, "POS5", [[-179,-123],[ -69, -95],[  28,-127],[  89,-122]]);
+		Obj_SetValue(objPos, "POS6", [[ -96,-144],[  32,-145]]);
+		Obj_SetValue(objPos, "POS7", [[-133,-141]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 3], [1, 4], [2, 5]]);
+		Obj_SetValue(objPos, "LINE3", [[4, 6], [4, 7], [5, 8]]);
+		Obj_SetValue(objPos, "LINE4", [[6, 9], [7, 10], [8, 11], [8, 12]]);
+		Obj_SetValue(objPos, "LINE5", [[10, 13], [11, 14]]);
+		Obj_SetValue(objPos, "LINE6", [[13, 15]]);
+		count = 7;
+	}
+	case(11)
+	{
+		// --- カシオペヤ座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[ -38,  27],[  27,  32]]);
+		Obj_SetValue(objPos, "POS3", [[  64,  29]]);
+		Obj_SetValue(objPos, "POS4", [[  92,  65]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2]]);
+		Obj_SetValue(objPos, "LINE2", [[2, 3]]);
+		Obj_SetValue(objPos, "LINE3", [[3, 4]]);
+		count = 4;
+	}
+	case(12)
+	{
+		// --- はくちょう座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[  15,  47]]);
+		Obj_SetValue(objPos, "POS3", [[ -46,  84],[  41,  98],[  87,  24]]);
+		Obj_SetValue(objPos, "POS4", [[-108, 101],[  52, 122],[ 111, -16]]);
+		Obj_SetValue(objPos, "POS5", [[  79, 166],[ 123, -27]]);
+		Obj_SetValue(objPos, "POS6", [[ 145, -37]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 2], [1, 3], [1, 4]]);
+		Obj_SetValue(objPos, "LINE3", [[2, 5], [3, 6], [4, 7]]);
+		Obj_SetValue(objPos, "LINE4", [[6, 8], [7, 9]]);
+		Obj_SetValue(objPos, "LINE5", [[9, 10]]);
+		count = 6;
+	}
+	case(13)
+	{
+		// --- こぎつね座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[ 109,  97]]);
+		Obj_SetValue(objPos, "POS3", [[ 162, 124]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 2]]);
+		count = 3;
+	}
+	case(14)
+	{
+		// --- わし座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[ -10,  21],[  40,  14],[  11, -19]]);
+		Obj_SetValue(objPos, "POS3", [[ -47,  88],[  58,  50],[ 103, -49],[ -23,  -25]]);
+		Obj_SetValue(objPos, "POS4", [[ 102, 124],[ -51, -59]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2], [0, 3]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 4], [2, 5], [3, 6], [3, 7]]);
+		Obj_SetValue(objPos, "LINE3", [[5, 8], [7, 9]]);
+		count = 4;
+	}
+	case(15)
+	{
+		// --- へびつかい座
+		// 星
+		Obj_SetValue(objPos, "POS1", [[0, 0]]);	// →↓の順に追加される
+		Obj_SetValue(objPos, "POS2", [[ -46,  28],[   9,  34],[  27, -32]]);
+		Obj_SetValue(objPos, "POS3", [[ -87,  -9],[ -57,  80],[   8, -69]]);
+		Obj_SetValue(objPos, "POS4", [[-110, -67],[ -37,-109]]);
+		Obj_SetValue(objPos, "POS5", [[ -97,-122]]);
+		// ライン（追加順の敵通しナンバー）
+		Obj_SetValue(objPos, "LINE1", [[0, 1], [0, 2], [0, 3]]);
+		Obj_SetValue(objPos, "LINE2", [[1, 4], [1, 5], [3, 6]]);
+		Obj_SetValue(objPos, "LINE3", [[4, 7], [6, 8]]);
+		Obj_SetValue(objPos, "LINE4", [[7, 9], [8, 9]]);
+		count = 5;
+	}
+	
+	local
+	{
+		let tmp_delay = delay;
+		max_delay = 60;
+		loop(count-1)
+		{
+			max_delay += tmp_delay;
+			tmp_delay = round(0.8*tmp_delay);
+		}
+	}
+	T_Star();
+	T_Line();
+	
+	task T_Star()
+	{
+		let base_delay = max_delay + 60;
+		let tmp_delay = delay;
+		let t = 1;
+		loop
+		{
+			let POS = Obj_GetValueD(objPos, "POS"~IntToString(t), []);
+			if (length(POS) <= 0) { break; }
+			
+			ascent(i in 0 .. length(POS))
+			{
+				let tmpObj = SetEnemyS01(baseX+POS[i][0], baseY+POS[i][1],
+					iniSpeed, iniAngle, 0, base_delay);
+				CallSound(sndShot2);
+				// 追加
+				Obj_SetValue(objPos, "ENM", Obj_GetValueD(objPos, "ENM", [])~[tmpObj]);
+			}
+			base_delay -= tmp_delay;
+			wait(tmp_delay);
+			tmp_delay = round(0.8*tmp_delay);
+			t++;
+		}
+		wait(120);
+		Obj_Delete(objPos);
+	}
+	task T_Line()
+	{
+		let graphic = BGW_BEAM_WHITE;
+		let base_delay = max_delay-delay;
+		let tmp_delay = delay;
+		let t = 1;
+		
+		wait(delay);
+		loop
+		{
+			let POS = Obj_GetValueD(objPos, "LINE"~IntToString(t), []);
+			if (length(POS) <= 0) { break; }
+			
+			let ALL_ENM = Obj_GetValueD(objPos, "ENM", []);
+			ascent(i in 0 .. length(POS))
+			{
+				StarLaser(ALL_ENM[POS[i][0]], ALL_ENM[POS[i][1]], graphic, base_delay);
+			}
+			base_delay -= tmp_delay;
+			wait(tmp_delay);
+			tmp_delay = round(0.8*tmp_delay);
+			t++;
+		}
+	}
+}

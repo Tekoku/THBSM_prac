@@ -1,0 +1,464 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["景綱の長刀"]
+#Text["景綱の長刀"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Tobiko.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(470);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(25);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 20;		//ダメージ透過率
+	bossDropItemSpecial = [MY_ITEM_SPELL];
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_TOBIKO);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(11), [0,0,1,2][Difficult], 
+			GetCurrentScriptDirectory()~"02a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	if (GetPlayMode() == GAME_SPELL || GetPlayMode() == GAME_NONE)
+	{
+		// スペプラ用
+		standBy(objEnemy, CenX, 140, 60);
+	}
+	wait(60);
+	SetEnemyVisible(objEnemy, true);
+	
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+
+	let move_len = [64, 96, 96, 96][Difficult];
+
+	let t = 0;
+	let muki = 1;
+
+	if (Difficult <= D_NORM)
+	{
+		while(eAlive)
+		{
+			let slash_count = [1, 2, 1][t%3];
+			loop(slash_count)
+			{
+				if (!eAlive) { return; }
+				BossCharge(objEnemy);
+				wait(60);
+				if (!eAlive) { return; }
+				NaginataLaser(GetAngleToPlayer(objEnemy)+120*muki, 240, 45, 60, muki);
+				SetAction(objEnemy, ACT_SHOT1, 120);
+				CallSound(sndLaser2);
+				wait(60);
+				if (!eAlive) { return; }
+				let ma = GetAngleToPlayer(objEnemy);
+				let mr = move_len / slash_count * slash_count^0.5;
+				MoveTo(objEnemy, ObjMove_GetX(objEnemy)+mr*cos(ma), ObjMove_GetY(objEnemy)+mr*sin(ma), 45);
+				TobikoParticleEffect(30, 2, ma+180);
+				if (slash_count > 1) { muki = -muki; }
+				wait(45);
+			}
+			wait(45);
+			if (!eAlive) { return; }
+			if (slash_count <= 1)
+			{
+				MoveTo(objEnemy, (CenX+ObjMove_GetX(objEnemy))/2, 140+rand(-16,16), 120);
+				JikiShot(120);
+				wait(150);
+			}
+			else
+			{
+				MoveTo(objEnemy, (CenX+ObjMove_GetX(objEnemy))/2, 140+rand(-16,16), 75);
+				wait(90);
+			}
+			if (!eAlive) { return; }
+			MufflerShot(muki);
+			wait(120);
+			muki = -muki;
+			t++;
+		}
+	}
+	else if (Difficult <= D_HARD)
+	{
+		while(eAlive)
+		{
+			let slash_count = [1, 2, 1][t%3];
+			loop(slash_count)
+			{
+				if (!eAlive) { return; }
+				BossCharge(objEnemy);
+				wait(60);
+				if (!eAlive) { return; }
+				NaginataLaser(GetAngleToPlayer(objEnemy)+120*muki, 240, 45, 60, muki);
+				SetAction(objEnemy, ACT_SHOT1, 120);
+				CallSound(sndLaser2);
+				wait(60);
+				if (!eAlive) { return; }
+				let ma = GetAngleToPlayer(objEnemy);
+				let mr = move_len / slash_count * slash_count^0.5;
+				MoveTo(objEnemy, ObjMove_GetX(objEnemy)+mr*cos(ma), ObjMove_GetY(objEnemy)+mr*sin(ma), 45);
+				TobikoParticleEffect(30, 2, ma+180);
+				if (slash_count > 1) { muki = -muki; }
+				wait(45);
+			}
+			wait(45);
+			if (!eAlive) { return; }
+			if (slash_count <= 1)
+			{
+				MoveTo(objEnemy, (CenX+ObjMove_GetX(objEnemy))/2, 140+rand(-16,16), 120);
+				JikiShot(75);
+				wait(150);
+				if (!eAlive) { return; }
+				MufflerShot(muki);
+				wait(120);
+			}
+			else
+			{
+				MoveTo(objEnemy, (CenX+ObjMove_GetX(objEnemy))/2, 140+rand(-16,16), 75);
+				JikiShot(75);
+				wait(180);
+			}
+			muki = -muki;
+			t++;
+		}
+	}
+	else
+	{
+		while(eAlive)
+		{
+			let slash_count = [1, 2, 1][t%3];
+			loop(slash_count)
+			{
+				if (!eAlive) { return; }
+				BossCharge(objEnemy);
+				wait(60);
+				if (!eAlive) { return; }
+				NaginataLaser(GetAngleToPlayer(objEnemy)+165*muki, 400, 45, 30, muki);
+				SetAction(objEnemy, ACT_SHOT1, 120);
+				CallSound(sndLaser2);
+				wait(45);
+				if (!eAlive) { return; }
+				let ma = GetAngleToPlayer(objEnemy);
+				let mr = move_len / slash_count * slash_count^0.5;
+				MoveTo(objEnemy, ObjMove_GetX(objEnemy)+mr*cos(ma), ObjMove_GetY(objEnemy)+mr*sin(ma), 45);
+				TobikoParticleEffect(30, 2, ma+180);
+				if (slash_count > 1) { muki = -muki; }
+				wait(15);
+			}
+			wait(75);
+			if (!eAlive) { return; }
+			if (slash_count <= 1)
+			{
+				MoveTo(objEnemy, (CenX+ObjMove_GetX(objEnemy))/2, 140+rand(-16,16), 120);
+				JikiShot(75);
+				wait(150);
+				if (!eAlive) { return; }
+				MufflerShot(muki);
+				wait(120);
+			}
+			else
+			{
+				MoveTo(objEnemy, (CenX+ObjMove_GetX(objEnemy))/2, 140+rand(-16,16), 75);
+				JikiShot(75);
+				wait(180);
+			}
+			muki = -muki;
+			t++;
+		}
+	}
+}
+
+task JikiShot(timer)
+{
+	if (Difficult <= D_NORM)
+	{
+		let speed = 4.5;
+		let way = 1;
+		let way_angle = [60, 45, 1, 1][Difficult];
+		let graphic = ADD_BGW_BALL_BS_YELLOW;
+		let wt = [30, 20, 1, 1][Difficult];
+		
+		let way2 = 5;
+		
+		ascent(t in 0 .. timer)
+		{
+			if (!eAlive) { return; }
+			if (t%wt == 0)
+			{
+				let ba = GetAngleToPlayer(objEnemy);
+				let ss = speed * (1-t/timer/2);
+				ascent(i in 0 .. way)
+				{
+					let sa = ba + (i-(way-1)/2)*way_angle;
+					CreateShotTobikoArrow(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+						0, sa, ss/240, ss, graphic, 15, way2, 1, 4);
+				}
+				CallSound(sndShot2);
+				way++;
+			}
+			yield;
+		}
+	}
+	else
+	{
+		let speed = [1, 1, 8, 8][Difficult];
+		let way = 1;
+		let way_angle = [1, 1, 25, 20][Difficult];
+		let graphic = [ADD_BGW_SCALE_RED, ADD_BGW_SCALE_RED, ADD_BGW_SCALE_RED, ADD_BGW_SCALE_YELLOW][Difficult];
+		let wt = [1, 1, 10, 10][Difficult];
+		let dec_timer = [0, 0, 20, 0][Difficult];
+		
+		let way2 = 5;
+		
+		ascent(t in 0 .. timer-dec_timer)
+		{
+			if (!eAlive) { return; }
+			if (t%wt == 0)
+			{
+				let ba = GetAngleToPlayer(objEnemy);
+				let ss = speed * (1-t/timer/2);
+				ascent(i in 0 .. way)
+				{
+					let sa = ba + (i-(way-1)/2)*way_angle;
+					SpearShot(ObjMove_GetX(objEnemy)+16*cos(sa), ObjMove_GetY(objEnemy)+16*sin(sa), ss, sa, graphic, 15)
+				}
+				CallSound(sndShot4);
+				way++;
+			}
+			yield;
+		}
+	}
+}
+
+// NAGINATA!!
+task NaginataLaser(base_angle, max_len, timer, delay, muki)
+{
+	let graphic = [BGW_SCALE_YELLOW, BGW_SCALE_YELLOW, BGW_SCALE_YELLOW, BGW_SCALE_BLUE][Difficult];
+	let graphic2 = [BGW_RICE_M_YELLOW, BGW_RICE_M_YELLOW, BGW_RICE_M_YELLOW, BGW_RICE_M_BLUE][Difficult];
+	
+	let shot_speed = [2, 2, 2, 3][Difficult];
+	let shot_way = [3, 5, 6, 9][Difficult];
+	let shot_graphic = [BGB_SCALE_YELLOW, BGB_SCALE_YELLOW, BGB_SCALE_YELLOW, BGW_SCALE_BLUE][Difficult];
+	let way_angle = [90, 90, 120, 150][Difficult];
+	
+	let objLaser = CreateStraightLaserA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), base_angle, 0, 0, 60*120, graphic, 0);
+	ObjLaser_SetGrazeInvalidFrame(objLaser, defaultLaserGraze);
+	ObjStLaser_SetSource(objLaser, false);
+	Obj_SetRenderPriorityI(objLaser, GetShotRenderPriorityI()+1);
+	
+	let l_angle = 0;
+	let l_len = 0;
+	let l_wid = 0;
+	delay = max(45, delay);
+	
+	ascent(t in 0 .. delay)
+	{
+		if (Obj_IsDeleted(objLaser) || !eAlive) { break; }
+		if (t < 30)
+		{
+			l_len = ((t+1)/30)^2 * max_len;
+		}
+		if (t < 15)
+		{
+			l_wid = ((t+1)/15)^2 * 12;
+		}
+		let lx = l_len * cos(l_angle);
+		let ly = l_len * sin(l_angle)/8;
+		let ll = (lx^2+ly^2)^0.5;
+		let la = atan2(ly, lx)+base_angle;
+		let bx = ObjMove_GetX(objEnemy)+cos(la)*16;
+		let by = ObjMove_GetY(objEnemy)+sin(la)*16;
+		ObjLaser_SetLength(objLaser, ll);
+		ObjLaser_SetRenderWidth(objLaser, l_wid);
+		ObjStLaser_SetAngle(objLaser, la);
+		ObjMove_SetPosition(objLaser, bx, by);
+		NaginataLaserEffect(bx, by, la+rand(-5,5), ll*rand(0.5,1), l_wid*2, graphic2, 64);
+		yield;
+	}
+	if (eAlive) { CallSound(sndShot4); }
+	ascent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(objLaser) || !eAlive) { break; }
+		
+		let tmp = (t+1)/timer;
+		l_angle = tmp^2*360*muki;
+		
+		let lx = l_len * cos(l_angle);
+		let ly = l_len * sin(l_angle)/8;
+		let ll = (lx^2+ly^2)^0.5;
+		let la = atan2(ly, lx)+base_angle;
+		let bx = ObjMove_GetX(objEnemy)+cos(la)*16;
+		let by = ObjMove_GetY(objEnemy)+sin(la)*16;
+		ObjLaser_SetLength(objLaser, ll);
+		ObjLaser_SetRenderWidth(objLaser, l_wid);
+		ObjStLaser_SetAngle(objLaser, la);
+		ObjMove_SetPosition(objLaser, bx, by);
+		NaginataLaserEffect(bx, by, la, ll, l_wid*2*(1+tmp), graphic2, 64);
+		
+		let vx = cos(la)*ll*0.8;
+		let vy = sin(la)*ll*0.8;
+		ascent(i in 0 .. shot_way)
+		{
+			let tmp = (i+1)/shot_way;
+			let sa = la+90 - (tmp-0.5)*way_angle;
+			let ss = shot_speed * (0.25 + tmp*0.75);
+			let obj = CreateShotA2(ObjMove_GetX(objEnemy)+vx*tmp, ObjMove_GetY(objEnemy)+vy*tmp,
+				0, sa, ss/60, ss, shot_graphic, 0);
+			My_RaiseShotEffectA(obj, 30);
+		}
+		
+		
+		// えへくと用
+		local
+		{
+			let tmp = (t+0.5)/timer;
+			l_angle = tmp^2*360*muki;
+			let lx = l_len * cos(l_angle);
+			let ly = l_len * sin(l_angle)/8;
+			let ll = (lx^2+ly^2)^0.5;
+			let la = atan2(ly, lx)+base_angle;
+			let bx = ObjMove_GetX(objEnemy)+cos(la)*16;
+			let by = ObjMove_GetY(objEnemy)+sin(la)*16;
+			NaginataLaserEffect(bx, by, la, ll, l_wid*2*(1+tmp), graphic2, 64);
+		}
+		yield;
+	}
+	Obj_Delete(objLaser);
+}
+
+// えへくと
+task NaginataLaserEffect(x, y, angle, l_len, l_wid, graphic, alpha)
+{
+	let objLaser = CreateStraightLaserA1(x, y, angle, l_len, l_wid, 60*120, graphic, 0);
+	SetShotDisabled(objLaser);
+	ObjStLaser_SetSource(objLaser, false);
+	Obj_SetRenderPriorityI(objLaser, GetShotRenderPriorityI()+1);
+	
+	ascent(t in 0 .. 30)
+	{
+		let tmp = (t+1)/30;
+		ObjLaser_SetRenderWidth(objLaser, l_wid);
+		ObjLaser_SetLength(objLaser, l_len);
+		ObjRender_SetAlpha(objLaser, (1-tmp)*alpha);
+		yield;
+	}
+	Obj_Delete(objLaser);
+}
+
+// マフラーっぽくふぁさーって感じ
+task MufflerShot(muki)
+{
+	let count = [3, 5, 8, 12][Difficult];
+	let base_angle = GetAngleToPlayer(objEnemy);
+	let wt = [20, 15, 10, 8][Difficult];
+	let timer = 30;
+	let way_angle = [8, 5, 6, 6][Difficult];
+	let add_way_angle = [8, 2.5, 6, 6][Difficult];
+	
+	let muki_base = muki;
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let sa = base_angle + ((i-(count-1)/2)/count*120-120)*muki_base + i*180;
+		let oa = muki*(way_angle + add_way_angle*i);
+		_MufflerShot(sa, 1, timer, muki_base, oa);
+		muki = -muki;
+		wait(wt);
+	}
+}
+
+
+task _MufflerShot(base_angle, base_speed, timer, muki, offset_angle)
+{
+	let speed = [3, 3, 8, 8][Difficult];
+	let count = 1;
+	let wt = 1;
+	let graphic = BGB_SCALE_WHITE;
+	
+	speed *= base_speed;
+	
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0)
+		{
+			let tmp = t/(timer-1);
+			let va = muki*t/timer*180;
+			let vr = tmp^0.5 * 128;
+			let vx = vr*cos(va);
+			let vy = vr*sin(va)/6;
+			let sx = ObjMove_GetX(objEnemy) + Rotate2D_X(vx, vy, base_angle);
+			let sy = ObjMove_GetY(objEnemy) + Rotate2D_Y(vx, vy, base_angle);
+			let sa = atan2(GetPlayerY-sy, GetPlayerX-sx) + offset_angle;
+			if ((sx-GetPlayerX)^2+(sy-GetPlayerY)^2 > 900)
+			{
+				ascent(i in 0 .. count)
+				{
+					let ss = speed * (1+i*0.25) * (1 - tmp*0.66);
+					if (Difficult <= D_NORM) {
+						CreateShotA1(sx, sy, ss, sa, graphic, 20);
+					} else {
+						CreateShotA2(sx, sy, 0, sa, ss/120, ss, graphic, 20);
+					}
+				}
+				CallSound(sndShot3);
+			}
+		}
+		yield;
+	}
+}
+
+task SpearShot(x, y, speed, angle, graphic, delay)
+{
+	let l_len = 120;
+	let obj = CreateStraightLaserA1(x, y, angle, 0, 12, 6000, graphic, 0);
+	ObjLaser_SetGrazeInvalidFrame(obj, defaultLaserGraze);
+	ObjStLaser_SetSource(obj, false);
+	
+	let tmp_len = 0;
+	ascent(i in 0 .. 60)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		tmp_len = sin((i+1)/60*90)*l_len;
+		ObjLaser_SetLength(obj, tmp_len);
+		yield;
+	}
+	ObjMove_SetSpeed(obj, 0);
+	ascent(i in 0 .. 120)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		let xc = ObjMove_GetX(obj) + cos(ObjStLaser_GetAngle(obj))*tmp_len/2;
+		let yc = ObjMove_GetY(obj) + sin(ObjStLaser_GetAngle(obj))*tmp_len/2;
+		let hp = sin(i/120*180)*1.5;
+		let tmp_a = GetHormingAngle(xc, yc, ObjStLaser_GetAngle(obj), hp);
+		ObjMove_SetPosition(obj, xc-cos(tmp_a)*tmp_len/2, yc-sin(tmp_a)*tmp_len/2);
+		ObjStLaser_SetAngle(obj, tmp_a);
+		ObjMove_SetAngle(obj, tmp_a);
+		if (i > 15)
+		{
+			ObjMove_SetAcceleration(obj, speed/60);
+			ObjMove_SetMaxSpeed(obj, speed);
+		}
+		yield;
+	}
+}

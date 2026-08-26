@@ -1,0 +1,291 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ラスワ"]
+#Text["ラスワ"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+let objEnemy2;
+let objEnemy3;
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(5000);		}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	case(EV_REQUEST_IS_LAST_SPELL)	{ SetScriptResult(true);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	BossEffect_ResetMagicCircle();
+	Reset_aTime(BOSS_ID_FABRITIS);
+	Reset_aTime(BOSS_ID_IPHONEA);
+	
+	bossHitToPlayer = 0;	//体当たり判定なし
+	bossDropItem = 0;	//アイテム数
+
+	Boss_Init();	//初期設定
+	objEnemy2 = CreateBossDrawOnly(BOSS_ID_IPHONEA);	//ボスセット
+	objEnemy3 = CreateBossDrawOnly(BOSS_ID_FABRITIS);	//ボスセット
+	objEnemy = CreateBoss(BOSS_ID_DUMMY);	//ボス本体
+	// 初期設定
+	SetEnemyVisible(objEnemy2, false);
+	SetEnemyVisible(objEnemy3, false);
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(101), [7, 7, 8, 8][Difficult], 
+			GetCurrentScriptDirectory()~"01a_Background.dnh",
+			GetBossTexture(objEnemy2, I_CUTIN2), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	ObjMove_SetPosition(objEnemy, CenX, 140);
+	ObjMove_SetPosition(objEnemy2, CenX+16, 140);
+	ObjMove_SetPosition(objEnemy3, CenX-16, 140);
+
+	LWMotion();
+	TCheckMainBossKilled();
+	wait(60);
+	
+	CallSpellCard(true);	//スペカ起動
+	
+	BossCharge(objEnemy2);
+	BossCharge(objEnemy3);
+	wait(60);
+	
+	
+	let speed = [1.25, 1.5, 1.5, 1.75][Difficult];
+	let speed_max = [0.25, 0.25, 0.25, 0.25][Difficult];	// (n+1)倍の速度になる
+	let wt = [10, 8, 8, 7][Difficult];
+	let wt_max = [0.5, 0.5, 0.5, 0.5][Difficult];	// (n+1)倍の速度になる
+
+	let add_angle = 0;
+	let way = [8, 13, 16, 18][Difficult];
+	let shot_span = [4, 6, 6, 6][Difficult];
+	
+	let graphics = [BGW_BUTTERFLY_PURPLE, BGW_BUTTERFLY_BLUE, BGW_BUTTERFLY_WHITE];
+	
+	let shot_count = 0;
+	let st = 0;
+	let rt = 0;
+	let at = 0;
+	let t = 0;
+	ascent(i in 0 .. 240)
+	{
+		if (!eAlive) { return; }
+		let timer_rate = ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) / ObjEnemyBossScene_GetInfo(objScene, INFO_ORGTIMERF);
+		let life_rate = GetBossLifeRate(objEnemy);
+		let rate = 1 - min(timer_rate, life_rate);
+		let tmp = sin(i/240*90);
+		
+		if (st > wt)
+		{
+			let x = CenX*tmp + ObjMove_GetX(objEnemy)*(1-tmp);
+			let y = CenY*tmp + (ObjMove_GetY(objEnemy)-64)*(1-tmp)^2;
+			let vr = 256*tmp;
+			let va = 0;
+			let oa = trunc(shot_count/shot_span)*195/way + at*add_angle + 85;
+			let ss = speed * (1+speed_max*rate);
+			ascent(i in 0 .. way)
+			{
+				let sa = i*360/way;
+				CoupleShot([x, y], [vr, va, 0, sa],
+					sa-90+oa, ss, 15, graphics);
+			}
+			CallSound(sndShot2);
+			st-=wt;
+			shot_count++;
+		}
+		st += (1 + wt_max*rate);
+		at += (1 + wt_max*rate)*tmp;
+		yield;
+	}
+
+	while(eAlive)
+	{
+		let timer_rate = ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) / ObjEnemyBossScene_GetInfo(objScene, INFO_ORGTIMERF);
+		let life_rate = GetBossLifeRate(objEnemy);
+		let rate = 1 - min(timer_rate, life_rate);
+		
+		if (st > wt)
+		{
+			let x = CenX;
+			let y = CenY;
+			let vr = 256;
+			let va = sin(rt)*360;
+			let oa = trunc(shot_count/shot_span)*195/way + at*add_angle + 85;
+			let ss = speed * (1+speed_max*rate);
+			ascent(i in 0 .. way)
+			{
+				let sa = i*360/way;
+				CoupleShot([x, y], [vr, va, 0, sa],
+					sa-90+oa, ss, 15, graphics);
+			}
+			CallSound(sndShot2);
+			st-=wt;
+			shot_count++;
+		}
+		yield;
+		t++;
+		st += (1 + wt_max*rate);
+		at += (1 + wt_max*rate);
+		rt += min(t, 360)/360*(1 + wt_max*rate)/8;
+	}
+}
+
+// base_pos[x,y]  offset_pos[r,angle,r2,angle2] graphics[1,2,3]
+task CoupleShot(base_pos, offset_pos, offset_angle, speed, delay, graphics)
+{
+	let a2 = offset_pos[1]*2 - (offset_pos[1]+offset_pos[3]+180);
+	let opos = [[offset_pos[0]*cos(offset_pos[1])+offset_pos[2]*cos(offset_pos[1]+offset_pos[3]), offset_pos[0]*sin(offset_pos[1])+offset_pos[2]*sin(offset_pos[1]+offset_pos[3])],
+		[offset_pos[0]*cos(offset_pos[1]+180)+offset_pos[2]*cos(a2), offset_pos[0]*sin(offset_pos[1]+180)+offset_pos[2]*sin(a2)]];
+
+	let ba = offset_pos[1] + 90;
+	
+	let objs = [CreateShotA1(base_pos[0]+opos[0][0], base_pos[1]+opos[0][1], speed, ba+offset_angle, graphics[0], 0),
+		CreateShotA1(base_pos[0]+opos[1][0], base_pos[1]+opos[1][1], speed, ba-offset_angle, graphics[1], 0)];
+	My_RaiseShotEffectA(objs[0], delay);
+	My_RaiseShotEffectA(objs[1], delay);
+
+	if (sin(offset_angle) <= 0) { return; }
+	let r = offset_pos[0] + offset_pos[2]*cos(offset_pos[3]);
+	let timer = r / sin(offset_angle) / speed;
+
+	while(!Obj_IsDeleted(objs[0]) && !Obj_IsDeleted(objs[1]) && timer > 0)
+	{
+		timer--;
+		yield;
+	}
+	if (!Obj_IsDeleted(objs[0]) && !Obj_IsDeleted(objs[1]))
+	{
+		/*
+		CreateShotA2((ObjMove_GetX(objs[0])+ObjMove_GetX(objs[1]))/2, (ObjMove_GetY(objs[0])+ObjMove_GetY(objs[1]))/2,
+			0, -90, speed/30, speed, graphics[2], 0);
+		*/
+		DeleteBulletEffect(objs[0]);
+		DeleteBulletEffect(objs[1]);
+//		CallSound(sndBulletBreak);
+	}
+}
+
+task TWinder()
+{
+	wait(240);
+	while(eAlive)
+	{
+		_TWinder();
+		wait(180);
+	}
+}
+task _TWinder()
+{
+	let t = 0;
+
+	ascent(i in 0 .. 6)
+	{
+		if (!eAlive) { return; }
+		let sa = -90 + i*15;
+		let sx = ObjMove_GetX(objEnemy) + cos(sa)*64;
+		let sy = ObjMove_GetY(objEnemy) + sin(sa)*16;
+		WinderShot(sx, sy, 5, sa, ADD_BGW_ICE_WHITE, 15);
+		if (i > 0)
+		{
+			let sa = -90 - i*15;
+			let sx = ObjMove_GetX(objEnemy) + cos(sa)*64;
+			let sy = ObjMove_GetY(objEnemy) + sin(sa)*16;
+			WinderShot(sx, sy, 5, sa, ADD_BGW_ICE_WHITE, 15);
+		}
+		wait(15);
+	}
+}
+
+task WinderShot(x, y, speed, angle, graphic, delay)
+{
+	loop(8)
+	{
+		if (!eAlive) { return; }
+		_WinderShot(x, y, speed, angle, graphic, delay, 3);
+		wait(5);
+	}
+}
+
+task _WinderShot(x, y, speed, angle, graphic, delay, count)
+{
+	let obj = CreateShotA2(x, y, speed, angle, -speed/20, 0, graphic, delay);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI()+1);
+	wait(20+delay);
+	if (Obj_IsDeleted(obj)) { return; }
+	if (count > 0)
+	{
+		_WinderShot(ObjMove_GetX(obj), ObjMove_GetY(obj), speed, angle+30, graphic, 5, count-1);
+		_WinderShot(ObjMove_GetX(obj), ObjMove_GetY(obj), speed, angle-30, graphic, 5, count-1);
+		Obj_Delete(obj);
+	}
+	else
+	{
+		ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, speed/30, 0, speed);
+	}
+}
+
+task TCheckMainBossKilled()
+{
+	while(!Obj_IsDeleted(objEnemy)) { yield; }
+	Obj_Delete(objEnemy2);
+	Obj_Delete(objEnemy3);
+}
+
+// ラスワ開幕モーション
+function LWMotion()
+{
+	let objEnemies = [objEnemy, objEnemy2, objEnemy3];
+	
+	ObjEnemyBossScene_SetSpellTimer(objScene, -1);	// タイマー停止
+	ascent(j in 0 .. 3)
+	{
+		SetEnemyVisible(objEnemies[j], false);
+		BossEffect_DisableMagicCircle(objEnemies[j]);
+		Obj_SetVisible(GetBossImageID(objEnemies[j]), false);	//画像非表示
+	}
+	ascent(i in 0 .. 3)
+	{
+		EffectConcentrationCircle(objEnemy, 3, 45);
+		CallSound(sndShot1);
+		wait([50, 20, 20][i]);
+	}
+	RaiseBoss();
+	
+	task RaiseBoss()
+	{
+		ObjEnemyBossScene_SetSpellTimer(objScene, 99*60);	// タイマー開始
+
+		SetEnemyVisible(objEnemy, true);
+		BossEffect_EnableMagicCircle(objEnemy);
+		ascent(j in 1 .. 3)
+		{
+			Obj_SetVisible(GetBossImageID(objEnemies[j]), true);	//画像表示
+		}
+		ascent(t in 0 .. 30)
+		{
+			let tmp_a = (t+1)/30*255;
+			ascent(j in 1 .. 3)
+			{
+				ObjRender_SetAlpha(GetBossImageID(objEnemies[j]), tmp_a);
+			}
+			yield;
+		}
+	}
+}

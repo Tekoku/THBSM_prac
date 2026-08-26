@@ -1,0 +1,348 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["完全犯罪事件簿"]
+#Text["完全犯罪事件簿"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Tobiko.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	case(EV_REQUEST_IS_LAST_SPELL)	{ SetScriptResult(true);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_TOBIKO);
+	BossEffect_ResetMagicCircle();
+
+	bossHitToPlayer = 0;	//体当たり判定なし
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_TOBIKO);	//ボスセット
+	BossEffect_DisableLifeCircle(objEnemy);
+	
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(102), [12,12,13,13][Difficult], 
+			GetCurrentScriptDirectory()~"02a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	ObjMove_SetPosition(objEnemy, CenX, 140);
+
+	LWMotion();
+	wait(60);
+	DrawShadowTobiko(objEnemy);
+	wait(60);
+	
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+	TRoom();
+	TKnife();
+	wait(90);
+	
+	let wt = 150;
+	
+	TShot_sub();
+
+	wait(300);
+
+	CallSound(sndPower3);
+	wait(60);
+	let t = 0;
+	let muki = 1;
+	while(eAlive)
+	{
+		if (!eAlive) { return; }
+		Shot01(muki);
+		wait(wt);
+		t++;
+		muki = -muki;
+	}
+}
+
+task TShot_sub()
+{
+	let muki = 1;
+	while(eAlive)
+	{
+		MoveAndShot(90, muki);
+		muki = -muki;
+		wait(90);
+	}
+}
+
+task Shot01(muki)
+{
+	let speed = 6;
+	let base_angle = GetAngleToPlayer(objEnemy);
+	let way = 8;
+	
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let sa = base_angle + (i*120/way+90)*muki;
+		LW_SurikenShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), speed, sa, BGW_SHURIKEN_WHITE, 30);
+		CallSound(sndShuriken);
+		wait(2);
+	}
+}
+
+task Shot02(muki)
+{
+	let speed = 3;
+	let base_angle = GetAngleToPlayer(objEnemy);
+	let way = 12;
+	
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let sa = base_angle + i*120/way + 15;
+		LW_SurikenShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), speed, sa, BGW_SHURIKEN_WHITE, 30);
+		CallSound(sndShuriken);
+
+		let sa2 = base_angle - i*120/way - 15;
+		LW_SurikenShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), speed, sa2, BGW_SHURIKEN_WHITE, 30);
+		wait(3);
+	}
+}
+
+// 移動しつつショット
+task MoveAndShot(timer, muki)
+{
+	let speed = [3, 3.5, 6, 8][Difficult];
+	let graphic = BGW_SCALE_YELLOW;
+	let way = 3;
+	let way2 = [3, 3, 5, 5][Difficult];
+	let wt = 3;
+	
+	_EnemyRandomMove02(objEnemy, CenX, 120, CenX*0.75, 82, 64/2, 64, 0, timer);
+	
+	let base_angle = 90;
+	let offset_angle = [120, 120, 80, 80][Difficult] * muki;
+	
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0)
+		{
+			let ba = base_angle + offset_angle*sin(t/(timer-1)*90);
+			ascent(i in 0 .. way2)
+			{
+				let ss = speed * (1-t/timer/3);
+				let sa = i*360/way2 + ba;
+				CreateShotTobikoArrow(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, ss/120, ss, graphic, 15, way, 1, 4);
+			}
+			CallSound(sndShot2);
+		}
+		yield;
+	}
+}
+
+
+task DrawShadowTobiko(parent)
+{
+	BossEffect_DisableMagicCircle(parent);
+	CallSound(sndBoon);
+
+	// ボスグラを消す
+	let objImgMain = GetBossImageID(objEnemy);
+	Obj_SetVisible(objImgMain, false);
+	
+	//初期設定
+	Boss_SetIDtoObj(parent, BOSS_ID_TOBIKO);
+	
+	//タスク起動
+	Boss_AnimeTimer(parent);	//アニメ状態管理タスク
+	BossAnime_Initialize(parent);	//ボス描画タスク
+
+	let objImg = GetBossImageID(parent);
+	Obj_SetRenderPriorityI(objImg, priorityBoss+1);
+
+	SetNoiseFadeEffect(objImg, 15, 120);
+	wait(120);
+	Obj_Delete(objImg);
+}
+
+
+// --------------- SHURIKEEEEEEEEEEN!!! 
+task LW_SurikenShot(x, y, speed, angle, graphic, delay)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, 0);
+	My_RaiseShotEffectA(obj, delay);
+	
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (ObjMove_GetX(obj) < 8 || ObjMove_GetX(obj) > GetStgFrameWidth-8 || ObjMove_GetY(obj) < 8)
+		{
+			ObjMove_SetSpeed(obj, 0);
+		//	wait(60);
+			if (!Obj_IsDeleted(obj))
+			{
+				let sa = 180-angle;
+				if (ObjMove_GetY(obj) < 8) { sa = 360-angle; }
+				CallSound(sndBulletBreak);
+				SurikenFlash(obj);
+				SurikenShoot(ObjMove_GetX(obj), ObjMove_GetY(obj), 12, GetAngleToPlayer(obj), graphic, 60, true);
+				Obj_Delete(obj);
+			}
+		}
+		ObjRender_SetAngleZ(obj, t*8);
+		t++;
+		yield;
+	}
+	
+	task SurikenFlash(obj)
+	{
+		let i = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			let tmp_c = (i%5)*60;
+			ObjRender_SetColor(obj, 255, 255-tmp_c, 255-tmp_c);
+			i++;
+			yield;
+		}
+	}
+}
+
+
+task TRoom()
+{
+	let t = 0;
+	while(eAlive)
+	{
+		LaserEffect(0, 0, 90, 4, 0, GetStgFrameHeight);
+		LaserEffect(GetStgFrameWidth, 0, 90, -4, 0, GetStgFrameHeight);
+		LaserEffect(0, 0, 0, 0, 4, GetStgFrameWidth);
+		LaserEffect(0, GetStgFrameHeight, 0, 0, -4, GetStgFrameWidth);
+		wait(20);
+	}
+}
+task LaserEffect(x, y, angle, vx, vy, len)
+{
+	let objDummy = CreateStraightLaserA1(x, y, angle, len, 3, 36000, BGW_BEAM_YELLOW, 0);
+	ObjStLaser_SetSource(objDummy, false);
+	ObjShot_SetAutoDelete(objDummy, false);
+	ObjShot_SetItemChange(objDummy, false);
+	ObjShot_SetIntersectionEnable(objDummy, false);
+	ObjRender_SetAlpha(objDummy, 192);
+	
+	ascent(t in 0 .. 45)
+	{
+		let tmp = (t+1)/45;
+		ObjMove_SetPosition(objDummy, x, y);
+		ObjRender_SetAlpha(objDummy, (1-tmp)^2*255);
+		x += vx*tmp; y += vy*tmp;
+		yield;
+	}
+	Obj_Delete(objDummy);
+}
+
+task TKnife()
+{
+	let wt_max = [30, 30, 25, 25][Difficult];
+	let wt_min = [15, 15, 12, 12][Difficult];
+	
+	let xs_min = [0.6, 0.6, 0.6, 0.6][Difficult];
+	let xs_max = [0.65, 0.66, 0.66, 0.66][Difficult];
+	
+	let t = 0;
+	while(eAlive)
+	{
+		let timer_rate = ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) / ObjEnemyBossScene_GetInfo(objScene, INFO_ORGTIMERF);
+		let life_rate = GetBossLifeRate(objEnemy);
+		let rt = min(timer_rate, life_rate);
+		let tmp = max(rt*1.25-0.25,0);
+
+		let x_space = (xs_min + tmp*(xs_max-xs_min)) * GetStgFrameWidth;
+		let wt = wt_min + tmp*(wt_max-wt_min);
+		if (t%2 == 0) { ShotKnifeWay(CenX, x_space, 180, -1); CallSound(sndShot4); }
+		else { ShotKnifeWay(CenX, x_space, 0, 1); }
+		wait(wt);
+		t++;
+	}
+}
+
+task ShotKnifeWay(x, x_space, angle, muki)
+{
+	let speed = [2, 3, 3, 3][Difficult];
+	let jiki_span = [-1, 24, 24, 6][Difficult];
+	
+	let sx = x - x_space*muki;
+	ascent(i in 1 .. 16)
+	{
+		let sy = GetPlayerY + i*24;
+		if (sy < GetStgFrameHeight && sy > 0) { ShotKnife(sx, sy, speed, angle, i%jiki_span == 0); }
+	}
+	ascent(i in 1 .. 16)
+	{
+		let sy = GetPlayerY - i*24;
+		if (sy < GetStgFrameHeight && sy > 0) { ShotKnife(sx, sy, speed, angle, i%jiki_span==0); }
+	}
+	ShotKnife(sx, GetPlayerY, speed, angle, (jiki_span>0));
+}
+task ShotKnife(x, y, speed, angle, shot_type)
+{
+	let obj = CreateShotA1(x, y, 6, angle, [ADD_BGW_KNIFE_WHITE, BGW_KNIFE_RED][shot_type], 0);
+	ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, -6/30, 0, -12);
+	ObjShot_SetAutoDelete(obj, false);
+	My_RaiseShotEffectA(obj, 15);
+	if (shot_type)
+	{
+		ObjMove_AddPatternA2(obj, 30, NO_CHANGE, NO_CHANGE, speed/30, 0, speed);
+	}
+	wait(30);
+	ObjShot_SetAutoDelete(obj, true);
+}
+
+
+
+// ラスワ開幕モーション
+function LWMotion()
+{
+	ObjEnemyBossScene_SetSpellTimer(objScene, -1);	// タイマー停止
+	SetEnemyVisible(objEnemy, false);
+	BossEffect_DisableMagicCircle(objEnemy);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	ascent(i in 0 .. 3)
+	{
+		EffectConcentrationCircle(objEnemy, 3, 45);
+		CallSound(sndShot1);
+		wait([50, 20, 20][i]);
+	}
+	RaiseBoss();
+	
+	task RaiseBoss()
+	{
+		ObjEnemyBossScene_SetSpellTimer(objScene, 99*60);	// タイマー開始
+		SetEnemyVisible(objEnemy, true);
+		BossEffect_EnableMagicCircle(objEnemy);
+		Obj_SetVisible(GetBossImageID(objEnemy), true);	//画像表示
+		ascent(t in 0 .. 30)
+		{
+			let tmp_a = (t+1)/30*255;
+			ObjRender_SetAlpha(GetBossImageID(objEnemy), tmp_a);
+			yield;
+		}
+	}
+}

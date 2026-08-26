@@ -1,0 +1,247 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["グローリー"]
+#Text["グローリー"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+let objEnemy2;
+let objEnemy3;
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(1000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(50);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 20;		//ダメージ透過率
+
+	// アニメリセット
+	Reset_aTime(BOSS_ID_FABRITIS);
+	Reset_aTime(BOSS_ID_IPHONEA);
+	
+	Boss_Init();	//初期設定
+	objEnemy2 = CreateBossDrawOnly(BOSS_ID_IPHONEA);	//ボスセット
+	objEnemy3 = CreateBossDrawOnly(BOSS_ID_FABRITIS);	//ボスセット
+	objEnemy = CreateBoss(BOSS_ID_DUMMY);	//ボス本体
+	// 初期設定
+	SetEnemyVisible(objEnemy2, false);
+	SetEnemyVisible(objEnemy3, false);
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(3), 6, 
+			GetCurrentScriptDirectory()~"01a_Background.dnh",
+			GetBossTexture(objEnemy2, I_CUTIN2), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	SetEnemyVisible(objEnemy, false);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	ObjMove_SetPosition(objEnemy, CenX, 140);
+	standBy(objEnemy2, CenX-14, 140, 120);
+	standBy(objEnemy3, CenX+14, 140, 120);
+	TCheckMainBossKilled();
+	
+	wait(30+90);
+	SetEnemyVisible(objEnemy2, false);
+	SetEnemyVisible(objEnemy3, false);
+	
+	CallSpellCard(true);	//スペカ起動
+	
+//	EnterEnemies();	// ボス登場モーション
+	BossCharge(objEnemy2);
+	BossCharge(objEnemy3);
+	SetAction(objEnemy2, ACT_SHOT1, 60*120);
+	SetAction(objEnemy3, ACT_SHOT1, 60*120);
+	
+	wait(30);
+	SetEnemyVisible(objEnemy, true);
+	wait(30);
+	
+	let wt = [300, 300, 270, 210][Difficult];
+	let min_wt = [210, 210, 210, 150][Difficult];
+	let muki = 1;
+	while(eAlive)
+	{
+		CallSound(sndPower2);
+		YokoLine(MinX, [MaxY-8, MinY+8][muki>0], 0, -muki);
+		YokoLine(MaxX, [MinY+8, MaxY-8][muki>0], 180, -muki);
+		wait(wt);
+		if (!eAlive) { return; }
+		CallSound(sndPower2);
+		TateLine(MinX+8, MinY, 90, muki);
+		TateLine(MaxX-8, MinY, 90, -muki);
+		wait(wt);
+		muki = -muki;
+		wt = max(min_wt, wt-30);
+	}
+}
+
+// 横！
+task YokoLine(x, y, angle, muki)
+{
+	let objBase = CreateShotA2(x, y, 0.25, angle, 3/240, 4, BGW_BALL_S_RED, 0);
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	
+	let wt = 30;
+	let shot_speed = 4;
+	let shot_angle = [-90, 90][y < CenY];
+	
+	let st2 = 0;
+	let st = 0;
+	let r = 0;
+	let t = 0;
+	while(!Obj_IsDeleted(objBase))
+	{
+		if (t%wt == wt-1)
+		{
+			WhipShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+				shot_speed, shot_angle, st2*45*muki, muki);
+		//	CallSound(sndShot5);
+			st2++;
+		}
+		if (r > 0)
+		{
+			TimerShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase), 1.25, st*75, BGW_HEART_GREEN, 180);
+			CallSound(sndShot2);
+			r -= 8; st++;
+		}
+		r += ObjMove_GetSpeed(objBase);
+		t++;
+		yield;
+	}
+}
+task WhipShot(x, y, speed, angle, offset_angle, muki)
+{
+	let objBase = CreateShotA2(x, y, speed/16, angle, speed/300, speed, BGW_BALL_S_RED, 0);
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	
+	let base_angle = offset_angle;
+	let t = 0;
+	let r = 0;
+	while(!Obj_IsDeleted(objBase))
+	{
+		if (r > 0)
+		{
+			TimerShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase), 0, ObjMove_GetAngle(objBase), BGW_ICE_GREEN, 120);
+			r -= 8;
+		}
+		r += ObjMove_GetSpeed(objBase);
+		ObjMove_SetAngle(objBase, ObjMove_GetAngle(objBase)+sin(base_angle)*1*muki);
+		base_angle += 300/(300+t)*2.5;
+		t++;
+		yield;
+	}
+}
+
+// 縦
+task TateLine(x, y, angle, muki)
+{
+	let objBase = CreateShotA2(x, y, 0.25, angle, 3/240, 4, BGW_BALL_S_RED, 0);
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	
+	let wt = 30;
+	let shot_speed = 4;
+	let shot_angle = [180, 0][x < CenX];
+	let shot_offset = [-16, 16][x < CenX];
+	
+	let st2 = 0;
+	let st = 0;
+	let r = 0;
+	let t = 0;
+	while(!Obj_IsDeleted(objBase))
+	{
+		if (t%wt == wt-1)
+		{
+			MukugeShot(ObjMove_GetX(objBase)+shot_offset+rand(-16,16), ObjMove_GetY(objBase)+rand(-16,16));
+		//	CallSound(sndShot5);
+			st2++;
+		}
+		if (r > 0)
+		{
+			TimerShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase), 1, st*75, BGW_RICE_M_GREEN, 180);
+			CallSound(sndShot2);
+			r -= 7; st++;
+		}
+		r += ObjMove_GetSpeed(objBase);
+		t++;
+		yield;
+	}
+}
+task MukugeShot(x, y)
+{
+	let angle = atan2(y-GetPlayerY, x-GetPlayerX)+180;
+	let speed2 = 1;
+	
+	ascent(i in 0 .. 5)
+	{
+		TimerShot2(x, y, -0.75, angle+i*75, BGW_HEART_PURPLE, 120, speed2, BGW_BALL_BS_YELLOW);
+	}
+}
+
+task TimerShot(x, y, speed, angle, graphic, timer)
+{
+	let obj = CreateShotA2(x, y, speed, angle, -speed/30, 0, graphic, 0);
+	My_RaiseShotEffectA(obj, 15);
+	wait(timer);
+	DeleteBulletEffect(obj);
+}
+task TimerShot2(x, y, speed, angle, graphic, timer, speed2, graphic2)
+{
+	let obj = CreateShotA2(x, y, speed, angle, -speed/30, 0, graphic, 0);
+	My_RaiseShotEffectA(obj, 15);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI()+1);
+	wait(timer);
+	if (!Obj_IsDeleted(obj))
+	{
+		ascent(i in 0 .. 3)
+		{
+			let obj2 = CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj),
+				speed2*4, angle+i*120, -speed2/3, speed2/3, graphic2, 15);
+			ObjMove_AddPatternA2(obj2, 120, NO_CHANGE, NO_CHANGE, speed2/60, 0, speed2);
+		}
+	}
+	DeleteBulletEffect(obj);
+}
+
+task EnterEnemies()
+{
+	Obj_SetVisible(GetBossImageID(objEnemy2), true);	//画像表示
+	Obj_SetVisible(GetBossImageID(objEnemy3), true);	//画像表示
+	
+	ascent(i in 0 .. 20)
+	{
+		let tmp = (i+1)/20;
+		let sx = 1 + ((1-tmp)^3)*3;
+		let sy = tmp^2;
+		ObjRender_SetScaleXYZ(GetBossImageID(objEnemy2), sx, sy, 1);
+		ObjRender_SetScaleXYZ(GetBossImageID(objEnemy3), sx, sy, 1);
+		yield;
+	}
+	ObjRender_SetScaleXYZ(GetBossImageID(objEnemy2), 1, 1, 1);
+	ObjRender_SetScaleXYZ(GetBossImageID(objEnemy3), 1, 1, 1);
+}
+task TCheckMainBossKilled()
+{
+	while(!Obj_IsDeleted(objEnemy)) { yield; }
+	Obj_Delete(objEnemy2);
+	Obj_Delete(objEnemy3);
+}

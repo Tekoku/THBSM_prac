@@ -1,0 +1,171 @@
+// 画面端ワープ移動
+task MoveToSlowdown2_Warp(obj, to_x, to_y, timer)
+{
+	let warp_pos = 48;
+	
+	// ワープ回数計測
+	let warp_x = 0;
+	let warp_y = 0;
+	if (to_x > MaxX)
+	{
+		let tmp_x = to_x;
+		while(tmp_x > MaxX) { warp_x++; tmp_x -= GetStgFrameWidth; }
+	}
+	if (to_x < MinX)
+	{
+		let tmp_x = to_x;
+		while(tmp_x < MinX) { warp_x--; tmp_x += GetStgFrameWidth; }
+	}
+	if (to_y > MaxY)
+	{
+		let tmp_y = to_y;
+		while(tmp_y > MaxY) { warp_y++; tmp_y -= GetStgFrameHeight; }
+	}
+	if (to_y < MinY)
+	{
+		let tmp_y = to_y;
+		while(tmp_y < MinY) { warp_y--; tmp_y += GetStgFrameHeight; }
+	}
+	
+	let from_x = ObjMove_GetX(obj);
+	let from_y = ObjMove_GetY(obj);
+	to_x += warp_pos*warp_x*2;
+	to_y += warp_pos*warp_y*2;
+
+	ascent(i in 0 .. timer)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		let tmp = sin(((i+1)/timer)*90);
+		let x = from_x*(1-tmp) + to_x*tmp;
+		let y = from_y*(1-tmp) + to_y*tmp;
+		x = ((x+warp_pos)%(GetStgFrameWidth+warp_pos*2)-warp_pos);
+		y = ((y+warp_pos)%(GetStgFrameHeight+warp_pos*2)-warp_pos);
+		ObjMove_SetDestAtFrame(obj, x, y, 1);
+		yield;
+	}
+}
+
+// 列から矢印型へ
+function CreateShotTobikoArrow(x, y, speed, angle, add_speed, max_speed, graphic, delay, way, way_angle, r)
+{
+	let w_cen = 0;
+	if (way > 1) { w_cen = (way-1)/2; }
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + (i-w_cen)*way_angle;
+		let ss = (1-absolute(i-w_cen)*0.05);
+		let tmp_r = r * (i-w_cen);
+		let sx = x + cos(sa)*32 + cos(sa+90)*tmp_r;
+		let sy = y + sin(sa)*32 + sin(sa+90)*tmp_r;
+		let obj = CreateShotA2(sx, sy, speed*ss, sa, add_speed*ss, max_speed*ss, graphic, 0);
+		My_RaiseShotEffectA(obj, delay);
+	}
+}
+
+function CreateShotTobikoArrow02(x, y, speed, angle, add_speed, max_speed, graphic, delay, way, way_angle, r, timer)
+{
+	let w_cen = 0;
+	if (way > 1) { w_cen = (way-1)/2; }
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + (i-w_cen)*way_angle;
+		let ss = (1-absolute(i-w_cen)*0.05);
+		let tmp_r = r * (i-w_cen);
+		let sx = x + cos(sa)*32 + cos(sa+90)*tmp_r;
+		let sy = y + sin(sa)*32 + sin(sa+90)*tmp_r;
+		CreateShotTobikoArrow02_sub(sx, sy, speed*ss, sa, add_speed*ss, max_speed*ss, graphic, delay, timer);
+	}
+}
+task CreateShotTobikoArrow02_sub(x, y, speed, angle, add_speed, max_speed, graphic, delay, timer)
+{
+	let obj = CreateShotA2(x, y, speed, angle, -speed/timer*2, 0.25, graphic, 0);
+	ObjMove_AddPatternA2(obj, timer+delay, NO_CHANGE, NO_CHANGE, add_speed, 0, max_speed);
+	My_RaiseShotEffectA(obj, delay);
+	wait(delay+timer);
+	if (!Obj_IsDeleted(obj)) { CallSound(sndShot2); }
+}
+
+
+// 羽根がふぁさー
+task TobikoParticleEffect(timer, count, base_angle)
+{
+	if (IsDrawEffect() < 2) { return; }
+
+	let st = 0;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		st += (1-sin((t+1)/timer*90))*count;
+		while(st > 0)
+		{
+			_TobikoParticleEffect(ObjMove_GetX(objEnemy)+randEffect(-16,16), ObjMove_GetY(objEnemy)+randEffect(-16,16),
+				base_angle+randEffect(-45,45), 60, 5);
+			st--;
+		}
+		yield;
+	}
+}
+
+task _TobikoParticleEffect(x, y, angle, timer, size)
+{
+	let ex = x;
+	let ey = y;
+	let obj = CreateParticleEffect([ex, ey], size/4, 2);
+	ObjRender_SetBlendType(obj, BLEND_ALPHA);
+	ObjRender_SetColor(obj, 0, 0, 0);
+
+	let vx = cos(angle); let vy = sin(angle); let add_vy = 0;
+	let vs = size*randEffect(0, 1); let add_vs = vs/timer;
+	let rx = 0; let rx_add = randEffect(-2, 2);
+	let ry = 0; let ry_add = randEffect(-2, 2);
+	let rz = randEffect(0, 360); let rz_add = randEffect(-4, 4);
+	let scale = 1; let alpha = 255;
+	
+	ascent(i in 0 .. timer)
+	{
+		ObjRender_SetPosition(obj, ex, ey, 0);
+		ObjRender_SetAngleXYZ(obj, rx, ry, rz);
+		ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+		ObjRender_SetAlpha(obj, alpha);
+		ex += vx * vs; ey += vy * vs + add_vy;
+		add_vy += size/60;
+		vs += add_vs; scale -= 0.75/timer; alpha -= 255/timer;
+		rx += rx_add; ry += ry_add; rz += rz_add;
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task TobikoSlash(from_x, from_y, to_x, to_y, timer)
+{
+	let la = atan2(to_y-from_y, to_x-from_x);
+	let ll = ((to_y-from_y)^2 + (to_x-from_x)^2)^0.5;
+
+	let obj = CreateShashEffect();
+	ObjRender_SetPosition(obj, from_x, from_y, 0);
+	ObjRender_SetAngleZ(obj, la);
+	ObjRender_SetScaleY(obj, 1);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjRender_SetColor(obj, 128, 128, 32);
+	
+	ascent(i in 0 .. 15)
+	{
+		if (!eAlive) { break; }
+		let tmp = sin((i+1)/15*90);
+		ObjRender_SetScaleX(obj, tmp*ll/100);
+		yield;
+	}
+	loop(timer-15)
+	{
+		if (!eAlive) { break; }
+		yield;
+	}
+	descent(i in 0 .. 10)
+	{
+		if (!eAlive) { break; }
+		let tmp = sin((i+1)/10*90);
+		ObjRender_SetScaleY(obj, tmp);
+		yield;
+	}
+	Obj_Delete(obj);
+}

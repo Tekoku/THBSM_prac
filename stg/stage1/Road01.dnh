@@ -1,0 +1,328 @@
+#“Œ•û’e–‹•—[Stage]
+#ScriptVersion[3]
+#Title["Stage1“¹’†"]
+#Text["Stage1“¹’†"]
+#System["./../../system/System.dnh"]
+
+#include "./../../lib/lib_Common.dnh"
+#include "./../../lib/lib_Stage.dnh"
+#include "./../../lib/lib_Zako.dnh"
+#include "./Road01_Zako.dnh"
+
+
+@Initialize
+{
+	STAGE_ID = 1;		//ƒXƒe[ƒWID‹L˜^
+	NEXT_STAGE_ID = 2;	//Ÿ‚ÌƒXƒe[ƒWID‚ğ‹L˜^
+	SetLastWordBorder(777);	//ƒ‰ƒXƒğŒ
+	StageInit();
+	TStage();
+}
+
+@Event()
+{
+	StageEvent();
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+task TStage
+{
+	// •ÛŒ¯
+	yield;
+	
+	let dir = GetCurrentScriptDirectory();
+	let pathBG	= dir ~ "BackgroundWorld01.dnh";	//”wŒi
+	let pathMBoss	= dir ~ "boss/01a_plural.dnh";	//’†ƒ{ƒX
+	let pathBoss	= dir ~ "boss/01b_plural.dnh";	//ƒ{ƒX
+	
+	//@’†ƒ{ƒXƒ[ƒh
+	// practice tool: chapter skip
+	let dest = GetStartChapter(1);
+	if(dest <= 3)
+	{
+		StartScriptInThread(pathMBoss);
+	}
+	else
+	{
+		StartScriptInThread(pathBoss);
+	}
+	
+	//  ”wŒi”z’u
+	SetStageBackGround(pathBG);
+
+	wait(90);
+	if(dest <= 5)
+	{
+		PlayMusicWithName(2, 120, 30);
+	}
+	else
+	{
+		PlayMusicWithName(3, 30, 30);
+	}
+
+	ChapterStart();
+// ------------------------ ‘O”¼
+	if(dest <= 1)
+	{
+		CHAPTER_1();
+	}
+	if(dest <= 2)
+	{
+		CHAPTER_2();
+	}
+
+// ------------------------ ’†ƒ{ƒX
+	if(dest <= 3)
+	{
+		CHAPTER_MBOSS(pathBoss);
+	}
+// ------------------------ ‘‰ñ‚µ
+	if(dest <= 4)
+	{
+		CHAPTER_3();
+	}
+
+// ------------------------ Œã”¼
+	if(dest <= 5)
+	{
+		CHAPTER_4();
+	}
+
+// ------------------------ ƒ{ƒX‚¾‚¼[I
+	// practice tool: wait for boss script ready when jumping directly to boss
+	if(dest >= 6){ wait(150); }
+	CallBoss();
+
+	// ‘Ò‹@‚Æƒ[ƒh
+	WaitForBossKilled();
+	wait(30);
+
+	StageEND();
+}
+
+
+function CHAPTER_1()
+{
+	F01(MaxX+32, CenY-32, 180+30, 12);	// ©‹@‘_‚¢—d¸
+	WaitRoad(240);
+	F01(MinX-32, CenY-64, 0+30, 12);	// ©‹@‘_‚¢—d¸
+	WaitRoad(180);
+	SetEnemyL01(MinX-32, 120, 0.5, 0+10, 0, 0);	// ‚‚ê–‹—d¸
+	WaitRoad(210);
+	F03(MaxX+32, 120, 150, 8);	// ‚İ‚å[‚ñ‚Æ‚µ‚½Š´‚¶‚Ìü‚è—d¸
+	WaitRoad(300);
+	// ƒ^ƒCƒgƒ‹
+	DisplayStage01( 0, 90 );
+	WaitRoad(390);
+
+	ChapterFinish();
+	WaitRoad(300);
+}
+
+function CHAPTER_2()
+{
+	F04(CenX+96, MinY-32, 90+15, 12, 1);	// ’Zû—d¸
+	WaitRoad(180);
+	SetEnemyL02(CenX-64, MinY-32, 0.5, 90, 0, 0);	// ¯ü‚è—d¸
+	WaitRoad(240);
+	F04(CenX-96, MinY-32, 90-15, 12, -1);	// ’Zû—d¸
+	WaitRoad(180);
+	SetEnemyL02(CenX+64, MinY-32, 0.5, 90, 0, 0);	// ¯ü‚è—d¸
+	WaitRoad(180);
+	F04(CenX-96, MinY-32, 90-15, 12, -1);	// ’Zû—d¸
+	WaitRoad(180);
+	F04(CenX+96, MinY-32, 90+15, 12, 1);	// ’Zû—d¸
+	WaitRoad(360);
+
+	ChapterFinish();
+	WaitRoad(90);
+}
+
+task CHAPTER_MBOSS(pathBoss)
+{
+	// ƒ{ƒX‚ª‚Å‚½‚¼[
+	// practice tool: wait for midboss script ready when jumping directly to midboss
+	if(GetStartChapter(1) == 3){ wait(150); }
+	CallBoss();
+	flgStopSetZako = true;
+	// ’†ƒ{ƒX‚ªÁ‚¦‚Ä‚©‚çƒ{ƒX‚ğƒ[ƒh
+	StartScriptInThreadWaitBoss(pathBoss);
+	
+	// ƒ{ƒXŒ‚”j‘Ò‚¿
+	CheckBossKilled();
+	WaitForMiddleBossKilled();
+	
+	WaitRoad(120);
+	flgStopSetZako = false;
+}
+
+function CHAPTER_3()
+{
+	let dest = GetStartChapter(1);
+	if(dest < 4)
+	{
+	WaitRoad(390);
+	S01(MaxX-32, MinX+96, 7);	// ‚¨‚Ù‚µ‚³‚Ü
+	WaitRoad(180);
+	S01(MinX+32, MaxX-96, 7);	// ‚¨‚Ù‚µ‚³‚Ü
+	WaitRoad(180);
+	S01(MaxX-32, MinX+96, 7);	// ‚¨‚Ù‚µ‚³‚Ü
+	F03(MaxX+32, 160, 165, 8);	// ‚İ‚å[‚ñ‚Æ‚µ‚½Š´‚¶‚Ìü‚è—d¸
+	WaitRoad(180);
+	S01(MinX+32, MaxX-96, 7);	// ‚¨‚Ù‚µ‚³‚Ü
+	F03(MinX-32, 160, 15, 8);	// ‚İ‚å[‚ñ‚Æ‚µ‚½Š´‚¶‚Ìü‚è—d¸
+	WaitRoad(180);
+	SetEnemyL01(MaxX+32, 200, 0.5, 180+10, 0, 0);	// ‚‚ê–‹—d¸
+	WaitRoad(180);
+
+	WaitForMiddleBossKilled();	// ’†ƒ{ƒXŒ‚”j‘Ò‚¿
+	}
+	
+	S01(MinX+32, MaxX-96, 7);	// ‚¨‚Ù‚µ‚³‚Ü
+	WaitRoad(180);
+	SetEnemyL02(CenX-128, MinY-32, 0.5, 90-10, 0, 0);	// ¯ü‚è—d¸
+	S01(MaxX-32, MinX+48, 7);	// ‚¨‚Ù‚µ‚³‚Ü
+	WaitRoad(180);
+	S01(MinX+32, MaxX-48, 7);	// ‚¨‚Ù‚µ‚³‚Ü
+	WaitRoad(180);
+	SetEnemyL02(CenX+128, MinY-32, 0.5, 90+10, 0, 0);	// ¯ü‚è—d¸
+	S01(MaxX-32, MinX+48, 7);	// ‚¨‚Ù‚µ‚³‚Ü
+	WaitRoad(180);
+	S01(MinX+32, MaxX-48, 7);	// ‚¨‚Ù‚µ‚³‚Ü
+	WaitRoad(180);
+	SetEnemyL02(CenX, MinY-32, 0.5, 90, 0, 0);	// ¯ü‚è—d¸
+	S01(MaxX-32, MinX+48, 8);	// ‚¨‚Ù‚µ‚³‚Ü
+	WaitRoad(180);
+	S01(MinX+32, MaxX-48, 8);	// ‚¨‚Ù‚µ‚³‚Ü
+	WaitRoad(180);
+	SetEnemyL02(CenX+96, MinY-32, 0.5, 90+5, 0, 0);	// ¯ü‚è—d¸
+	SetEnemyL02(CenX-96, MinY-32, 0.5, 90-5, 0, 0);	// ¯ü‚è—d¸
+	WaitRoad(360);
+	ChapterFinish();
+	WaitRoad(60);
+}
+
+function CHAPTER_4()
+{
+	F04b(CenX-96, MinY-32, 90-10, 12, -1);	// ’Zû—d¸
+	F04b(CenX+96, MinY-32, 90+10, 12, 1);	// ’Zû—d¸
+	WaitRoad(300);
+//	SetEnemyL02(CenX, MinY-32, 0.5, 90, 0, 0);	// ¯ü‚è—d¸
+	F04b(CenX+32, MinY-32, 90-10, 12, -1);	// ’Zû—d¸
+	F04b(CenX-32, MinY-32, 90+10, 12, 1);	// ’Zû—d¸
+	WaitRoad(300);
+	S01b(MinX+32, MaxX-48, 9);	// ‚¨‚Ù‚µ‚³‚Ü
+	S01b(MaxX-32, MinX+48, 9);	// ‚¨‚Ù‚µ‚³‚Ü
+	WaitRoad(300);
+	F03(MaxX+64, 120, 165, 6);	// ‚İ‚å[‚ñ‚Æ‚µ‚½Š´‚¶‚Ìü‚è—d¸
+	F03(MinX-64, 120, 15, 6);	// ‚İ‚å[‚ñ‚Æ‚µ‚½Š´‚¶‚Ìü‚è—d¸
+	WaitRoad(420);
+	ChapterFinish();
+	WaitRoad(120);
+}
+
+
+
+
+// “G”z’u—p
+task F01(x, y, angle, count)
+{
+	ascent(i in 0 .. count)
+	{
+		SetEnemyF01(x, y, 2.25, angle, i, 0);
+		wait(15);
+	}
+}
+task F02(count)
+{
+	let muki = 1;
+	ascent(i in 0 .. count)
+	{
+		let tmp = ((trunc(i/2)*7+1)%count)/count;
+		let ex = (tmp*0.4*muki+0.5)*GetStgFrameWidth;
+		let ey = MinY-32;
+		let es = 1.5 + i/count;
+		SetEnemyF02(ex, ey, es, 90, 0, 0);
+		wait(30);
+		muki = -muki;
+	}
+}
+task F03(x, y, angle, count)
+{
+	ascent(i in 0 .. count)
+	{
+		let tmp = ((trunc(i/2)*7+1)%count)/count;
+		let ex = x;
+		let ey = y + (tmp-0.5)*64 - i/count*64;
+		let es = 2.5 - i/count*1.5;
+		SetEnemyF03(ex, ey, es, angle, 0, 0);
+		wait(20);
+	}
+}
+task F04(x, y, angle, count, muki)
+{
+//	let muki = [1, -1][x < CenX];
+	ascent(i in 0 .. count)
+	{
+		let tmp = ((trunc(i/2)*7+1)%count)/count;
+		let ex = x + ((tmp-0.5)*64 + i/count*64)*muki;
+		let ey = y;
+		let es = 0.5;
+		let ev = muki;
+		SetEnemyF04(ex, ey, es, angle, i, ev);
+		wait(20);
+	}
+}
+task F04b(x, y, angle, count, muki)
+{
+//	let muki = [1, -1][x < CenX];
+	ascent(i in 0 .. count)
+	{
+		let tmp = ((trunc(i/2)*7+1)%count)/count;
+		let ex = x + ((tmp-0.5)*64 + i/count*64)*muki;
+		let ey = y;
+		let es = 0.5;
+		let ev = muki;
+		SetEnemyF04(ex, ey, es, angle, i, ev);
+		wait(25);
+	}
+}
+
+task S01(from_x, to_x, count)
+{
+	ascent(i in 0 .. count)
+	{
+		let tmp = i/(count-1);
+		let tmp2 = randStage(0,1,i/count*777);
+		let ex = from_x*(1-tmp) + to_x*tmp + (tmp2-0.5)*32;
+		let ey = MinY;
+		let ea = 90 + (tmp2-0.5)*30;
+		let es = 1;
+		SetEnemyS01(ex, ey, es, ea, 0, 0);
+		wait(20);
+	}
+}
+
+task S01b(from_x, to_x, count)
+{
+	ascent(i in 0 .. count)
+	{
+		let tmp = i/(count-1);
+		let tmp2 = randStage(0,1,i/count*777);
+		let ex = from_x*(1-tmp) + to_x*tmp + (tmp2-0.5)*32;
+		let ey = MinY;
+		let ea = 90 + (tmp2-0.5)*30;
+		let es = 1;
+		SetEnemyS01(ex, ey, es, ea, 0, 0);
+		wait(30);
+	}
+}
+

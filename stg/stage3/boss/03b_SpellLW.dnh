@@ -1,0 +1,396 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["シェリアバーン"]
+#Text["シェリアバーン"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Shelia.dnh"
+
+let objStars = [];
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3200);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	case(EV_REQUEST_IS_LAST_SPELL)	{ SetScriptResult(true);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_SHELIA);
+	BossEffect_ResetMagicCircle();
+
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_SHELIA);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(103), [14,14,15,15][Difficult], 
+			GetCurrentScriptDirectory()~"03a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	ObjMove_SetPosition(objEnemy, CenX, 120);
+	// 使い魔設置
+	local
+	{
+		let size = 8;
+		let angle = 180+30;
+		let timer = 120;
+		SetFamilier01(-9999, -9999, 295+angle,  1, 72*size, timer);
+		SetFamilier01(-9999, -9999, 285+angle, -1, 50*size, timer);
+		SetFamilier01(-9999, -9999, 255+angle,  1.5, 45*size, timer);
+		SetFamilier01(-9999, -9999, 160+angle, -1.5, 25*size, timer);
+	}
+	LWMotion();
+	
+	let BURST_POS = [CenX, -8];
+	CurveLaseEffect(objEnemy, BURST_POS[0], BURST_POS[1]);
+	ascent(i in 0 .. length(objStars)) { CurveLaseEffect(objStars[i], BURST_POS[0], BURST_POS[1]); }
+	TBurst(BURST_POS[0], BURST_POS[1]);
+	
+	wait(30);
+	CallSpellCard(true);	//スペカ起動
+	CallSound(sndFlare);
+	wait(45);
+
+	ascent(i in 0 .. 3)
+	{
+		TLaser(BURST_POS[0], BURST_POS[1], i/2);
+		wait(15);
+	}
+	wait(180);
+	
+	
+	let wt = [180, 135, 110, 90][Difficult];
+	
+	while(eAlive)
+	{
+		let timer_rate = ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) / ObjEnemyBossScene_GetInfo(objScene, INFO_ORGTIMERF);
+		let life_rate = GetBossLifeRate(objEnemy);
+		let rt = min(timer_rate, life_rate);
+		let tmp = max(rt*1.5-0.5,0);
+
+		TLaser(BURST_POS[0], BURST_POS[1], 0);
+		wait(wt*(0.4+tmp*0.6));
+	}
+}
+
+task TLaser(x, y, offset_angle)
+{
+	let way = [6, 8, 8, 8][Difficult];
+	let way_angle = 12*way/8;
+	
+	let base_angle = atan2(GetPlayerY-y, GetPlayerX-x);
+	ascent(i in 0 .. 5)
+	{
+		let sa = base_angle + (i+offset_angle)*360/5;
+		_TLaser(sa);
+	}
+	
+	task _TLaser(angle)
+	{
+		ascent(i in 0 .. way)
+		{
+			if (!eAlive) { return; }
+			let oa = (i/(way-1))^2*way_angle;
+			let sa = angle + oa;
+			if (sin(sa) > 0)
+			{
+				ShineLaser(ObjMove_GetX(objEnemy), 0, sa);
+			}
+			if (i > 0)
+			{
+				let sa = angle - oa;
+				if (sin(sa) > 0)
+				{
+					ShineLaser(ObjMove_GetX(objEnemy), 0, sa);
+				}
+			}
+			if (i < 6) { CallSound(sndShot6); }
+			wait(3);
+		}
+	}
+}
+
+//自機/敵機反応レーザー
+task ShineLaser(x, y, angle)
+{
+	let min_speed = 2;
+	let max_speed = 16;
+	let speed2 = 4;
+
+	let vx = cos(angle);
+	let vy = sin(angle);
+
+	let obj = CreateShotA1(x, y, max_speed, angle, BGW_STAR_M_BLUE, 0);
+	ascent(i in 0 .. 4)
+	{
+		ShineLaser_sub(obj, 480*(1-i/5), 12*(i+1), BGW_FUGU_BLUE);
+	}
+	Obj_SetVisible(obj, false);
+	ObjShot_SetIntersectionEnable(obj, false);
+
+	let r_flg = false;
+	while(!Obj_IsDeleted(obj))
+	{
+		let r = ((ObjMove_GetX(obj)+vx*ObjMove_GetSpeed(obj)-GetPlayerX)^2 + (ObjMove_GetY(obj)+vy*ObjMove_GetSpeed(obj)-GetPlayerY)^2)^0.5;
+		if (r < 64)
+		{
+			PushPlayer(vx, vy, 15);
+			
+			let sa = GetAngleToPlayer(obj);
+			My_CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, sa, speed2/180, speed2, BGW_CROSS_RED, 30);
+			break;
+		}
+		yield;
+	}
+	Obj_Delete(obj);
+}
+task ShineLaser_sub(parent, l_len, l_wid, graphic)
+{
+	let obj = CreateStraightLaserA1(ObjMove_GetX(parent), ObjMove_GetY(parent), ObjMove_GetAngle(parent), 0, l_wid, 99999, graphic, 0);
+	ObjStLaser_SetSource(obj, false);
+	ObjRender_SetColor(obj, 128, 128, 255);
+	ObjLaser_SetIntersectionWidth(obj, l_wid/3);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI()+1);
+	ObjShot_SetAutoDelete(obj, false);
+	
+	let vx = cos(ObjMove_GetAngle(parent));
+	let vy = sin(ObjMove_GetAngle(parent));
+	let r = 0;
+	let tmp_len = 0;
+	while(!Obj_IsDeleted(obj) && !Obj_IsDeleted(parent))
+	{
+		r += ObjMove_GetSpeed(parent);
+		tmp_len = min(r, l_len);
+		ObjLaser_SetLength(obj, tmp_len);
+		ObjLaser_SetInvalidLength(obj, tmp_len/4, tmp_len/4);
+		ObjMove_SetPosition(obj, ObjMove_GetX(parent)-vx*tmp_len, ObjMove_GetY(parent)-vy*tmp_len);
+		yield;
+	}
+	if (!Obj_IsDeleted(obj))
+	{
+		let bx = ObjMove_GetX(obj);
+		let by = ObjMove_GetY(obj);
+		descent(t in 0 .. 15)
+		{
+			let tmp = (t+1)/15;
+			let vr = tmp^2*tmp_len;
+			ObjMove_SetPosition(obj, bx-vx*(vr-tmp_len), by-vy*(vr-tmp_len));
+			ObjLaser_SetLength(obj, vr);
+			ObjLaser_SetInvalidLength(obj, vr/4, vr/4);
+			ObjLaser_SetRenderWidth(obj, l_wid*(3-tmp*2));
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+// シェリアバーン！
+task TBurst(x, y)
+{
+	let l_len = 0;
+	let t = 0;
+	while(eAlive)
+	{
+		if (t < 120)
+		{
+			l_len = sin((t+1)/120*90)*512;
+		}
+		_TBurst(x, y, rand(0,180), l_len);
+		t++;
+		wait(1);
+	}
+}
+
+task _TBurst(x, y, angle, l_len)
+{
+	let obj = CreateStraightLaserA1(x, y, angle, 0, 64, 60, BGW_STAR_M_BLUE, 0);
+	ObjStLaser_SetSource(obj, false);
+	ObjRender_SetColor(obj, 96, 160, 255);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI()+2);
+	SetShotDisabled(obj);
+	
+	descent(t in 0 .. 30)
+	{
+		let tmp = sin((t+1)/60*90);
+		ObjLaser_SetLength(obj, tmp*l_len);
+		ObjRender_SetAlpha(obj, (1-tmp)*384);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task PushPlayer(vx, vy, timer)
+{
+//	let pclip = GetPlayerClip();
+	
+	descent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		let tmp = (t+1)/timer;
+		let px = GetPlayerX + tmp*vx;
+		let py = GetPlayerY + tmp*vy;
+	//	if (px > pclip[0] && py > pclip[1] && px < pclip[2] && py < pclip[3])
+	//	{
+			ObjMove_SetPosition(objPlayer, px, py);
+	//	}
+		yield;
+	}
+}
+
+// 使い魔
+task SetFamilier01(iniX, iniY, iniAngle, iniAddAngle, iniR, iniTimer)
+{
+	let BASE_ANGLE = 0;
+	
+	let eSize = ENEMY_S;
+	let eColor = EFF_PURPLE;
+	let item_count = 0;
+	let item_star = 0;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 200, eSize);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawStarEnemy(objFamilier, 3, 1.5);
+//	DrawSheliaCircle(objFamilier, iniValue);
+	objStars = objStars ~ [objFamilier];
+
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		ascent(i in 0 .. iniTimer)
+		{
+			let tmp = sin((i+1)/iniTimer*90);
+			BASE_ANGLE = -(1-tmp)*120*iniAddAngle;
+			let vr = iniR * (1-tmp*0.7);
+			let vx = cos(BASE_ANGLE)*vr;
+			let vy = sin(BASE_ANGLE)*vr/2;
+			let pos = Rotate2D_XY(vx, vy, iniAngle);
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objEnemy)+pos[0], ObjMove_GetY(objEnemy)+pos[1]);
+			yield;
+		}
+		wait(60);
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			let vr = iniR * 0.3;
+			let vx = cos(BASE_ANGLE)*vr;
+			let vy = sin(BASE_ANGLE)*vr/2;
+			let pos = Rotate2D_XY(vx, vy, iniAngle);
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objEnemy)+pos[0], ObjMove_GetY(objEnemy)+pos[1]);
+			BASE_ANGLE += min(t,120)/120*iniAddAngle;
+			t++;
+			yield;
+		}
+	}
+
+	task TShot()
+	{
+		wait(180+iniTimer);
+		
+		let wt = 4;
+		let graphics = [BGW_FUGU_YELLOW, BGW_FUGU_GREEN, BGW_FUGU_SKY, BGW_FUGU_BLUE, BGW_FUGU_PURPLE, BGW_FUGU_RED];
+		let speed = [5, 8, 9, 12][Difficult];
+		let count = [2, 3, 4, 6][Difficult];
+		let shot_span = [6, 9, 9, 9][Difficult];
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			if (t%9 < shot_span)
+			{
+				let ba = BASE_ANGLE + iniAngle - (t%9-4)*iniAddAngle*wt;
+				descent(i in 0 .. count)
+				{
+					let sa = ba;
+					let ss = speed * (1-i*0.15);
+					F02_CreateShotA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), ss, sa, graphics[i%6], 30);
+				}
+				CallSound(sndBulletBreak);
+			}
+			t++;
+			wait(wt);
+		}
+	}
+	function F02_CreateShotA1(x, y, speed, angle, graphic, delay)
+	{
+		let obj = CreateShotA2(x, y, 3, angle, -3/delay, 0, graphic, 0);
+		ObjMove_AddPatternA2(obj, delay, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+		My_RaiseShotEffectA(obj, delay);
+		return(obj);
+	}
+}
+
+task CurveLaseEffect(objBase, x, y)
+{
+	loop(6)
+	{
+		if (!eAlive) { return; }
+		_CurveLaseEffect(objBase, x, y);
+		wait(5);
+	}
+}
+task _CurveLaseEffect(objBase, x, y)
+{
+	let obj = CreateCurveLaserA1(ObjMove_GetX(objBase), ObjMove_GetY(objBase), 0, 0, 60, 12, BGW_FUGU_BLUE, 0);
+	SetMovePositionHermite(obj, x, y, rand(400, 1600), rand(0, 360), 0, 0, 30);
+	SetShotDisabled(obj);
+	wait(90);
+	Obj_Delete(obj);
+}
+
+// ラスワ開幕モーション
+function LWMotion()
+{
+	ObjEnemyBossScene_SetSpellTimer(objScene, -1);	// タイマー停止
+	SetEnemyVisible(objEnemy, false);
+	BossEffect_DisableMagicCircle(objEnemy);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	ascent(i in 0 .. 3)
+	{
+		EffectConcentrationCircle(objEnemy, 3, 45);
+		CallSound(sndShot1);
+		wait([50, 20, 20][i]);
+	}
+	RaiseBoss();
+	
+	task RaiseBoss()
+	{
+		ObjEnemyBossScene_SetSpellTimer(objScene, 99*60);	// タイマー開始
+		SetEnemyVisible(objEnemy, true);
+		BossEffect_EnableMagicCircle(objEnemy);
+		Obj_SetVisible(GetBossImageID(objEnemy), true);	//画像表示
+		ascent(t in 0 .. 30)
+		{
+			let tmp_a = (t+1)/30*255;
+			ObjRender_SetAlpha(GetBossImageID(objEnemy), tmp_a);
+			yield;
+		}
+	}
+}

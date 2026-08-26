@@ -1,0 +1,202 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["合体攻撃！"]
+#Text["合体攻撃！"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+let objEnemy2;
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(1800);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(30);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy2 = CreateBossEx(BOSS_ID_IPHONEA);	//ボスセット
+	objEnemy = CreateBoss(BOSS_ID_FABRITIS);	//ボスセット
+	SetBossIntersection(objEnemy2, 0, 0);
+	
+	// 当たり判定共有
+	TIntersectionEx(objEnemy, objEnemy2);
+	BossLifeLink(objEnemy2, objEnemy);
+	
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	// practice tool: also stand by bosses when chapter-skipped directly to this attack (talk skipped -> no EnterBoss move)
+	if (GetPlayMode() == GAME_SPELL || GetPlayMode() == GAME_NONE || GetStartChapter(1) >= chapter_boss[0])
+	{
+		standBy(objEnemy, CenX+64, 140, 60);
+		standBy(objEnemy2, CenX-64, 140, 60);
+	}
+	else
+	{
+		SetEnemyVisible(objEnemy, true);
+		SetEnemyVisible(objEnemy2, true);
+	}
+	wait(60);
+	
+	TShot01();
+	TShot02();
+}
+
+task TShot01
+{
+	let timer = [360, 300, 300, 240][Difficult];
+
+	let muki = 1;
+	while(eAlive)
+	{
+		Febreze(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), muki);
+		SetAction(objEnemy, ACT_SHOT1, timer*0.4);
+		wait(timer*0.4);
+		if (!eAlive) { return; }
+		EnemyRandomMoveEx(objEnemy, CenX+96, 120, 48, 72, 64, 0.5);
+		wait(timer*0.6);
+		muki = -muki;
+	}
+}
+
+task TShot02
+{
+	
+	let timer = [360, 300, 300, 240][Difficult];
+	
+	let t = 0;
+	let muki = 1;
+	
+	while(eAlive)
+	{
+		wait(timer*0.4);
+		if (!eAlive) { return; }
+		HyoutanShotgun_Set(ObjMove_GetX(objEnemy2), ObjMove_GetY(objEnemy2),
+			GetAngleToPlayer(objEnemy2), BGW_ICE_GREEN, 15, muki);
+		SetAction(objEnemy2, ACT_SHOT1, timer*0.2);
+		wait(timer*0.2);
+		if (!eAlive) { return; }
+		EnemyRandomMoveEx(objEnemy2, CenX-96, 120, 48, 72, 64, 0.5);
+		wait(timer*0.4);
+		t++;
+		muki = -muki;
+	}
+}
+
+task Febreze(x, y, muki)
+{
+	let speed = [1, 1.25, 1.5, 1.75][Difficult];
+	let graphic = BGW_BALL_SS_WHITE;
+	let timer = 60;
+	let count = [1, 2, 3, 3][Difficult];
+	ascent(i in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i+0.5)/timer;
+		let ba = 90 + muki*(150-tmp^0.5*210);
+		let br = min(1, tmp*3) * 240;
+		let bx = x + cos(ba)*br;
+		let by = y + sin(ba)*br/3 - tmp*80;
+		
+		let offset_r = sin(tmp*180)*64 + 16;
+		let offset_a = rand(0, 360);
+		let sa = 90 + muki*(150-tmp^0.5*210)*2;
+		loop(count)
+		{
+			let or = rand(0, offset_r^2)^0.5;
+			let sx = bx + cos(offset_a)*or;
+			let sy = by + sin(offset_a)*or;
+			let ss = rand(0.5, 1)*speed;
+			MistShot(sx, sy, ss, sa, graphic, 15);
+		}
+		CallSound(sndShot2);
+		yield;
+	}
+}
+
+task MistShot(x, y, speed, angle, graphic, delay)
+{
+	CreateShotA2(x, y, speed+5, angle, -5/5, speed, graphic, delay);
+	
+	let objEffect = CreateParticleEffect([x, y], 2, 0);
+	Obj_SetRenderPriorityI(objEffect, GetShotRenderPriorityI()+1);
+	let ea = rand(0, 360);
+	let add_a = rand(-6, 6);
+	ascent(i in 0 .. 30)
+	{
+		let tmp = (i+1)/30;
+		let tmp_s = 1-tmp;
+		let tmp_a = (0.25-(tmp-0.5)^2)*255;
+		ObjRender_SetScaleXYZ(objEffect, tmp_s, tmp_s, tmp_a);
+		ObjRender_SetAlpha(objEffect, tmp_a);
+		ObjRender_SetAngleZ(objEffect, ea);
+		ea += add_a;
+		yield;
+	}
+	Obj_Delete(objEffect);
+}
+
+// ルナティックガン的な
+task HyoutanShotgun_Set(x, y, angle, graphic, delay, muki)
+{
+	let speed = [1.5, 1.75, 2.5, 2.5][Difficult];
+	let set_count = [3, 5, 7, 7][Difficult];
+	let way_angle = [60, 50, 30, 30][Difficult];
+	let wt = [10, 8, 6, 6][Difficult];
+	
+	let way2 = 27;
+//	let way_angle2 = 10;
+	
+	ascent(i in 0 .. set_count)
+	{
+		if (!eAlive) { return; }
+		let sa = angle + (i-(set_count-1)/2)*way_angle*muki;
+		GourdShotGun(ObjMove_GetX(objEnemy2), ObjMove_GetY(objEnemy2),
+			speed, sa, graphic, 15, way2, way2*0.33, 0.2, 0.33);
+		CallSound(sndShot1);
+		wait(wt);
+	}
+}
+
+
+task GourdShotGun(x, y, speed, angle, graphic, delay, way, way_angle, space_size, speed_rate)
+{
+	let sc = [(way-1)/2, 0][way < 2];
+	ascent(i in 0 .. way)
+	{
+		let tmp = (i-sc)/way*2;
+		if (absolute(absolute(tmp)-0.5) > space_size)
+		{
+			let ss = speed * (1-absolute(tmp)*speed_rate);
+			let sa = angle + tmp*way_angle;
+			let objShot = CreateShotA2(ObjMove_GetX(objEnemy2), ObjMove_GetY(objEnemy2),
+				ss*3, sa, -ss/5, ss, graphic, 0);
+			My_RaiseShotEffectA(objShot, delay);
+		}
+	}
+}
+
+task BossLifeLink(obj, obj2)
+{
+	while(!Obj_IsDeleted(obj) && eAlive)
+	{
+		ObjEnemy_SetLife(obj, ObjEnemy_GetInfo(obj2, INFO_LIFE));
+		yield;
+	}
+}

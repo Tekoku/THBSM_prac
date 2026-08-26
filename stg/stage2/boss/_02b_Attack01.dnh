@@ -1,0 +1,191 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["test鳶子通常1"]
+#Text["test鳶子通常1"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Tobiko.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(1800);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(45);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_TOBIKO);	//ボスセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	wait(60);
+	
+	let MotionX = [MinX+8, MaxX-8];
+	let MotionY = [120, 160, 100, 130, 180, 140];
+	
+	let t = 0;
+	let muki = 1;
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		wait(90);
+		ascent(i in 0 .. 6)
+		{
+			if (!eAlive) { return; }
+			if (i == 0)
+			{
+				// 最初は移動のみ
+				MoveToSlowdown2(objEnemy, MotionX[t%length(MotionX)], MotionY[t%length(MotionY)], 25);
+			}
+			else
+			{
+				let os = 1-(i-1)*0.1;
+				MoveAndShot(MotionX[t%length(MotionX)], MotionY[t%length(MotionY)], 25, os);
+				CallSound(sndShot1);
+			}
+			wait(25);
+			t++;
+		}
+		if (!eAlive) { return; }
+		MoveTo(objEnemy, (ObjMove_GetX(objEnemy)+GetPlayerX)/2, (ObjMove_GetY(objEnemy)+GetPlayerY)/2, 45);
+		wait(45);
+		if (!eAlive) { return; }
+		StayShotA();	// 自機狙いショット
+		CallSound(sndShot1);
+		wait(45);
+		if (!eAlive) { return; }
+		MoveTo(objEnemy, (CenX+GetPlayerX)/2, 140, 45);
+		wait(75);
+		if (!eAlive) { return; }
+		MufflerShot(muki);	// マフラーっぽくふぁさーって感じ
+		wait(90);
+		muki = -muki;
+		t++;
+	}
+}
+
+
+// 移動しつつショット
+task MoveAndShot(to_x, to_y, timer, offset_speed)
+{
+	let speed = 3;
+	let graphic = BGW_SCALE_YELLOW;
+	let way = 3;
+	let count = 1;
+	let wt = 1;
+	
+	let muki = [1, -1][to_x-ObjMove_GetX(objEnemy) > 0];
+	MoveToSlowdown2(objEnemy, to_x, to_y, timer);
+	
+	let base_angle = 90;
+	let offset_angle = 240*muki;
+	speed *= offset_speed;
+	
+	let move_angle = atan2(to_y-ObjMove_GetY(objEnemy), to_x-ObjMove_GetX(objEnemy));
+	TobikoParticleEffect(25, 1, move_angle+150*muki);
+	
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0)
+		{
+			let sa = base_angle + offset_angle*t/(timer-1);
+			ascent(i in 0 .. count)
+			{
+				let ss = speed * (1+i/2);
+				CreateShotTobikoArrow(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, ss/120, ss, graphic, 15, way, 1, 4);
+			}
+			CallSound(sndShot3);
+		}
+		yield;
+	}
+}
+
+// 自機狙いショット
+task StayShotA()
+{
+	let speed = 2;
+	let graphic = ADD_BGW_BALL_BS_YELLOW;
+	let way = 9;
+	let base_angle = GetAngleToPlayer(objEnemy);
+	
+	let way2 = 5;
+	
+	ascent(i in 0 .. way)
+	{
+		let ba = base_angle + (i-(way-1)/2)/way*240;
+		CreateShotTobikoArrow02(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			1.25, ba, speed/60, speed, graphic, 30, way2, 1, 4, 60);
+	}
+}
+
+// マフラーっぽくふぁさーって感じ
+task MufflerShot(muki)
+{
+	let count = 10;
+	let base_angle = GetAngleToPlayer(objEnemy);
+	let wt = 8;
+	let timer = 30;
+	
+	let muki_base = muki;
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let sa = base_angle + ((i-(count-1)/2)/count*120-120)*muki_base + i*180;
+		let ss = 1 - i/count*0.25;
+		_MufflerShot(sa, ss, timer, muki);
+		wait(wt);
+	}
+}
+
+
+task _MufflerShot(base_angle, base_speed, timer, muki)
+{
+	let speed = 1.5;
+	let count = 1;
+	let wt = 1;
+	let graphic = BGB_SCALE_ORANGE;
+	
+	speed *= base_speed;
+	
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0)
+		{
+			let tmp = t/(timer-1);
+			let va = muki*t/timer*180;
+			let vr = tmp^0.5 * 128;
+			let vx = vr*cos(va);
+			let vy = vr*sin(va)/6;
+			let sx = ObjMove_GetX(objEnemy) + Rotate2D_X(vx, vy, base_angle);
+			let sy = ObjMove_GetY(objEnemy) + Rotate2D_Y(vx, vy, base_angle);
+			let sa = va+base_angle;
+			ascent(i in 0 .. count)
+			{
+				let ss = speed * (1+i/2);
+				CreateShotA1(sx, sy, ss, sa, graphic, 20);
+			}
+			CallSound(sndShot3);
+		}
+		yield;
+	}
+}

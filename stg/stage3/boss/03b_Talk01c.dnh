@@ -1,0 +1,218 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["3面　会話前半"]
+#Text["3面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_TOBIKO);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_SHELIA);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_SHELIA, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SANAE, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+	SetImageFoward(cutinPlayer1, true);
+	SetImageVisible(cutinBoss1, false);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "季節外れの天の川が本当に開通している！");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "神奈子様と諏訪子様の御力の[r]何と底知れぬ事でしょう。");
+		}
+		case(2)
+		{
+			SetImageVisible(cutinBoss1, false);	// ボス画像出現フラグ
+			
+			SetTalkEx2(cutinBoss1, "んなわけあるかボケ", -32, -280);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinBoss1, "");
+			EnterBoss();
+			wait(90);
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+
+			ChangeTalkTexture(cutinBoss1, I_NOTICE);
+			SetTalkEx(cutinBoss1, "あっ、つい言葉が崩れてしまい[r]失礼しました");
+			SetBossName(cutinBoss1);	// ボスネーム表示
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "好都合です、お堅く小難しい[r]言葉より適当に話して頂く方が");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "最近の新人神様は随分フランクね");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "厳かな雰囲気を見せるよりも、[r]友達感覚の方が信仰は集まり易いのよ");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "まあいいや");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "うちの天の川を乗っ取ろうとするの[r]これ困るからやめてくれない？");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "乗っ取ろうとなどしていません。");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "先ほどの天狗の話を踏まえ[r]よく考えて下さい。");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "ただの想定外の偶然による事故です。");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_WORRY);
+			SetTalkEx(cutinBoss1, "天狗って誰よ。");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "ともかく、一刻も早く地上からの[r]欲エネルギーの流れをそちらから遮断するのよ");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "さもなければこの結界――[r]七夕の夜に降る催涙雨は止める事が出来ない");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "甘く見られた物ですね。");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "守矢の雨を降らせる奇跡、それは天を[r]晴らせる奇跡と一対。どうぞ我々にお任せ下さい");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinBoss1, I_WORRY);
+			SetTalkEx(cutinBoss1, "どうやら意見は平行線のよう");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "信用出来る材料が足りませんので。");
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "疎らな星を強引に結んで星座と[r]言い張るような物です");
+		}
+		case(20)
+		{
+			//BGM
+			PlayMusicWithName(7, 180, 30);
+
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "なれば比べましょう。運命を覆す[r]奇跡の力と、運命を定める星辰の力。");
+		}
+		case(21)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "喜びなさい、地上は終わらぬ催涙雨。[r]貴方達の望んだ七夕が年中続くのだ！");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	EffectEntryBoss(objEnemy, [EFF_SKY, EFF_BLUE, EFF_PURPLE], [CenX, 140]);
+}

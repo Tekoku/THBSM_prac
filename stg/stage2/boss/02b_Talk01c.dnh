@@ -1,0 +1,186 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["2面　会話前半"]
+#Text["2面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_TOBIKO);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_TOBIKO);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_TOBIKO, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SANAE, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+	SetImageFoward(cutinPlayer1, true);
+	SetImageVisible(cutinBoss1, false);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "これは私一人の手には負えません。[r]早く神奈子様と諏訪子様の所に戻らなければ…");
+		}
+		case(1)
+		{
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+
+			ChangeTalkTexture(cutinBoss1, I_NOTICE);
+			SetTalkEx(cutinBoss1, "ほう！　噂の守矢の新人神様殿か！");
+			SetBossName(cutinBoss1);	// ボスネーム表示
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "朝顔を通じた欲望の増幅、昼から[r]輝く七夕の星。慌てふためく二柱の神。");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NOTICE);
+			SetTalkEx(cutinBoss1, "残念だねえ、神社はもぬけの殻であったよ。");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "ああもう、また面倒ななんかが出て来る！");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER);
+			SetTalkEx(cutinPlayer1, "最近の天狗は留守をいい事に勝手に神社に入る[r]のですか？　住居侵入罪で訴えますよ？");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "失敬失敬、職業柄そういう事は得意でね。");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "あと立派な武器と良い童女を[r]物色するのもお手の物だ。");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "君の神社には眼鏡に適う物は[r]無かったので何も弄っておらんよ。");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			SetTalkEx(cutinPlayer1, "もしかして喧嘩売ってます？[r]こっちは七夕騒ぎでそれ所じゃないのに");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "ではこの鷹藤を雇ってみんかね？");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "異変の真犯人に辿り着く情報、[r]我が鷹の目を以て必ずや集めて見せよう");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			SetTalkEx(cutinPlayer1, "そんな事言っちゃって、さては貴方達が[r]真犯人である事をごまかす気ですね。");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "それに勘違いしないで下さい。[r]貴方の力を測るのは貴方ではないの。");
+		}
+		case(14)
+		{
+			//BGM
+			PlayMusicWithName(5, 180, 30);
+
+			ChangeTalkTexture(cutinBoss1, I_NOTICE);
+			SetTalkEx(cutinBoss1, "結構！　結構！　君がそうであるように[r]僕もまた雇い主の器を見極める！");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "噂の新人神様、その底は如何程か？[r]さあ、猛犬でも槍衾でも好きに使いたまえ！");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 140, 15, 1, 0.1, 5);
+}

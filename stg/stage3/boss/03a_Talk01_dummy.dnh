@@ -1,0 +1,34 @@
+//---------------------------------------------------------------------
+// 出現モーション
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 1);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	objEnemy  = CreateBossTalk(BOSS_ID_SHELIA);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 登場モーション
+	wait(45);
+	EffectEntryBoss(objEnemy, [EFF_SKY, EFF_BLUE, EFF_PURPLE], [CenX, 140]);
+	wait(120);
+	Boss_Finalize(objEnemy, false, false);
+}

@@ -1,0 +1,167 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["1面　会話前半"]
+#Text["1面　会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let objEnemy2;
+let MOVE_END = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_FABRITIS);
+	Reset_aTime(BOSS_ID_IPHONEA);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy2  = CreateBossTalkEx(BOSS_ID_IPHONEA);
+	objEnemy  = CreateBossTalk(BOSS_ID_FABRITIS);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	while(!MOVE_END) { yield; }
+	Boss_Finalize(objEnemy2, false, false);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObjectEx(BOSS_ID_IPHONEA, true, 40, 0);
+	let cutinBoss2   = CreateTalkObjectEx(BOSS_ID_FABRITIS, true, -40, 0);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_UPSET);
+	SetImageFoward(cutinPlayer1, true);
+	SetImageVisible(cutinBoss1, false);
+	SetImageVisible(cutinBoss2, false);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinPlayer1, "むしあつ～、いい加減にして欲しいわ。[r]いつもなら昼寝する季節だって言うのに");
+		}
+		case(1)
+		{
+			EnterBoss();
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss2, true);	// ボス画像出現フラグ
+
+			ChangeTalkTexture(cutinBoss2, I_NOTICE);
+			SetTalkEx(cutinBoss2, "まだ寝る気かい？[r]いつも昼寝してる癖に");
+		}
+		case(2)
+		{
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+			
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "巫女の生態は、神社裏の三人組から[r]情報収集済みなのです！");
+			SetBossName(cutinBoss1);	// ボスネーム表示
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "良かったね。[r]逆立ちしても勝てないって事前に分かって");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss2, I_DOYA);
+			SetTalkEx(cutinBoss2, "何も分かってないなあ！");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE2);
+			SetTalkEx(cutinBoss1, "なんだか朝顔が活性化しているけど、[r]おかげで私たちも恩恵を授かったのです！");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx(cutinPlayer1, "槿花一日の栄、ね");
+		}
+		case(7)
+		{
+			//BGM
+			PlayMusicWithName(3, 180, 30);
+			
+			ChangeTalkTexture(cutinBoss2, I_NORMAL);
+			SetTalkEx(cutinBoss2, "私達は朝顔を超え、[r]かの遺伝子を駆逐する！");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "私たちの[ruby rb=\"優性遺伝結界\" rt=\"　メンデルス・ゾーン　\"]の中で、[r]存分に思い知るのです！");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX+64, 140, 15, 1, 0.1, 5);
+	wait(30);
+	SetAction(objEnemy2, ACT_MOVE, 600);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy2, CenX-64, 140, 15, 1, 0.1, 5);
+	wait(90);
+	MOVE_END = true;
+}

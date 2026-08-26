@@ -1,0 +1,117 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["2面　会話後半"]
+#Text["2面　会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+// 各ボスのオブジェクトID
+let objEnemy2;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_TOBIKO);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_TOBIKO, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinBoss1, I_BORO2);
+	SetImageFoward(cutinBoss1, true);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "そもそも夜明けに願いを叶えるのに、[r]夕刻に出て来るのは良くなかったな");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "ただの妖怪鳶なんて目じゃあない。[r]次は金鵄でも崇徳院でも連れて来なさい");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "それほど強い敵を所望なら、[r]このまま天の川に登るがいい。");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "守矢神社？　無駄無駄！");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "今頃は連中も鳶に油揚げを[r]さらわれたようになっておるよ");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_ANGER_SMILE);
+			SetTalkEx(cutinPlayer1, "鳶は鳶らしく死肉でも漁ってろ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

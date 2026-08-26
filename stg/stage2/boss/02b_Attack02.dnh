@@ -1,0 +1,149 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["鳶子通常2"]
+#Text["鳶子通常2"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Tobiko.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(1800);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(35);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_TOBIKO);	//ボスセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	wait(60);
+	
+	let MotionX_Add = [GetStgFrameWidth-32, -GetStgFrameWidth+32];
+	let MotionY = [80, 160, 100];
+	
+	let t = 0;
+	let muki = 1;
+	while(eAlive)
+	{
+		MoveAndShot(GetPlayerX+MotionX_Add[t%length(MotionX_Add)], MotionY[t%length(MotionY)], 90);
+		SetAction(objEnemy, ACT_MOVE, 90);
+		CallSound(sndShot7);
+		wait(180);
+		if (!eAlive) { return; }
+		MufflerShot(muki);	// マフラーっぽくふぁさーって感じ
+		SetAction(objEnemy, ACT_SHOT1, 120);
+		wait(180);
+		muki = -muki;
+		t++;
+	}
+}
+
+
+// 移動しつつショット
+task MoveAndShot(to_x, to_y, timer)
+{
+	let speed = [3, 3.5, 4, 5][Difficult];
+	let graphic = BGW_SCALE_YELLOW;
+	let way = 3;
+	let way2 = [3, 3, 5, 5][Difficult];
+	let wt = [5, 3, 3, 3][Difficult];
+	
+	let muki = [1, -1][to_x-ObjMove_GetX(objEnemy) > 0];
+	MoveToSlowdown2_Warp(objEnemy, to_x, to_y, timer);
+	
+	let base_angle = GetAngleToPlayer(objEnemy);
+	let offset_angle = 240*muki;
+	
+	let move_angle = atan2(to_y-ObjMove_GetY(objEnemy), to_x-ObjMove_GetX(objEnemy));
+	TobikoParticleEffect(timer, 1, move_angle+150*muki);
+	
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0)
+		{
+			let ba = base_angle + offset_angle*t/(timer-1);
+			ascent(i in 0 .. way2)
+			{
+				let ss = speed * (1-t/timer/2);
+				let sa = i*360/way2 + ba;
+				CreateShotTobikoArrow(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, ss/120, ss, graphic, 15, way, 1, 4);
+			}
+		//	CallSound(sndShot3);
+		}
+		yield;
+	}
+}
+
+// マフラーっぽくふぁさーって感じ
+task MufflerShot(muki)
+{
+	let count = [7, 8, 10, 12][Difficult];
+	let base_angle = GetAngleToPlayer(objEnemy);
+	let wt = [9, 8, 7, 6][Difficult];
+	let timer = 30;
+	
+	let muki_base = muki;
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let sa = base_angle + ((i-(count-1)/2)/count*120-120)*muki_base + i*180;
+		let ss = 1 - i/count*0.25;
+		_MufflerShot(sa, ss, timer, muki);
+		wait(wt);
+	}
+}
+
+
+task _MufflerShot(base_angle, base_speed, timer, muki)
+{
+	let speed = [1.5, 1.5, 2, 2][Difficult];
+	let count = 1;
+	let wt = [2, 1, 1, 1][Difficult];
+	let graphic = BGB_SCALE_ORANGE;
+	
+	speed *= base_speed;
+	
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0)
+		{
+			let tmp = t/(timer-1);
+			let va = muki*t/timer*180;
+			let vr = tmp^0.5 * 128;
+			let vx = vr*cos(va);
+			let vy = vr*sin(va)/6;
+			let sx = ObjMove_GetX(objEnemy) + Rotate2D_X(vx, vy, base_angle);
+			let sy = ObjMove_GetY(objEnemy) + Rotate2D_Y(vx, vy, base_angle);
+			let sa = va+base_angle;
+			ascent(i in 0 .. count)
+			{
+				let ss = speed * (1+i/2);
+				CreateShotA1(sx, sy, ss, sa, graphic, 20);
+			}
+			CallSound(sndShot3);
+		}
+		yield;
+	}
+}

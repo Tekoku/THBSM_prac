@@ -1,0 +1,288 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ソーンバラッジ"]
+#Text["ソーンバラッジ"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Tobiko.dnh"
+
+let THONE_SPLASH = false;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(450);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(45);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossHitToPlayer = 12;	//体当たり判定小さめ
+	dIni_Shot = 20;		//ダメージ透過率
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_TOBIKO);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(12), [3,3,4,5][Difficult], 
+			GetCurrentScriptDirectory()~"02a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60+60);
+	wait(60);
+	
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+
+	let t = 0;
+	let muki = 1;
+	while(eAlive)
+	{
+		MoveTo(objEnemy, CenX+muki*120, -256, 60);
+		wait(30);
+		if (!eAlive) { return; }
+		ThornShot(muki);
+		wait(120-30);
+		if (!eAlive) { return; }
+		CallSound(sndPower3);
+	//	wait(30);
+		if (!eAlive) { return; }
+		
+		let mx = [];
+		let my = [];
+		ascent(i in 0 .. 6)
+		{
+			let tmp_mx = CenX + ([CenX+128, -CenX-128][i%2])*muki;
+			let tmp_my = 16 + i*72 + rand(-64,64);
+			mx = mx ~ [tmp_mx];
+			my = my ~ [tmp_my];
+		}
+		ObjMove_SetPosition(objEnemy, mx[0], my[0]);
+		ascent(i in 0 .. 5)
+		{
+			MoveSlash(mx[i], my[i], mx[i+1], my[i+1], 20*i, i<3);
+		}
+		wait(20*5+30+60);
+		if (!eAlive) { return; }
+		THONE_SPLASH = true;
+		CallSound(sndShot4);
+		wait(90);
+		if (!eAlive) { return; }
+		ObjMove_SetY(objEnemy, 200);
+		MoveTo(objEnemy, CenX, 140+rand(-20,20), 180);
+		JikiShot(60, 105, 135+120);
+		wait(510);
+		muki = -muki;
+	}
+}
+
+task JikiShot(delay, timer1, timer2)
+{
+	wait(delay);
+	
+	let speed = [3, 4.5, 5, 6][Difficult];
+	let way = 1;
+	let way_angle = [60, 45, 45, 45][Difficult];
+	let graphic = [ADD_BGW_BALL_BS_YELLOW, ADD_BGW_BALL_BS_YELLOW, ADD_BGW_BALL_BS_PURPLE, ADD_BGW_BALL_BS_RED][Difficult];
+	let wt = [25, 18, 14, 12][Difficult];
+	let wt2 = wt*2;
+	
+	let way2 = 5;
+	
+	let st = 0;
+	let timer = timer1 + timer2;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (st <= 0)
+		{
+			let ba = GetAngleToPlayer(objEnemy);
+			let ss = speed * (1-t/timer*0.66);
+			let wa = way_angle;
+			if (way_angle*way > 360) { wa = 360/way; }
+			ascent(i in 0 .. way)
+			{
+				let sa = ba + (i-(way-1)/2)*wa;
+				CreateShotTobikoArrow(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					0, sa, ss/240, ss, graphic, 15, way2, 1, 4);
+			}
+			CallSound(sndShot2);
+			way++;
+			st += [wt, wt2][t >= timer1];
+		}
+		st--;
+		yield;
+	}
+}
+
+task MoveSlash(from_x, from_y, to_x, to_y, delay, addshot)
+{
+	wait(delay);
+	if (!eAlive) { return; }
+
+	let la = atan2(to_y-from_y, to_x-from_x);
+
+	let muki = [-1 ,1][to_x > CenX];
+	let shot_angle = la - 120*muki;
+	let effect_angle = la - 150*muki;
+	
+	TobikoSlash(from_x, from_y, to_x, to_y, 60);
+	wait(60);
+	if (!eAlive) { return; }
+	MoveToSlowdown2(objEnemy, to_x, to_y, 15);
+	CallSound(sndShot1);
+	
+	// えへくと
+	TobikoParticleEffect(15, 6, effect_angle);
+	
+	// 通り道の弾削除
+	ascent(i in 0 .. 20)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i+0.5)/20;
+		let sx = from_x*(1-tmp) + to_x*tmp;
+		let sy = from_y*(1-tmp) + to_y*tmp;
+		let tmp_obj = GetShotIdInCircleA2(sx, sy, 24, TARGET_ENEMY);
+		ascent(i in 0 .. length(tmp_obj))
+		{
+			if (Obj_GetValueD(tmp_obj[i], "THORN", false))
+			{
+				DeleteBulletEffect(tmp_obj[i]);
+				CallSound(sndBulletBreak);
+			}
+		}
+		// ついでに弾設置
+		if (addshot)
+		{
+			let ss = rand(2, 4);
+			let sa = shot_angle;
+			CreateShotTobikoArrow(sx, sy,
+				0, sa, ss/60, ss, ADD_BGW_SCALE_RED, 15, 7, 1, 2);
+
+			// Lunatic時自機狙い追加
+			if (Difficult >= D_LUNA)
+			{
+				let sa = atan2(GetPlayerY-sy, GetPlayerX-sx)+i*180/8;
+				CreateStayShotS1Circle(sx, sy, 6, sa, ADD_BGW_BILL_SKY, 15, 4, 150-delay-i, 8);
+			}
+		}
+		yield;
+	}
+}
+
+task ThornShot(muki)
+{
+	// フラグリセット
+	THONE_SPLASH = false;
+	
+	let count = [5, 9, 12, 15][Difficult];
+	
+	let s_muki = muki;
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i+rand(-0.5,0.5)+0.5)/count;
+		_ThornShot(CenX+CenX*(tmp*2-1)*muki, -90+rand(-35,-10)*s_muki);
+		wait(5);
+		s_muki = -s_muki;
+	}
+}
+
+task _ThornShot(x, angle)
+{
+	let delay = 30;
+	let y = MaxY;
+	let vx = cos(angle)*8;
+	let vy = sin(angle)*8;
+	
+	let t = 0;
+	while(y > -4)
+	{
+		if (!eAlive) { return; }
+		loop(3)
+		{
+			if (y <= -4) { return; }
+			ThornShotSingle(x, y, angle, trunc(delay), t*60+angle, (t%2==0));
+			x += vx; y += vy;
+			t++;
+		}
+		CallSound(sndShot3);
+		delay -= 1;
+		yield;
+	}
+}
+
+task ThornShotSingle(x, y, angle, delay, first_angle, shot_flag)
+{
+	let obj = My_CreateShotA1(x, y, 0, first_angle, ADD_BGW_NEEDLE_GREEN, 90);
+	ObjMove_SetAngularVelocity(obj, 15);
+	Obj_SetValue(obj, "THORN", true);
+//	SetShotDisabled(obj);
+//	ObjRender_SetAlpha(obj, 128);
+	
+	let t = 0;
+	while(!Obj_IsDeleted(obj) && !THONE_SPLASH)
+	{
+		if (t == 60) { ObjMove_SetAngularVelocity(obj, 0); }
+		t++;
+		yield;
+	}
+	wait(delay);
+	if (eAlive && THONE_SPLASH)
+	{
+		if (shot_flag)
+		{
+			let sg = [BGB_RICE_S_GREEN, BGB_RICE_S_GREEN, BGW_RICE_S_YELLOW, BGW_FUGU_GREEN][Difficult];
+			let ss = rand(1, 3);
+			let sa = angle + rand(-5,5);
+			let vx = cos(sa)*ss;
+			let vy = sin(sa)*ss;
+			CreateShotB2(x, y, vx, vy, 0, 0.02, 99, 1.75, sg, 15);
+		}
+		DeleteBulletEffect(obj);
+	}
+}
+
+function CreateStayShotS1Circle(x, y, speed, angle, graphic, delay, fs, timer, way)
+{
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + i*360/way;
+		CreateStayShotS1(x, y, speed, sa, graphic, delay, fs, timer);
+	}
+}
+task CreateStayShotS1(x, y, speed, angle, graphic, delay, fs, timer)
+{
+	let obj = CreateShotA2(x, y, fs, angle, -fs/delay, 0, graphic, 0);
+	ObjMove_AddPatternA2(obj, timer, NO_CHANGE, NO_CHANGE, speed/30, 0, speed);
+	ObjShot_SetIntersectionEnable(obj, false);
+	ascent(i in 0 .. delay*2)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		let tmp = sin((i+1)/delay/2*180);
+		ObjRender_SetScaleX(obj, tmp);
+		yield;
+	}
+	wait(timer-delay*2-15);
+	ascent(i in 0 .. 15)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		let tmp = sin((i+1)/15*90);
+		ObjRender_SetScaleX(obj, tmp);
+		yield;
+	}
+	ObjShot_SetIntersectionEnable(obj, true);
+}

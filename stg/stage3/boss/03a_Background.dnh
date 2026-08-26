@@ -1,0 +1,131 @@
+
+
+//@ƒVƒFƒŠƒAspell”wŒi
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../../lib/spell_function.dnh"
+
+let imgBgTexture = [];
+let flagEnd = false;
+
+@Event
+{
+	alternative(GetEventType())
+	case(EV_END_BOSS_STEP)
+	{
+		//”wŒiíœ
+		flagEnd = true;
+		CloseMine(180);
+	}
+}
+
+@Initialize
+{
+	init();	//‰ŠúÝ’è
+	imgBgTexture = LoadingImageFile_SpellBg(BOSS_ID_SHELIA);
+	TMain;
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task TMain()
+{
+	if (IsDrawBackground() >= 2) { SetSpellCardBG03a(GetEnemyBossObjectID()[0]); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+
+task SetSpellCardBG03a( CallID ){
+	let alpha1		= 0;
+	let alphaA		= 0;
+	let alpha2		= 0;
+	let alphaB		= 0;
+	let cc			= 0;
+	let i			= 0;
+	
+	let ID			= [
+		CreateTexture2D_01( imgBgTexture[0] ),
+		CreateTexture2D_01( imgBgTexture[1] ),
+	];
+	
+	ObjRender_SetBlendType( ID[1], BLEND_SUBTRACT );
+	
+	ascent( i in 0..( length(ID) ) ){
+		ObjRender_SetPosition(ID[i], CenX, CenY, 0 );
+		ObjPrim_SetVertexCount(ID[i], 4 );
+		ObjPrim_SetVertexPosition(ID[i], 0, 384/-2, 448/-2, 0 );
+		ObjPrim_SetVertexPosition(ID[i], 1, 384/-2, 448/2, 0 );
+		ObjPrim_SetVertexPosition(ID[i], 2, 384/2, 448/-2, 0 );
+		ObjPrim_SetVertexPosition(ID[i], 3, 384/2, 448/2, 0 );
+		ObjPrim_SetVertexUVT(ID[i], 0, 0, 0 );
+		ObjPrim_SetVertexUVT(ID[i], 1, 0, 448 );
+		ObjPrim_SetVertexUVT(ID[i], 2, 384, 0 );
+		ObjPrim_SetVertexUVT(ID[i], 3, 384, 448 );
+	}
+	
+	CreateTexture2D_PolarCoordinates( CallID, imgBgTexture[2], [CenX,CenY], 16, 384, [90,0], BLEND_MULTIPLY );
+	
+	while( !Obj_IsDeleted(CallID) ){
+		
+		alpha1 = 1 * sin( alphaA );
+		alpha2 = 1 * sin( alphaB );
+		
+		ObjPrim_SetVertexUVT(ID[1], 0, 0, 0 + cc/4 );
+		ObjPrim_SetVertexUVT(ID[1], 1, 0, 448 + cc/4 );
+		ObjPrim_SetVertexUVT(ID[1], 2, 384, 0 + cc/4 );
+		ObjPrim_SetVertexUVT(ID[1], 3, 384, 448 + cc/4 );
+		
+		ascent( i in 0..2 ){
+			ObjPrim_SetVertexAlpha(ID[0], 0 + i*2, alpha1*255 );
+			ObjPrim_SetVertexAlpha(ID[0], 1 + i*2, alpha2*255 );
+			ObjPrim_SetVertexAlpha(ID[1], 0 + i*2, alpha1*255 );
+			ObjPrim_SetVertexAlpha(ID[1], 1 + i*2, alpha2*255 );
+		}
+		
+		ascent( i in 0..4 ){
+			ObjPrim_SetVertexColor(ID[0], i, 255, 255, 255 );
+			ObjPrim_SetVertexColor(ID[1], i, 255, 255, 255 );
+			i++;
+		}
+		
+		cc++;
+		if( alpha1 < 1 ){ alphaA += 2; }
+		if( alpha2 < 1 && alpha1 >= 0.5 ){ alphaB += 5; }
+		
+		yield;
+	}
+	ascent( i in 0..( length(ID) ) ){
+		Obj_Delete( ID[i] );
+	}
+}
+
+task BackGroundLite
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,prioritySpellBG);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,imgBgTexture[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	while(alpha<255) {
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
