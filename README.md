@@ -1,5 +1,5 @@
-# 东方魔宝城(v1.0) 练习器 THBSM(v1.0) prac tool 
-集成在《东方邪星章（汉化版）游戏本体的练习器/A practice tool integrated into the game The Last Comer (Chinese version)。
+# 东方魔宝城(练习器 THBSM(v1.0) prac tool 
+集成在《东方魔宝城》游戏本体的练习器/A practice tool integrated into the game Book of Star Mythology.
 包含：
 - 练习器所需的脚本文件
 - 原版脚本文件
@@ -21,6 +21,9 @@
 - 练习模式已默认解锁全部关卡（含EX）与全部机体（可能覆盖你原有的存档，注意备份）。
 - replay播放bug已修复。未经过完整测试，未来发现新bug可能也许大概会修。
 - 请一定来找我并亲口告诉我「我将夜晚烧尽了」
+## 2026.08.27更新
+- 更新了对魔宝城v1.1汉化版/日文版的游戏支持
+- 使用方式同上，选择对应版本即可
 
 
 
