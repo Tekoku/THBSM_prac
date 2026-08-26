@@ -1,0 +1,242 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["6面　ボス会話"]
+#Text["6面　ボス会話"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_MISHANDRA);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_MISHANDRA);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+	//Obj_Delete(objScene);	// 会話シーン強制終了
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MISHANDRA, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+	SetImageFoward(cutinPlayer1, true);
+	SetImageVisible(cutinBoss1, false);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "かつて、[r]人が空を飛べなかった時代があった。");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "人は空の星を見上げて、[r]叶う事の無い願いを託した。");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "さて、お前はそれを独り占めするのか？");
+		}
+		case(3)
+		{
+			SetImageVisible(cutinBoss1, false);	// ボス画像出現フラグ
+			ChangeTalkTexture(cutinPlayer1, I_SURPRISE);
+			
+			SetTalkEx2(cutinBoss1, "まるで夢物語、だな。", -32, -280);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinBoss1, "");
+			EnterBoss();
+			wait(90);
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "強い者が上に立ち、弱い者は利用される。[r]世界はそのように出来ていた。");
+			SetBossName(cutinBoss1);	// ボスネーム表示
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "夢物語で出来ているのが幻想郷だぜ。");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL3);
+			SetTalkEx(cutinBoss1, "私の名はフーマ。[r]またの名を魔法書レメゲトン。");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "魔法使い、君は世界に一冊しか無い[r]レメゲトンを分け合えるのか？");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "いい事を聞いた。[ruby rb=\" 本題\" rt=\"ゴエティア\"]以外の[r]部分は誰にでも好きにくれてやる。");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "力は使われなければ意味が無い。[r]その為にフーマは生まれて来た。");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL3);
+			SetTalkEx(cutinBoss1, "決して叶う事の無い願いも、[r]形を変えれば別の願いを叶えられる。");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "そうか、目立つ大三角星は囮。");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "周りの小さい星座を三つ繋いで[r]逆向きの三角形を用意する。");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "それを組み合わせれば…ソロモンの星。");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "お前は何が狙いだ？[r]本当に狐を封印したいだけか？");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NOTICE);
+			SetTalkEx(cutinBoss1, "フーマの願いは乱世の覇者となる事だった。");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL3);
+			SetTalkEx(cutinBoss1, "少なくともフーマを生んだ者の[r]願いはそうだった。");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "しかし人々の願いを集めて気付いた。");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "この願い、[r]この世界にはどうやらそぐわぬ物だ。");
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "乱世も下克上も全部霊夢と私が潰すからな。");
+		}
+		case(20)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "さあて、だからレメゲトンを寄越せ、[r]早く早く。");
+		}
+		case(21)
+		{
+			//BGM
+			PlayMusicWithName(13, 180, 30);
+
+			ChangeTalkTexture(cutinBoss1, I_WORRY);
+			SetTalkEx(cutinBoss1, "鍵の力は王の力。[r]人を超えた者にしか扱えぬ力。");
+		}
+		case(22)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "霧雨の魔法使い、[r]君がフーマの主と、王となると言うのか？");
+		}
+		case(23)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetTalkEx(cutinPlayer1, "本は水に弱い。[r]霧雨が本に負ける筈が無いぜ。");
+		}
+		case(24)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL3);
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "フーマは神話を紡ぐ本。[r]星の神話を語り継ぎ、英雄の神話を遺す魔本。");
+		}
+		case(25)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "君が新たな一頁に相応しいか、[r]決めるのはフーマ自身だ！");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	EffectEntryBoss(objEnemy, [EFF_SKY, EFF_BLUE, EFF_PURPLE], [CenX, 105]);
+}

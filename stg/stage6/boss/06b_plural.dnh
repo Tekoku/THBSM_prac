@@ -1,0 +1,153 @@
+//#東方弾幕風[Plural]
+#ScriptVersion[3]
+#Title["6面ボス 連続再生"]
+#Text[""]
+#System["./../../../system/System.dnh"]
+
+
+#include"./../../../lib/lib_Boss.dnh"
+#include"./../../../lib/lib_ChapterSkip.dnh"
+
+let objBossScene;
+let objBossScene02;
+let dir = GetCurrentScriptDirectory();
+let dest = GetStartChapter(6);
+SetDivLoadEnabledPre(6);
+let divload = GetDivLoadEnabled(6) && !GetPracFull();	// practice tool: no divload on FULL (keeps talk before ns1)
+if(dest >= 17){ divload = false; }	// practice tool: spell6/spell7 have no following unit in main scene
+let boss_div1;
+
+@Initialize
+{
+	TPlural();
+}
+
+@Event
+{
+	alternative( GetEventType() )
+	//　ボス登場イベント
+	case( ev_ResistBoss )
+	{
+//		ResistSceneScript();
+	}
+	case( ev_ResistBoss2 )
+	{
+		ResistSceneScript();
+	}
+}
+
+@MainLoop
+{
+	yield;
+}
+
+// 裏でボスシーンをロード
+task TPlural
+{
+	// practice tool: separate 7-step dummy talk scene removed (deadlocked on chapter skip); talk merged into main scene step 0 below
+
+
+
+	// ボスシーンを作成します。
+	objBossScene = ObjEnemyBossScene_Create();
+	
+	// ボスシーンの初期設定
+	BossScene_SetInit(objBossScene,
+		BOSS_ID_MISHANDRA,	// ボスID
+		[CenX, -128],		// 初期座標
+	);
+	BossScene_SetNameVisible(objBossScene, true);	//
+
+	// practice tool: talk merged into main scene step 0 (normal play & FULL)
+	if(dest < 7 || GetPracFull())
+	{
+	alternative(GetPlayerType())
+	case(PLAYER_REIMU_A)  { ObjEnemyBossScene_Add(objBossScene, 0, dir ~ "06b_Talk01a.dnh"); }
+	case(PLAYER_MARISA_A) { ObjEnemyBossScene_Add(objBossScene, 0, dir ~ "06b_Talk01b.dnh"); }
+	case(PLAYER_SANAE_A)  { ObjEnemyBossScene_Add(objBossScene, 0, dir ~ "06b_Talk01c.dnh"); }
+	}
+
+	// practice tool: boss attack units (chapters 7-17 map 1:1)
+	if (dest < 18)
+	{
+		let files = ["06b_Attack01.dnh", "06b_Spell01.dnh", "06b_Attack02.dnh", "06b_Spell02.dnh", "06b_Attack03.dnh", "06b_Spell03.dnh", "06b_Attack04.dnh", "06b_Spell04.dnh", "06b_Attack05.dnh", "06b_Spell05.dnh", "06b_Spell06.dnh"];
+		let sht   = [0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 6];
+		if(divload)
+		{
+			boss_div1 = ObjEnemyBossScene_Create();
+			BossScene_SetInit(boss_div1,
+				BOSS_ID_MISHANDRA,
+				[CenX, -128],
+			);
+			ChapterSkip_AddDivEx(objBossScene, boss_div1, dest, 7, sht, files, dir, 6, [], []);
+		}
+		else
+		{
+			ChapterSkip_AddFromEx(objBossScene, dest, 7, sht, files, dir, [], []);
+		}
+		ObjEnemyBossScene_LoadInThread(objBossScene);
+	}
+
+	// practice tool: LastWord scene (creation moved here from ResistSceneScript)
+	objBossScene02 = ObjEnemyBossScene_Create();
+	ObjEnemyBossScene_Add(objBossScene02, 0, dir ~ "06b_Spell07_Enter.dnh");
+	ObjEnemyBossScene_Add(objBossScene02, 0, dir ~ "06b_Spell07.dnh");
+	ObjEnemyBossScene_LoadInThread(objBossScene02);
+}
+
+// ボスシーンの起動
+task ResistSceneScript
+{
+//	if (!IsReplay()) { CDM_SetCharacterDataFlag(BOSS_ID_SETUJO); }	// 解説フラグON
+	
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+	
+	if (dest < 18)
+	{
+		if(divload)
+		{
+			BossEffect_ResetMagicCircle();
+			ObjEnemyBossScene_Regist(boss_div1);
+			SetRawdel(true);
+			while(!Obj_IsDeleted(boss_div1))
+			{
+				yield;
+			}
+			SetRawdel(false);
+		}
+
+
+	// ボスシーン開始
+	ObjEnemyBossScene_Regist(objBossScene);
+
+	//敵ボスシーンが終了するまで待機
+	while(!Obj_IsDeleted(objBossScene))
+	{
+		yield;
+	}
+	
+	wait(240);
+	}
+	
+	if (GetLastWordBorder() >= 1 || GetStartChapter(6) > 1)
+	{
+		// ボスシーン２開始
+		ObjEnemyBossScene_Regist(objBossScene02);
+		// ボスシーン２が終了するまで待機
+		while(!Obj_IsDeleted(objBossScene02))
+		{
+			yield;
+		}
+	}
+	else
+	{
+		SetAreaCommonData(CAREA_SYSTEM, "FlgBadEnding", true);
+	}
+
+	// 連続再生終了通知
+	FinalizePlural();
+
+	//スクリプト終了
+	CloseScript(GetOwnScriptID());
+}

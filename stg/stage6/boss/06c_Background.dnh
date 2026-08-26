@@ -1,0 +1,148 @@
+
+
+//@ƒ‰ƒXƒy”wŒi
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../../lib/spell_function.dnh"
+
+let imgBgTexture = [];
+let flagEnd = false;
+
+@Event
+{
+	alternative(GetEventType())
+	case(EV_END_BOSS_STEP)
+	{
+		//”wŒiíœ
+	//	flagEnd = true;
+	//	CloseMine(180);
+	}
+	case(ev_CloseScript)
+	{
+		//”wŒiíœ
+		flagEnd = true;
+		CloseMine(180);
+	}
+}
+
+@Initialize
+{
+	init();	//‰ŠúÝ’è
+	imgBgTexture = LoadingImageFile_SpellBg(BOSS_ID_MISHANDRA);
+	TMain;
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task TMain()
+{
+	if (IsDrawBackground() >= 2) { BackGround6a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+task BackGround6a
+{
+	BackGround1;
+	wait(180);
+	let alpha = 0;
+	while(!flagEnd)
+	{
+		alpha = min(1, alpha+0.1);
+		BackGround2(randEffect(0,360), 0.2, alpha);
+		wait(25);
+	}
+
+	task BackGround1
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG+1);
+//		ObjPrim_SetTexture(obj, imgBgTexture[0]);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 384, 448);
+		ObjSprite2D_SetDestRect(obj, 0, 0, 384, 448);
+		ObjRender_SetColor(obj, 0, 0, 0);
+
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha += 2;
+			ObjRender_SetAlpha(obj, alpha);
+			yield;
+		}
+		while(!flagEnd)
+		{
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	task BackGround2( baseAngle, rotateAngle, baseAlpha )
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG+1);
+		ObjPrim_SetTexture(obj, imgBgTexture[0]);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 512, 512);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetPosition(obj, GetStgFrameWidth/2, GetStgFrameHeight/2, 0);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+
+		let t = 0;
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			let scale = 120/(t+60);
+			alpha += 5;
+			ObjRender_SetAlpha(obj, alpha*baseAlpha);
+			ObjRender_SetAngleZ(obj, baseAngle);
+			ObjRender_SetScaleXYZ(obj, scale, scale, 0);
+			baseAngle += rotateAngle;
+			t++;
+			yield;
+		}
+		while(!flagEnd && t < 240)
+		{
+			let scale = 120/(t+60);
+			alpha -= 1;
+			ObjRender_SetAlpha(obj, alpha*baseAlpha);
+			ObjRender_SetAngleZ(obj, baseAngle);
+			ObjRender_SetScaleXYZ(obj, scale, scale, 0);
+			baseAngle += rotateAngle;
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+
+}
+
+
+task BackGroundLite
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,prioritySpellBG);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,imgBgTexture[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	while(alpha<255) {
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+

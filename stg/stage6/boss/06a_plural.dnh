@@ -1,0 +1,79 @@
+//#東方弾幕風[Plural]
+#ScriptVersion[3]
+#Title["6面ボス 連続再生"]
+#Text[""]
+#System["./../../../system/System.dnh"]
+
+
+#include"./../../../lib/lib_Boss.dnh"
+#include"./../../../lib/lib_ChapterSkip.dnh"
+
+let objBossScene;
+let dir = GetCurrentScriptDirectory();
+let dest = GetStartChapter(6);
+
+@Initialize
+{
+	TPlural();
+}
+
+@Event
+{
+	alternative( GetEventType() )
+	//　ボス登場イベント
+	case( ev_ResistBoss )
+	{
+		ResistSceneScript();
+	}
+}
+
+@MainLoop
+{
+	yield;
+}
+
+// 裏でボスシーンをロード
+task TPlural
+{
+	// ボスシーンを作成します。
+	objBossScene = ObjEnemyBossScene_Create();
+	
+	// ボスシーンの初期設定
+	BossScene_SetInit(objBossScene,
+		BOSS_ID_NEZU,	// ボスID
+		[CenX, -128],		// 初期座標
+	);
+	BossScene_SetNameVisible(objBossScene, true);	//ボスネーム表示状態
+
+	// 会話
+	if(dest < 5 || GetPracFull()){ ObjEnemyBossScene_Add(objBossScene, 0, dir ~ "06a_Talk01a.dnh"); }
+
+	// practice tool: chapter skip aware
+	ChapterSkip_AddFromEx(objBossScene, dest, 5, [0, 1], ["06a_Attack01.dnh", "06a_Spell01.dnh"], dir, [], []);
+	ObjEnemyBossScene_LoadInThread(objBossScene);
+}
+
+// ボスシーンの起動
+task ResistSceneScript
+{
+//	if (!IsReplay()) { CDM_SetCharacterDataFlag(BOSS_ID_SETUJO); }	// 解説フラグON
+	
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+	
+	// ボスシーン開始
+	ObjEnemyBossScene_Regist(objBossScene);
+
+	//敵ボスシーンが終了するまで待機
+	while(!Obj_IsDeleted(objBossScene))
+	{
+		yield;
+	}
+	
+
+	// 連続再生終了通知
+	FinalizePlural();
+
+	//スクリプト終了
+	CloseScript(GetOwnScriptID());
+}

@@ -1,0 +1,229 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ミシャンドラ通常"]
+#Text["ミシャンドラ通常3"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mishandra.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(4000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MISHANDRA);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	FumaCharismaOption(objEnemy, false);
+	wait(90);
+	
+	CallSound(sndBoon);
+	
+	CircleShotA03(160, -1);
+	wait(30);
+	CircleShotA03(96, 1);
+	wait(240);
+	
+	let wt = 360;
+	
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		wait(45);
+		if (!eAlive) { return; }
+		TShot_sub(muki);
+		wait(wt-60);
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 140, 48);
+		wait(60);
+	}
+}
+
+task TShot_sub(muki)
+{
+	let ba = GetAngleToPlayer(objEnemy);
+	let r = 128;
+	ascent(i in 0 .. 6)
+	{
+		if (!eAlive) { return; }
+		let sa = ba + i*60*muki;
+		HebrewShot01(ObjMove_GetX(objEnemy)+r*cos(sa), ObjMove_GetY(objEnemy)+r*sin(sa), sa-90);
+		wait(5);
+	}
+}
+
+task CircleShotA03(max_r, muki)
+{
+	let speed = [1, 1, 1.25, 2][Difficult];
+	let wt = [8, 6, 5, 3][Difficult];
+	let graphic = BGW_RICE_M_WHITE;
+	let way = 3;
+	let shot_span = [5, 6, 6, 6][Difficult];
+
+//	let max_r = 108;
+	let base_angle = rand(0, 360);
+	let add_angle = [0.35, 0.5, 0.75, 1][Difficult] * muki;
+	let offset_angle = -90;
+	
+	let bx = ObjMove_GetX(objEnemy);
+	let by = ObjMove_GetY(objEnemy);
+	
+	let objEff = MishandraLineEffect(objEnemy, bx, by, MLINE_CIRCLE);
+	
+	ascent(t in 0 .. 90)
+	{
+		let tmp = sin((t+1)/90*90);
+		Obj_SetValue(objEff, "R", tmp*max_r);
+		ObjRender_SetPosition(objEff, bx, by, 0);
+		bx = bx*0.98+ObjMove_GetX(objEnemy)*0.02;
+		by = by*0.98+ObjMove_GetY(objEnemy)*0.02;
+		yield;
+	}
+	let t = 0;
+	let st = 0;
+	while(eAlive)
+	{
+		if (t > 60 && t%wt == 0)
+		{
+			let muki = [1, -1][trunc(st/shot_span)%2];
+			ascent(i in 0 .. way)
+			{
+				let sa = base_angle + i*360/way;
+				let sx = bx + max_r*cos(sa);
+				let sy = by + max_r*sin(sa);
+				let ta = sa+offset_angle*muki;
+				
+				let objShot = CreateShotA1(sx, sy, 0, ta, graphic, 0);
+				ObjMove_AddPatternA2(objShot, 60, NO_CHANGE, NO_CHANGE, speed/60, 0, speed);
+				My_RaiseShotEffectD_AA(objShot, 15);
+				
+				OpenLaserEffect(bx, by,
+					atan2(sy-by,sx-bx), ((sy-by)^2+(sx-bx)^2)^0.5, 20);
+			}
+			CallSound(sndShot2);
+			base_angle += add_angle*wt;
+			st++;
+		}
+		ObjRender_SetPosition(objEff, bx, by, 0);
+		bx = bx*0.98+ObjMove_GetX(objEnemy)*0.02;
+		by = by*0.98+ObjMove_GetY(objEnemy)*0.02;
+		t++;
+		yield;
+	}
+	MishandraLineEffect_Fadeout(objEff);
+}
+
+task TriangleShot(x, y, speed, angle, graphic, delay, way)
+{
+	let bposx = [1, -0.5, -0.5];
+	let bposy = [0, 0.866, -0.866];
+	
+	let bx = [];
+	let by = [];
+	ascent(k in 0 .. 3)
+	{
+		let pos = Rotate2D_XY(bposx[k]*speed, bposy[k]*speed, angle);
+		bx = bx ~ [pos[0]];
+		by = by ~ [pos[1]];
+	}
+	
+	ascent(i in 0 .. 3)
+	{
+		ascent(j in 0 .. way)
+		{
+			let tmp = j/way;
+			let vx = bx[i]*(1-tmp) + bx[(i+1)%3]*tmp;
+			let vy = by[i]*(1-tmp) + by[(i+1)%3]*tmp;
+			let vs = ((vx^2+vy^2)^0.5);
+			let va = atan2(vy, vx);
+			let os = CreateShotA1(x, y, vs, va, graphic, 0);
+			My_RaiseShotEffectD_AA(os, delay);
+		}
+	}
+}
+
+
+task HebrewShot01(x, y, angle)
+{
+	MishandraMiniCircle(x, y, 0.5, 120+210);
+	wait(60);
+	if (!eAlive) { return; }
+	
+	let speed = 2;
+	let graphic = ADD_BGW_LIGHT_S_YELLOW;
+	let to_graphic = BGW_STAR_S_WHITE;
+	
+	let count = 15;
+	let shot_timer = 15;
+	
+	let char_num = rand_int(0,21);
+	let scale = 30;
+	
+	let timer = 60;
+	let st = 0;
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+
+		let tmp = i/(count-1);
+		let pos = GetHebrewPos(angle, scale, char_num, tmp);
+		HebrewShot01_sub(x+pos[0], y+pos[1], pos[0]/15, pos[1]/15, graphic, 15, timer);
+		
+		st += shot_timer/count;
+		while(st > 0) { st--; timer--; yield; }
+	}
+	wait(40+timer);
+	if (eAlive)
+	{
+		let speed = [1, 1, 1, 1][Difficult];
+		let way = [6, 8, 10, 10][Difficult];
+		let graphic = BGB_BALL_BS_WHITE;
+		
+		TriangleShot(x, y, speed, angle+90, graphic, 30, way);
+		TriangleShot(x, y, speed, angle-90, graphic, 30, way);
+		CallSound(sndShot6);
+	}
+}
+task HebrewShot01_sub(x, y, vx, vy, graphic, delay, timer)
+{
+	let obj = CreateShotA1(x, y, 0, 0, graphic, delay);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+	wait(timer);
+	if (!Obj_IsDeleted(obj))
+	{
+		HebrewShot01_sub2(x, y, vx, vy, graphic, 30);
+		ObjShot_FadeDelete(obj);
+	}
+}
+task HebrewShot01_sub2(x, y, vx, vy, graphic, delay)
+{
+	let obj = CreateShotB2(x, y, 0, 0, -vx/60, -vy/60, -vx*2, -vy*2, graphic, 0);
+	ObjShot_SetSpellResist(obj, true);
+	My_RaiseShotEffectB(obj, delay);
+	wait(40);
+	Obj_Delete(obj);
+}
+

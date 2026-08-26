@@ -1,0 +1,144 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["霊夢バッドエンディング"]
+#Text["霊夢バッドエンディング"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Initialize {
+	init();
+	Task_Main();
+	
+	// バッドエンド
+	SetAreaCommonData(CAREA_TITLE, "FlgBadEnding", true);
+}
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(180);
+	TEndingImage(imgEDReimu[0], 120);
+	//  BGM
+	PlayMusic( 17, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [255, 108, 108];
+	let COL2 = [255, 108, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「何よ何よあの忍者、72の悪魔なんて聞いてないわよ。[r]　残りは一体あと何人じゃ」", COL1);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]魔宝（レメゲトン）から次々に召喚される悪魔。歴戦の巫女ですら、これには戦線を下げざるを得ない。[r]霊夢は途方に暮れて迷いの竹林を彷徨っていた。", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「よく考えたら、あいつの目的は狐の封印って言ってた[r]　じゃない。[r]　それって私が手を下す必要がそもそも無いって事じゃ」", COL1);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "[r]言いかけたその脳裏を、瞬時に幾つものイメージが不自然に駆け抜ける。", COL0);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "[r]人里に広まる巫女敗北の噂。[r]雨水と埃ばかりで満たされる賽銭箱。[r]信仰を失い消える博麗の巫女。[r]幻想郷の終わり。", COL0);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「どうやら悪い夢を見ていたわ。[r]　私は博麗の巫女、本物の巫女。自分の仕事くらいは[r]　していくよ」", COL1);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "[r]闘志復活。新たな御札と針を構え、再び死地へ飛ぶ霊夢。[r]その背後、竹林の中に不穏な影あり。", COL0);
+		}
+		case(7)
+		{
+			TEndingImage(imgEDReimu[1], 30);
+			SetTalkEx(cutinDescri, "ドレミー[r]　「その悪夢、私が処理させて頂きました。[r]　博麗の巫女、貴方が挫けた時が現し世の終わりですよ」", COL2);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "[r]霊夢の意味は不思議な夢。その名に悪夢は似合わない！[r]さあ飛べ霊夢！　さあ撃て霊夢！[r]君の勇気もパワーに変えて画面越しに送れ！", COL0);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r][r]　　　　　　　　　　Ending.04　夢を見る不思議な巫女", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,111 @@
+#東方弾幕風[Stage]
+#ScriptVersion[3]
+#Title["エンディング"]
+#Text["エンディング"]
+#System["./../../system/System.dnh"]
+
+#include "./../../lib/lib_Common.dnh"
+#include "./../../lib/lib_Stage.dnh"
+#include "./../../lib/lib_Zako.dnh"
+#include "./Road06_Zako.dnh"
+
+
+@Initialize
+{
+	STAGE_ID = 6;		//ステージID記録
+	NEXT_STAGE_ID = -1;	//次のステージIDを記録
+	SetLastWordBorder(666);	//ラスワ条件
+	StageInit();
+	TStage();
+}
+
+@Event()
+{
+	StageEvent();
+}
+
+@Loading
+{
+	LoadEnemyShotData(pathShotData);
+}
+
+@MainLoop
+{
+	yield;
+}
+
+// ------------------------ ステージ ------------------------ 
+
+task TStage
+{
+	// 保険
+	yield;
+	
+	let dir = GetCurrentScriptDirectory();
+	let pathBG	= dir ~ "BackgroundWorld06.dnh";	//背景
+	
+	//  背景配置
+//	SetStageBackGround(pathBG);
+
+	wait(60);
+
+	// エンディング
+	if (IsReplay())
+	{
+		StageEND();
+		CloseMine(0);	//終了
+	}
+	else if (true)
+	{
+		let idScript = LoadScriptInThread(GetStageX_BossScript());
+		
+		StageEND();
+		
+		StartScript(idScript);
+		
+		// エンディング終了まで待機
+		while(!IsCloseScript(idScript)) { yield; }
+		CloseMine(0);
+	}
+	else
+	{
+		CloseMine(0);
+	}
+	CloseMine(0);
+}
+
+
+function GetStageX_BossScript()
+{
+	let edType = true;	// グッド,バッド分岐
+	SetAreaCommonData(CAREA_TITLE, "FlgBadEnding", false);	// フラグリセット
+
+	let dir = GetCurrentScriptDirectory();
+	if (edType)
+	{
+		alternative(GetPlayerTypeEx())
+		case(PLAYER_REIMU_A)
+				{ return(dir~"boss/0X_Talk01a.dnh"); }
+		case(PLAYER_MARISA_A)
+				{ return(dir~"boss/0X_Talk01b.dnh"); }
+		case(PLAYER_SANAE_A)
+				{ return(dir~"boss/0X_Talk01c.dnh"); }
+		case(PLAYER_REIMU_B)
+				{ return(dir~"boss/0X_Talk02a.dnh"); }
+		case(PLAYER_MARISA_B)
+				{ return(dir~"boss/0X_Talk02b.dnh"); }
+		case(PLAYER_SANAE_B)
+				{ return(dir~"boss/0X_Talk02c.dnh"); }
+	}
+	else
+	{
+		alternative(GetPlayerType())
+		case(PLAYER_REIMU_A)
+				{ return(dir~"boss/0X_Talk02a.dnh"); }
+		case(PLAYER_MARISA_A)
+				{ return(dir~"boss/0X_Talk02b.dnh"); }
+		case(PLAYER_SANAE_A)
+				{ return(dir~"boss/0X_Talk02c.dnh"); }
+	}
+	return("");
+}

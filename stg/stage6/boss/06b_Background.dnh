@@ -1,0 +1,127 @@
+
+
+//@ƒ‰ƒXƒy”wŒi
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../../lib/spell_function.dnh"
+
+let imgBgTexture = [];
+let flagEnd = false;
+
+@Event
+{
+	alternative(GetEventType())
+	case(EV_END_BOSS_STEP)
+	{
+		//”wŒiíœ
+		flagEnd = true;
+		CloseMine(180);
+	}
+}
+
+@Initialize
+{
+	init();	//‰ŠúÝ’è
+	imgBgTexture = LoadingImageFile_SpellBg(BOSS_ID_MISHANDRA);
+	TMain;
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task TMain()
+{
+	if (IsDrawBackground() >= 2) { BackGround6a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+task BackGround6a
+{
+	BackGround1;
+	BackGround2;
+
+	task BackGround1
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+		ObjPrim_SetTexture(obj, imgBgTexture[1]);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 384, 448);
+		ObjSprite2D_SetDestRect(obj, 0, 0, 384, 448);
+//		ObjRender_SetColor(obj, 0, 0, 0);
+
+		let t = 0;
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha += 2;
+			ObjSprite2D_SetSourceRect(obj, 0-t, 0-t/4, 384-t, 448-t/4);
+			ObjRender_SetAlpha(obj, alpha);
+			t++;
+			yield;
+		}
+		while(!flagEnd)
+		{
+			ObjSprite2D_SetSourceRect(obj, 0-t, 0-t/2, 384-t, 448-t/2);
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+	task BackGround2
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+		ObjPrim_SetTexture(obj, imgBgTexture[2]);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 512, 512);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetBlendType(obj, BLEND_ALPHA);
+		ObjRender_SetPosition(obj, GetStgFrameWidth/2, GetStgFrameHeight/2, 0);
+
+		let t = 0;
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha += 3;
+			ObjRender_SetAlpha(obj, alpha);
+			t++;
+			yield;
+		}
+		while(!flagEnd)
+		{
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+
+task BackGroundLite
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,prioritySpellBG);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,imgBgTexture[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	while(alpha<255) {
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+

@@ -1,0 +1,289 @@
+#東方弾幕風[Stage]
+#ScriptVersion[3]
+#Title["Stage6道中"]
+#Text["Stage6道中"]
+#System["./../../system/System.dnh"]
+
+#include "./../../lib/lib_Common.dnh"
+#include "./../../lib/lib_Stage.dnh"
+#include "./../../lib/lib_Zako.dnh"
+#include "./Road06_Zako.dnh"
+
+
+@Initialize
+{
+	STAGE_ID = 6;		//ステージID記録
+	NEXT_STAGE_ID = -1;	//次のステージIDを記録
+	SetLastWordBorder(666);	//ラスワ条件
+	StageInit();
+	TStage();
+}
+
+@Event()
+{
+	StageEvent();
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+// エンディング
+function GetStageX_BossScript()
+{
+	let edType = true;	// グッド,バッド分岐
+	
+	if (GetAreaCommonData(CAREA_SYSTEM, "FlgBadEnding", false) || GetContinueCount() > 0)
+	{
+		edType = false;
+	}
+	SetAreaCommonData(CAREA_TITLE, "FlgBadEnding", false);	// フラグリセット
+	
+	let dir = GetCurrentScriptDirectory();
+	if (edType)
+	{
+		alternative(GetPlayerType())
+		case(PLAYER_REIMU_A)
+				{ return(dir~"boss/0X_Talk01a.dnh"); }
+		case(PLAYER_MARISA_A)
+				{ return(dir~"boss/0X_Talk01b.dnh"); }
+		case(PLAYER_SANAE_A)
+				{ return(dir~"boss/0X_Talk01c.dnh"); }
+	}
+	else
+	{
+		alternative(GetPlayerType())
+		case(PLAYER_REIMU_A)
+				{ return(dir~"boss/0X_Talk02a.dnh"); }
+		case(PLAYER_MARISA_A)
+				{ return(dir~"boss/0X_Talk02b.dnh"); }
+		case(PLAYER_SANAE_A)
+				{ return(dir~"boss/0X_Talk02c.dnh"); }
+	}
+	return("");
+}
+
+task TStage
+{
+	// 保険
+	yield;
+	
+	let dir = GetCurrentScriptDirectory();
+	let pathBG	= dir ~ "BackgroundWorld06.dnh";	//背景
+	let pathMBoss	= dir ~ "boss/06a_plural.dnh";	//中ボス
+	let pathBoss	= dir ~ "boss/06b_plural.dnh";	//中ボス
+
+	//　中ボスロード
+	// practice tool: chapter skip
+	let dest = GetStartChapter(6);
+	SetAreaCommonData(CAREA_TITLE, "STG6_FASTBG", dest >= 7);	// practice tool: fast boss restart flag
+	if(dest <= 6)
+	{
+		StartScriptInThread(pathMBoss);
+	}
+	//  背景配置
+	SetStageBackGround(pathBG);
+	if(dest >= 7){ StartScriptInThread(pathBoss); }	// practice tool: load boss asap on jump
+	wait(60);
+	//　時間開けてボスもロード
+	if(dest < 7){ StartScriptInThread(pathBoss); }
+	wait(30);
+	
+	if(dest <= 1){ DisplayStage06( 0, 90 ); }	// practice tool: skip title anim on chapter jump
+	if(dest <= 6){ WaitRoad(120); }	// practice tool: skipped on boss jump
+	if(dest <= 6)
+	{
+		PlayMusicWithName(12, 120, 30);
+	}
+	else if(dest < 18)
+	{
+		PlayMusicWithName(13, 30, 30);
+	}
+
+	ChapterStart();
+// ------------------------ 前半
+
+	if(dest <= 1)
+	{
+		CHAPTER_1();
+	}
+	if(dest <= 2)
+	{
+		CHAPTER_2();
+	}
+	if(dest <= 3)
+	{
+		CHAPTER_3();
+	}
+	if(dest <= 4)
+	{
+		CHAPTER_4();
+	}
+
+// ------------------------ 中ボス
+	// 背景イベント
+	if(dest >= 7)
+	{
+		// practice tool: fast boss restart (skip road transitions)
+		NotifyEventAll(ev_NextStageScene, 0);
+		NotifyEventAll(ev_NextStageScene, 0);
+		wait(60);	// cover StartScriptInThread startup delay
+	}
+	else
+	{
+		NotifyEventAll(ev_NextStageScene, 0);
+		wait(120);
+		CHAPTER_MBOSS(pathBoss);
+		wait(120);
+		NotifyEventAll(ev_NextStageScene, 0);
+		wait(120);
+	}
+	CallBoss2();
+	// 待機とロード
+	WaitForBossKilled();
+
+	wait(240);
+
+	// エンディング
+	if (IsReplay())
+	{
+		StageEND();
+
+		CloseMine(0);	//終了
+	}
+	else if (GetPlayMode() == GAME_MAIN)
+	{
+		let idScript = LoadScriptInThread(GetStageX_BossScript());
+
+		StageEND();
+
+		StartScript(idScript);
+		
+		// エンディング終了まで待機
+		while(!IsCloseScript(idScript)) { yield; }
+		CloseMine(0);
+	}
+	else
+	{
+		StageEND();
+
+		CloseMine(0);
+	}
+}
+
+function CHAPTER_1()
+{
+	WaitRoad(60);
+	SetEnemyF01(CenX, 140, 6, 90, 0, 0);
+	WaitRoad(300);
+	loop(4)
+	{
+		if (length(GetAllEnemyID()) <= 0) { SetEnemyF01(CenX, 140, 6, 90, 0, 0); }
+		WaitRoad(60);
+	}
+	WaitRoad(120);
+	ChapterFinish();
+}
+function CHAPTER_2()
+{
+	WaitRoad(60);
+	
+	SetEnemyF02(-32, 80, 5, 45, 1, 0, 0);
+	WaitRoad(60);
+	SetEnemyF02(-32, -40, 5, 45, 1, 0, 0);
+	WaitRoad(100);
+	SetEnemyF02(GetStgFrameWidth+32, 120, 5, 135, 1, 0, 0);
+	WaitRoad(30);
+	SetEnemyF02(GetStgFrameWidth+32, 60, 5, 135, 1, 0, 0);
+	WaitRoad(30);
+	SetEnemyF02(GetStgFrameWidth+32, -40, 5, 135, 1, 0, 0);
+	WaitRoad(120);
+	SetEnemyF02(0, -96, 5, 90-20, 1, 0, 0);
+	WaitRoad(30);
+	SetEnemyF02(CenX-32, -72, 5, 90-10, 1, 0, 0);
+	WaitRoad(30);
+	SetEnemyF02(GetStgFrameWidth-32, -32, 5, 90+15, 1, 0, 0);
+	WaitRoad(180+10);
+
+	ChapterFinish();
+}
+function CHAPTER_3()
+{
+	WaitRoad(60);
+	SetEnemyF03(-32, 60, 3, 15, 0, 0);
+	WaitRoad(120);
+	SetEnemyF03(MaxX+32, 120, 3, 180-30, 0, 0);
+	WaitRoad(240);
+	SetEnemyF03(MaxX+32, 60, 3, 180-30, 0, 0);
+	WaitRoad(120);
+	SetEnemyF03(-32, 120, 3, 15, 0, 0);
+	WaitRoad(240);
+	SetEnemyF03(-32, 60, 3, 15, 0, 0);
+	WaitRoad(120);
+	SetEnemyF03(MaxX+32, 120, 3, 180-30, 0, 0);
+	WaitRoad(240);
+	ChapterFinish();
+}
+function CHAPTER_4()
+{
+	WaitRoad(120);
+	
+	S01(CenX, CenX, 12, 12);
+	WaitRoad(12*12);
+	S01(CenX, CenX+160, 8, 12);
+	WaitRoad(12*8);
+	S01(CenX+160, CenX+160, 12, 12);
+	WaitRoad(12*12);
+	S01(CenX+160, CenX-160, 16, 12);
+	WaitRoad(12*16);
+	S01(CenX-160, CenX-160, 12, 12);
+	WaitRoad(12*12);
+	S01(CenX-160, CenX, 8, 12);
+	WaitRoad(12*8);
+	S01(CenX, CenX, 12, 12);
+	WaitRoad(12*12);
+	S01(CenX, CenX+96, 6, 24);
+	WaitRoad(12);
+	S01(CenX, CenX-96, 6, 24);
+	WaitRoad(24*6-12);
+	WaitRoad(1380-1248);
+	ChapterFinish();
+}
+
+
+let STAR_SEED = 0;
+task S01(from_x, to_x, count, wt)
+{
+	ascent(t in 0 .. count)
+	{
+		let tmp = t/(count-1);
+		let sx = from_x*(1-tmp) + to_x*tmp;
+		let tmp_x = max(64, min(GetStgFrameWidth-64, sx)) + rand(-96,96);
+		SetStarEnemy(tmp_x, sx, STAR_SEED*2);
+		WaitRoad(wt);
+		STAR_SEED++;
+	}
+}
+
+
+function CHAPTER_MBOSS(pathBoss)
+{
+	// ボスがでたぞー
+	CallBoss();
+	flgStopSetZako = true;
+	// 中ボスが消えてからボスをロード
+//	StartScriptInThreadWaitBoss(pathBoss);
+	
+	// ボス撃破待ち
+	CheckBossKilled();
+	WaitForMiddleBossKilled();
+	wait(60);
+	
+	flgStopSetZako = false;
+}
+

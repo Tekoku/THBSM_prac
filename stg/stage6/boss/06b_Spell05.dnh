@@ -1,0 +1,559 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ギガノ・ミシャルド"]
+#Text["ギガノ・ミシャルド"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+let FLG_NEXT_SHOT = false;
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mishandra.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(1200);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 20;		//ダメージ透過率
+
+	bossDropItem = 80;	//アイテム数
+	bossHitToShot = 64;
+	bossDropStarItem = 180;
+	
+	bossNormalDropStar = 8;
+	bossDropStarItemR = 118;
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MISHANDRA);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(56), [12,13,13,14][Difficult], 
+			GetCurrentScriptDirectory()~"06b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 150, 60);
+	FumaCharismaOption(objEnemy, false);
+	wait(60);
+	CallSpellCard(true);	//スペカ起動
+	
+	wait(60);
+	
+	let speed = [0.45, 0.5, 0.5, 0.4][Difficult];
+	
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		FLG_NEXT_SHOT = false;
+		ascent(i in 0 .. 3)
+		{
+			let ba = -90 + i*120;
+			SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), ba, ba, muki, i);
+		}
+		CallSound(sndBoon);
+		wait(360);
+		if (!eAlive) { return; }
+		NukeShotS05(CenX, -32, speed, 90, 156);
+		while(!FLG_NEXT_SHOT) { yield; }
+		muki = -muki;
+	}
+}
+
+// フーマスゴイハンド
+task SetFamilier01(iniX, iniY, iniAngle, iniAngle2, iniMuki, iniValue)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_RED;
+	let item_count = 0;
+	let item_star = 0;
+	let baseAngle = iniAngle;
+	let toAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 99999, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	MishandraOption_SetDamageRate(objFamilier);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawMishandraHand(objFamilier, baseAngle, iniMuki);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 38, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove();
+	}
+	
+	task TMove()
+	{
+		let timer = 120;
+		let to_pos1 = [iniX, iniY+64];
+
+		let timer2 = 480;
+		let to_pos2 = [CenX, -96];
+		
+		let erx = 0;
+		let ery = 0;
+		
+		local
+		{
+			erx = 96;
+			ery = 96;
+			baseAngle = iniAngle;
+			let ex = iniX + erx*cos(baseAngle);
+			let ey = iniY + ery*sin(baseAngle);
+			ObjMove_SetPosition(objFamilier, ex, ey);
+		}
+		CallSound(sndBoon);
+		TChange_HandAngle(timer-90+30, 120);
+		wait(30);
+		ascent(t in 0 .. timer)
+		{
+			if (!CanShotBullet(objFamilier)) { return; }
+			let tmp = (1-cos((t+1)/timer*180))/2;
+			erx = 96+32*tmp;
+			ery = 96-32*tmp;
+			baseAngle = iniAngle + tmp*180*iniMuki;
+			let ex = iniX*(1-tmp) + to_pos1[0]*tmp + erx*cos(baseAngle);
+			let ey = iniY*(1-tmp) + to_pos1[1]*tmp + ery*sin(baseAngle);
+			ObjMove_SetPosition(objFamilier, ex, ey);
+			yield;
+		}
+		if (!CanShotBullet(objFamilier)) { return; }
+		EffectConcentrationLine(objFamilier, EFF_BLUE, 90, 6);
+		wait(30);
+		TShot(timer2-120);
+		ascent(t in 0 .. timer2)
+		{
+			if (!CanShotBullet(objFamilier)) { return; }
+			let tmp = (1-cos((t+1)/timer2*180))/2;
+			let tmp2 = (1-cos(tmp^2*180))/2;
+			let tmp3 = (1-cos(tmp^2*360))/2;
+			erx = 128 + tmp3*96 - tmp2*64;
+			ery = 64*(1-tmp);
+			baseAngle = iniAngle+180*iniMuki + tmp*360*iniMuki;
+			let ex = to_pos1[0]*(1-tmp2) + to_pos2[0]*tmp2 + erx*cos(baseAngle);
+			let ey = to_pos1[1]*(1-tmp2) + to_pos2[1]*tmp2 + ery*sin(baseAngle) + tmp3*128;
+			ObjMove_SetPosition(objFamilier, ex, ey);
+
+			yield;
+		}
+		EraseEnemy(objFamilier);
+		
+		task TChange_HandAngle(delay, timer)
+		{
+			loop(delay)
+			{
+				if (!CanShotBullet(objFamilier)) { return; }
+				SetMishandraHandAngle(objFamilier, iniAngle);
+				yield;
+			}
+			ascent(t in 0 .. timer)
+			{
+				if (!CanShotBullet(objFamilier)) { return; }
+				toAngle = atan2(to_pos2[1]-ObjMove_GetY(objFamilier),to_pos2[0]-ObjMove_GetX(objFamilier));
+				let tmp_h = (1-cos((t+1)/timer*180))/2;
+				let ha = toAngle*tmp_h + ((iniAngle+180*iniMuki+360)%360-180)*(1-tmp_h);
+				SetMishandraHandAngle(objFamilier, ha);
+				yield;
+			}
+			while(CanShotBullet(objFamilier))
+			{
+				toAngle = atan2(to_pos2[1]-ObjMove_GetY(objFamilier),to_pos2[0]-ObjMove_GetX(objFamilier));
+				SetMishandraHandAngle(objFamilier, toAngle);
+				yield;
+			}
+		}
+	}
+	
+	// 下に向かうショット
+	task TShot(timer)
+	{
+		TShot2(timer);
+		wait(30);
+		
+		let speed = [1, 1, 1.5, 1.5][Difficult];
+		let way = [3, 3, 5, 7][Difficult];
+		let way_angle = [45, 45, 30, 25][Difficult];
+		let count = [1, 1, 1, 1][Difficult];
+		let wt2 = 3;
+		let graphic = [BGW_FUGU_SKY, BGW_FUGU_BLUE, BGW_FUGU_BLUE, BGW_FUGU_WHITE][Difficult];
+		let wt = [15, 10, 10, 10][Difficult];
+		
+		wait(wt/3*iniValue);
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier) && t < timer)
+		{
+			ascent(i in 0 .. way)
+			{
+				let sa = toAngle+(i-(way-1)/2)*way_angle + 180;
+				S05_BottomShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					speed, sa, graphic, 5, count, wt2);
+			}
+			wait(wt);
+			t += wt;
+		}
+	}
+	
+	// 上に向かうショット
+	task TShot2(timer)
+	{
+		wait(30);
+
+		let speed = 2;
+		let way = 3;
+		let way_angle = 30;
+		let count = 5;
+		let wt2 = 3;
+		let graphic = ADD_BGW_STAR_M_BLUE;
+		let wt = 20;
+		
+		wait(wt/3*iniValue);
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier) && t < timer)
+		{
+			ascent(i in 0 .. way)
+			{
+				let sa = toAngle+(i-(way-1)/2)*way_angle;
+				S05_TopShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					speed, sa, graphic, 5, count, wt2);
+			}
+			CallSound(sndShot2);
+			wait(wt);
+			t += wt;
+		}
+	}
+	
+	task S05_TopShot(x, y, speed, angle, graphic, delay, count, wt)
+	{
+		ascent(i in 0 .. count)
+		{
+			if (!eAlive) { return; }
+			let ss = speed * (1+ i/count);
+			let obj = CreateShotA1(x, y, ss, angle, graphic, 0);
+			My_RaiseShotEffectA(obj, delay);
+			wait(wt);
+		}
+	}
+	
+	task S05_BottomShot(x, y, speed, angle, graphic, delay, count, wt)
+	{
+		ascent(i in 0 .. count)
+		{
+			if (!eAlive) { return; }
+			let ss = speed * (1+i*0.1);
+			let obj = CreateShotA2(x, y, 0, angle, ss/60, ss, graphic, 0);
+			My_RaiseShotEffectA(obj, delay);
+			wait(wt);
+		}
+	}
+}
+
+// 核弾
+task NukeShotS05(x, y, speed, angle, base_size)
+{
+	let move_flg = false;
+	
+	let size = base_size * [0.75, 1, 1, 1.5][Difficult];
+	let baseR = size;
+	let eMaxLife = [4000, 4000, 4200, 4500][Difficult];
+	let objFamilier = MakeEnemyFamilier(x, y, eMaxLife, ENEMY_S);
+	let eLifeRate = 1;
+	SetDropItemCount(objFamilier, 0, 0);
+	TShot();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	Obj_Delete(objFamilier);
+	
+	task TShot()
+	{
+		let s_color = [0, 64, 255];
+		if (Difficult >= D_LUNA) { s_color = [128, 128, 128]; }
+		
+		let objShot = NuclearShot(x, y, s_color, size*0.66, 60);
+		ObjMove_AddPatternA1(objShot, 0, 0, angle);
+		ObjMove_AddPatternA2(objShot, 390, NO_CHANGE, NO_CHANGE, speed/180, 0, speed);
+		ObjShot_SetAutoDelete(objShot, false);
+		
+		ascent(i in 0 .. 6)
+		{
+			if (Obj_IsDeleted(objShot)) { return; }
+			if (i%2 == 0) { CallSound(sndPower1); }
+			EffectConcentrationLine(objFamilier,
+				[EFF_RED,EFF_YELLOW,EFF_GREEN,EFF_SKY,EFF_BLUE,EFF_WHITE][i],
+				120, 6+i*2);
+			wait(30);
+		}
+		wait(60);
+		if (Obj_IsDeleted(objShot)) { return; }
+		CallSound(sndFlare);
+		CallSound(sndBossEndBigin);
+		TExplodeEffect(x, y);
+		TShot_sub4();
+		TShot_sub();
+		ascent(t in 0 .. 30)
+		{
+			if (Obj_IsDeleted(objShot)) { return; }
+			let tmp = sin((t+1)/30*90);
+			baseR = size*(0.66+tmp*0.32);
+			Obj_SetValue(objShot, "SIZE", baseR);	// 核弾サイズ
+			yield;
+		}
+		wait(90);
+		
+		TMove(objShot);
+		TShot_sub2();
+		TShot_sub3();
+		
+		while(!Obj_IsDeleted(objShot))
+		{
+			eLifeRate = ObjEnemy_GetInfo(objFamilier, INFO_LIFE) / eMaxLife;
+			baseR = eLifeRate*size;
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objShot), ObjMove_GetY(objShot));
+			Obj_SetValue(objShot, "SIZE", baseR);	// 核弾サイズ
+			Obj_SetValue(objFamilier, "TO_SHT", baseR);		// 当たり判定サイズ
+			yield;
+		}
+		EraseEnemy(objFamilier);
+	}
+	
+	task TExplodeEffect(x, y)
+	{
+		let col1 = [0, 0, 96];
+		let col2 = [0, 64, 0];
+		ascent(t in 0 .. 10)
+		{
+			if (!eAlive) { return; }
+			let tmp = t/9;
+			NuclearExplodeEffect(x, y,
+				[col1[0]+col2[0]*tmp,col1[1]+col2[1]*tmp,col1[2]+col2[2]*tmp], 12-tmp*6, 45+tmp*75);
+			yield;
+		}
+	}
+
+	// モーションチェック
+	task TMove(objShot)
+	{
+		wait(360);
+		
+		while(!Obj_IsDeleted(objShot))
+		{
+			if (!CheckDispIN(objShot, baseR*0.75))
+			{
+				Obj_Delete(objShot);
+				break;
+			}
+			if (!move_flg && ObjMove_GetY(objShot) > GetPlayerY-32)
+			{
+				FLG_NEXT_SHOT = true;
+				
+				move_flg = true;
+				ObjMove_SetAcceleration(objShot, 1/60);
+				ObjMove_SetMaxSpeed(objShot, 99);
+			}
+			yield;
+		}
+	}
+	
+	// 輪っか
+	task TShot_sub()
+	{
+		let speed = 3;
+		let way = 48;
+		let graphic = ADD_BGW_LIGHT_L_WHITE;
+		let timer = 240;
+		
+		let t = 0;
+		ascent(i in 0 .. way)
+		{
+			SatelliteShot(objFamilier, speed, i*360/way, graphic, 60, timer);
+		}
+	}
+	// ばらまき
+	task TShot_sub2()
+	{
+		let speed = [1, 1, 1.5, 1.5][Difficult];
+		let graphic = [BGW_FUGU_SKY, BGW_FUGU_BLUE, BGW_FUGU_BLUE, BGW_FUGU_WHITE][Difficult];
+		let timer = 240;
+		let way = [5, 5, 5, 16][Difficult];
+		let way_angle = 150/way;
+		
+		let wt = [15, 12, 8, 10][Difficult];
+		let wt_min = [5, 3, 2, 5][Difficult];
+		
+		let muki = 1;
+		let tmp_wt = wt;
+		let t = 0;
+		let st = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			if (t > tmp_wt)
+			{
+				if (Difficult <= D_HARD)
+				{
+					let sa = 90 + rand(-15,15);
+					CreateShotWayA2Ex(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+						0, sa, speed/120, speed, graphic, 30, way, way_angle, baseR*1.2);
+				}
+				else
+				{
+					let ba = st*muki/4;
+					ascent(i in 0 .. way)
+					{
+						let sa = ba + i*360/way;
+						if (sin(sa) > 0)
+						{
+							let sx = ObjMove_GetX(objFamilier) + cos(sa)*baseR*1.15;
+							let sy = ObjMove_GetY(objFamilier) + sin(sa)*baseR*1.15;
+							let obj = CreateShotA1(sx, sy, speed/4, sa, graphic, 0);
+							ObjMove_AddPatternA2(obj, 30, NO_CHANGE, NO_CHANGE, speed/30, 0, speed);
+							My_RaiseShotEffectA(obj, 30);
+						}
+					}
+				}
+				t -= tmp_wt;
+				muki = -muki;
+				tmp_wt = wt_min + ceil((wt-wt_min) * eLifeRate^2);
+				CallSound(sndShot2);
+			}
+			t++;
+			st++;
+			yield;
+		}
+	}
+	// 撃ち返し
+	task TShot_sub3()
+	{
+		wait(60);
+		
+		let speed = 16;
+		let way = 1;
+		let way_angle = 15;
+		let graphic = [BGW_BALL_M_SKY, BGW_BALL_M_BLUE, BGW_BALL_M_BLUE, BGW_BALL_M_WHITE][Difficult];
+		let l_len = 240;
+		let l_wid = 12;
+		
+		let wt = 5;
+		
+		let st = 0;
+		let beforeLife = eLifeRate;
+		while(CanShotBullet(objFamilier) && !move_flg)
+		{
+			if (beforeLife > eLifeRate)
+			{
+				beforeLife = eLifeRate;
+
+				if (Difficult <= D_HARD)
+				{
+					/*
+					let ba = GetAngleToPlayer(objFamilier) + rand(-45, 45);
+					let sr = baseR * 1.2;
+					let sx = ObjMove_GetX(objFamilier) + sr*cos(ba);
+					let sy = ObjMove_GetY(objFamilier) + sr*sin(ba);
+					let sba = atan2(GetPlayerY-sy, GetPlayerX-sx) + rand(-2,2);
+					*/
+					let ba = GetAngleToPlayer(objFamilier) + rand(0, 1)^2 * 5 * rand_dir();
+					let sr = baseR * 1.2;
+					let sx = ObjMove_GetX(objFamilier) + sr*cos(ba);
+					let sy = ObjMove_GetY(objFamilier) + sr*sin(ba);
+					let sba = ba;
+					ascent(i in 0 .. way)
+					{
+						let sa = sba + (i-(way-1)/2)*way_angle;
+						let obj = My_CreateLooseLaserA1(sx, sy, 3, sa, l_len, l_wid, graphic, 30);
+						ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, -3/15, 0, 0);
+						ObjMove_AddPatternA2(obj, 15, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+					}
+					CallSound(sndLaser2);
+				}
+				else
+				{
+					let ba = GetAngleToPlayer(objFamilier) + rand(0, 1)^2 * 5 * rand_dir();
+					let sr = baseR * 1.2;
+					let sx = ObjMove_GetX(objFamilier) + sr*cos(ba);
+					let sy = ObjMove_GetY(objFamilier) + sr*sin(ba);
+					let sba = ba;
+					ascent(i in 0 .. way)
+					{
+						let sa = sba + (i-(way-1)/2)*way_angle;
+						let obj = My_CreateLooseLaserA1(sx, sy, 3, sa, l_len, l_wid, graphic, 30);
+						ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, -3/15, 0, 0);
+						ObjMove_AddPatternA2(obj, 15, NO_CHANGE, NO_CHANGE, speed/30, 0, speed);
+					}
+					CallSound(sndLaser2);
+				}
+				st++;
+			}
+			else
+			{
+				st = 0;
+			}
+			wait(wt);
+		}
+	}
+	// 開幕レーザー
+	task TShot_sub4()
+	{
+		let way = [18, 24, 30, 40][Difficult];
+		let graphic = [BGW_BEAM_SKY, BGW_BEAM_BLUE, BGW_BEAM_BLUE, BGW_BEAM_WHITE][Difficult];
+		let base_angle = GetAngleToPlayer(objFamilier);
+		
+		let muki = 1;
+		let lc = 1;
+		ascent(i in 0 .. way)
+		{
+			if (!CanShotBullet(objFamilier)) { break; }
+			let tmp = 1-cos(i/way*90);
+			loop(lc)
+			{
+				let sr = size * 1.1;
+				let sa = base_angle + tmp*180*muki;
+				let sx = ObjMove_GetX(objFamilier) + sr*cos(sa);
+				let sy = ObjMove_GetY(objFamilier) + sr*sin(sa);
+				if (CheckDispINEx(sx, sy, 0))
+				{
+					let obj = My_CreateStraightLaserA1(sx, sy, sa, 800, 12, 30, graphic, 90, true);
+					if (i == 0) { CallSoundDelay(sndLaser1, 90, obj); }
+				}
+				muki = -muki;
+			}
+			lc = 2;
+			wait(3);
+		}
+	}
+	
+	task SatelliteShot(objBase, speed, angle, graphic, delay, timer)
+	{
+		let obj = CreateShotA1(0, 0, 0, 0, graphic, 0);
+		My_RaiseShotEffectA(obj, delay);
+		ObjShot_SetAutoDelete(obj, false);
+		ObjRender_SetColor(obj, 128, 128, 255);
+		
+		let ma = angle;
+		while(!Obj_IsDeleted(objBase))
+		{
+			let r = baseR*1.5;
+		//	let vpos = Rotate2D_XY(cos(ma)*r, sin(ma)*r/6, 0);
+			ObjMove_SetPosition(obj, ObjMove_GetX(objBase)+cos(ma)*r, ObjMove_GetY(objBase)+sin(ma)*r/6);
+			ma += 360/timer;
+			yield;
+		}
+		DeleteBulletEffect(obj);
+	}
+}

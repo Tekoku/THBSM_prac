@@ -1,0 +1,194 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ねずーりん通常1"]
+#Text["ねずーりん通常1"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../stage5/boss/lib_Nezu.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3300);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_NEZU);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+	NezuCharismaAura(objEnemy);	// オーラえへくと
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 105, 120);
+	wait(30);
+	BossCharge(objEnemy);
+	wait(90);
+	TMove();
+	
+	let wt = [150, 120, 105, 90][Difficult];
+	let wt_min = [75, 60, 50, 45][Difficult];
+	
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		SetRollFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 90+20*muki, muki);
+		CallSound(sndBoon);
+		muki = -muki;
+		wait(wt);
+		wt = (wt-wt_min)*0.7 + wt_min;
+	}
+}
+
+task TMove()
+{
+	wait(120);
+	
+	while(eAlive)
+	{
+		EnemyRandomMove(objEnemy, 120, 48);
+		wait(120);
+	}
+}
+
+task SetRollFamilier(x, y, angle, muki)
+{
+	let way = [6, 6, 6, 6][Difficult];
+	let add_angle = [2, 2, 2, 2][Difficult] * muki;
+	let shot_timer = 90;
+	let timer = 360;
+	let move_speed = 0.5;
+	
+	let objBase = CreateShotA2(x, y, 0, -90, -0/60, 0, BGW_BALL_S_RED, 0);
+	ObjMove_AddPatternA2(objBase, 60, NO_CHANGE, 90, move_speed/timer, 0, move_speed);
+	Obj_SetValue(objBase, "ANGLE", angle);
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	
+	ascent(i in 0 .. way)
+	{
+		SetFamilier01(objBase, 1, i*360/way, muki, i, shot_timer);
+	}
+	
+	let t = 0;
+	while(!Obj_IsDeleted(objBase))
+	{
+		let tmp = sin(t/timer*90);
+		if (t < timer)
+		{
+			Obj_SetValue(objBase, "R", tmp*360);
+		}
+		else
+		{
+			break;
+		}
+		Obj_SetValue(objBase, "ANGLE", angle);
+		if (t < shot_timer)
+		{
+		}
+		let tmp_add = add_angle * (1-max(0, t-shot_timer)/(timer-shot_timer))^3;
+		angle += tmp_add;
+		t++;
+		yield;
+	}
+	Obj_Delete(objBase);
+}
+
+
+// 使い魔
+task SetFamilier01(objBase, iniSpeed, iniAngle, iniMuki, iniValue, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let item_count = 0;
+	let item_star = 0;
+	let baseAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 100, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	NezuOption_SetDamageRate(objFamilier);	// ダメージ軽減率自機別設定
+	SetDropItemCount(objFamilier, item_count, item_star);
+	SetEnemyVisible(objFamilier, false);
+	DrawHitodama(objFamilier, eColor);
+//	TCheckDispINOut(objFamilier, 16);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TShot();
+		
+		let t = 0;
+		while (CanShotBullet(objFamilier))
+		{
+			if (t == 15)
+			{
+				SetEnemyVisible(objFamilier, true);
+			}
+			if (Obj_IsDeleted(objBase))
+			{
+				EraseEnemy(objFamilier);
+				break;
+			}
+			let a = iniAngle + Obj_GetValueD(objBase, "ANGLE", 0);
+			let r = Obj_GetValueD(objBase, "R", 0);
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objBase)+cos(a)*r, ObjMove_GetY(objBase)+sin(a)*r);
+			t++;
+			yield;
+		}
+	}
+	
+	task TShot()
+	{
+		wait(5);
+		
+		let speed = [1, 1.25, 1.5, 2][Difficult];
+		let wt = [5, 4, 3, 3][Difficult];
+
+		let graphic = [[BGW_BILL_BLUE, BGW_BILL_SKY],
+			[BGW_BILL_WHITE, BGW_BILL_SKY],
+			[BGW_BILL_PURPLE, BGW_BILL_SKY]][iniValue%3];
+		
+		let timer = iniTimer;
+		
+		let t = 0;
+		let st = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			if (t < timer)
+			{
+				let tmp = t/iniTimer;
+				let ss = speed * (1+tmp*0.75) * iniSpeed;
+				let sa = iniAngle + Obj_GetValueD(objBase, "ANGLE", 0) - 90*iniMuki - iniMuki*270*tmp;
+				DarkShotA01(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					ss, sa, graphic, 0);
+				CallSound(sndShot2);
+			}
+			st++;
+			t += wt;
+			wait(wt);
+		}
+	}
+}
+
+task DarkShotA01(x, y, speed, angle, graphics, delay)
+{
+	let objs = CreateDarkShotsA1(x, y, speed, angle, graphics[0], graphics[1], 0, 1.25);
+}

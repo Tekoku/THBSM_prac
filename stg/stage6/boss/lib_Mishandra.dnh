@@ -1,0 +1,936 @@
+// ダメージ軽減率を自機別に設定
+task MishandraOption_SetDamageRate(objFamilier)
+{
+	let shot_rate = 100;
+	let spell_rate = 25;
+	
+	alternative(GetPlayerTypeEx())
+	case (PLAYER_REIMU_A)  { shot_rate = 135; spell_rate = 25; }
+	case (PLAYER_REIMU_B)  { shot_rate = 135; spell_rate = 25; }
+	case (PLAYER_MARISA_A) { shot_rate =  65; spell_rate = 25; }
+	case (PLAYER_MARISA_B) { shot_rate = 125; spell_rate = 25; }
+	case (PLAYER_SANAE_A)  { shot_rate =  75; spell_rate = 25; }
+	case (PLAYER_SANAE_B)  { shot_rate = 125; spell_rate = 25; }
+	
+	ObjEnemy_SetDamageRate(objFamilier, shot_rate, spell_rate);
+}
+
+// ヘブライ文字ショット
+task ShotHebrew(x, y, angle, scale, graphic, delay, shot_count, shot_timer, del_timer, str_num)
+{
+	let POS_STRING;
+	
+	// [開始,曲線種別,x1,y1,x2,y2,x3,y3]
+	// 開始		ラインを絵描くスタート時間（？）  0～1、全体からの割合
+	// 曲線種別	0：直線 1：ベジエ曲線
+	// x3,y3はベジエ曲線用制御点
+	alternative(str_num%22)
+	case(0)
+	{
+		// alef
+		POS_STRING = [
+			[ 0.0,   1,  0.25,-0.8,  0.5,0.5,  1,-0.8 ],
+			[ 0.3,   0,  -0.8,-0.8,  0.8,0.8,  0,0 ],
+			[ 0.7,   1,  -0.5,-0.5,  -0.6,0.8,  -0.8,-0.5 ],
+			[ 0.95,   0,  -0.6,0.8,  -0.4,0.8,  0,0 ],
+		];
+	}
+	case(1)
+	{
+		// bet
+		POS_STRING = [
+			[ 0.0,   0,  -0.5,-0.65,  0.4,-0.75,  0,0 ],
+			[ 0.25,   1,  0.4,-0.75,  0.3,1,  0,0.5 ],
+			[ 0.7,   0,  -0.6,1,  0.6,1,  0,0 ],
+		];
+	}
+	case(2)
+	{
+		// gimel
+		POS_STRING = [
+			[ 0.0,   1,  -0.5,-0.85,  0,0,  0.25,-1 ],
+			[ 0.4,   1,  0,0,  0.5,1,  0,1 ],
+			[ 0.8,   0,  0,0.5,  -0.6,1,  0,0 ],
+		];
+	}
+	case(3)
+	{
+		// dalet
+		POS_STRING = [
+			[ 0.0,   1,  -0.5,-1,  -0.25,-0.8,  -0.8,-0.8 ],
+			[ 0.25,   0,  -0.25,-0.8,  0.65,-0.8,  0,0 ],
+			[ 0.55,   0,  0.35,-0.8,  0.35,1,  0,0 ],
+		];
+	}
+	case(4)
+	{
+		// he
+		POS_STRING = [
+			[ 0.0,   0,  -0.6,-0.75,  0,-0.8, 0,0 ],
+			[ 0.15,   1,  0,-0.8,  0.6,1, 1,-0.8 ],
+			[ 0.65,   0,  -0.35,-0.5,  -0.5,1, 0,0 ],
+		];
+	}
+	case(5)
+	{
+		// vav
+		POS_STRING = [
+			[ 0.0,   1,  -0.2,-0.85,  0.2,-0.5, 0,-0.5 ],
+			[ 0.35,   1,  0.2,-0.5,  0.2,1, 0,1 ],
+		];
+	}
+	case(6)
+	{
+		// zayin
+		POS_STRING = [
+			[ 0.0,   1,  -0.35,-0.85,  0.25,-0.5, 0,-0.5 ],
+			[ 0.35,   1,  0,-0.35,  0.2,1, -0.25,1 ],
+		];
+	}
+	case(7)
+	{
+		// chet
+		POS_STRING = [
+			[ 0.0,   1,  -0.6,-0.85,  0,-0.65, -0.5,-0.65 ],
+			[ 0.2,   1,  0,-0.65,  0.6,1, 1,-0.8 ],
+			[ 0.7,   0,  -0.45,-0.75,  -0.5,1, 0,0 ],
+		];
+	}
+	case(8)
+	{
+		// tet
+		POS_STRING = [
+			[ 0.0,   0,  -0.6,-0.6,  -0.1,1, 0,0 ],
+			[ 0.35,   1,  -0.1,1,  0.75,0, 0.75,0.5 ],
+			[ 0.7,   1,  0.75,0,  0,-0.6, 0.75,-0.75 ],
+		];
+	}
+	case(9)
+	{
+		// yod
+		POS_STRING = [
+			[ 0.0,   1,  -0.25,-0.5,  0,0.5, 0.5,-0.5 ],
+		];
+	}
+	case(10)
+	{
+		// kaf
+		POS_STRING = [
+			[ 0.0,   1,  -0.5,-0.5,  0.3,1,  1,-1 ],
+			[ 0.65,   0,  -0.6,1,  0.6,1,  0,0 ],
+		];
+	}
+	case(11)
+	{
+		// lamed
+		POS_STRING = [
+			[ 0.0,  1,  -0.4,-0.75,  -0.6,-0.25,  -0.4,-0.25 ],
+			[ 0.25,  0,  -0.6,-0.25,  0.5,-0.25,  0,0 ],
+			[ 0.55,  1,  0.5,-0.25,  -0.4,1,  0.5,0.5 ],
+		];
+	}
+	case(12)
+	{
+		// mem
+		POS_STRING = [
+			[ 0.0,   1,  -0.3,-0.4,  0.6,1, 1,-1 ],
+			[ 0.4,   1,  -0.6,-0.7,  -0.5,1, 0,-0.5 ],
+			[ 0.85,   0,  -0.25,1,  0.5,1, 0,0 ],
+		];
+	}
+	case(13)
+	{
+		// nun
+		POS_STRING = [
+			[ 0.0,   1,  -0.2,-0.85,  0.2,-0.5, 0,-0.5 ],
+			[ 0.3,   1,  0.2,-0.5,  0.2,1, 0,1 ],
+			[ 0.85,   0,  0.2,1,  -0.25,1, 0,0 ],
+		];
+	}
+	case(14)
+	{
+		// samech
+		POS_STRING = [
+			[ 0.0,   0,  -0.6,-0.6,  -0.1,1, 0,0 ],
+			[ 0.35,   1,  -0.1,1,  0.75,-0.35, 0.75,0.5 ],
+			[ 0.7,   1,  0.75,-0.35,  -0.5,-0.4, 0.75,-0.75 ],
+		];
+	}
+	case(15)
+	{
+		// ayin
+		POS_STRING = [
+			[ 0.0,   0,  -0.5,-0.5,  0,0.75, 0,0 ],
+			[ 0.3,   1,  0.6,-0.75,  0.1,0.75, 0.75,0.6 ],
+			[ 0.75,   0,  0.1,0.75,  -0.5,1, 0,0.75 ],
+		];
+	}
+	case(16)
+	{
+		// pe
+		POS_STRING = [
+			[ 0.0,   1,  0,0.25,  -0.3,-0.3, -0.5,0 ],
+			[ 0.2,   1,  -0.3,-0.3,  0.6,1, 1,-1 ],
+			[ 0.75,   0,  -0.25,1,  0.5,1, 0,0 ],
+		];
+	}
+	case(17)
+	{
+		// tsadi
+		POS_STRING = [
+			[ 0.0,   1,  -0.5,-0.6,  0.5,0.8, 0.5,0.5 ],
+			[ 0.4,   1,  0.5,0.8,  -0.5,1, 0.5,1 ],
+			[ 0.75,   1,  0.5,-0.75,  0.25,0, 0.35,0 ],
+		];
+	}
+	case(18)
+	{
+		// kof
+		POS_STRING = [
+			[ 0.0,   0,  -0.5,-0.6,  0.5,-0.6, 0,0 ],
+			[ 0.3,   1,  0.5,-0.6,  -0.15,0.4, 0.5,0.4 ],
+			[ 0.6,   0,  -0.4,-0.5,  -0.2,1, 0,0 ],
+		];
+	}
+	case(19)
+	{
+		// resh
+		POS_STRING = [
+			[ 0.0,   0,  -0.5,-0.65,  0.4,-0.75,  0,0 ],
+			[ 0.4,   1,  0.4,-0.75,  0.3,1,  0,0.5 ],
+		];
+	}
+	case(20)
+	{
+		// shin
+		POS_STRING = [
+			[ 0.0,   0,  -0.6,-0.6,  -0.1,1, 0,0 ],
+			[ 0.35,   1,  -0.1,1,  0.75,-0.5, 0.75,0.75 ],
+			[ 0.75,   1,  -0.2,0.4,  0.25,-0.5, 0.25,0.25 ],
+		];
+	}
+	case(21)
+	{
+		// tav
+		POS_STRING = [
+			[ 0.0,   0,  -0.5,-0.65,  0.4,-0.75,  0,0 ],
+			[ 0.25,   1,  0.4,-0.75,  0.65,1,  0.2,0.5 ],
+			[ 0.6,   1,  -0.25,-0.75,  -0.6,1,  -0.25,0.75 ],
+		];
+	}
+	
+	let st = 0;
+	ascent(i in 0 .. shot_count)
+	{
+		if (!eAlive) { return; }
+
+		let tmp = i/(shot_count-1);
+		let to_tmp = 1;
+		let ldat = [];
+		descent(i in 0 .. length(POS_STRING))
+		{
+			if (POS_STRING[i][0] <= tmp)
+			{
+				ldat = POS_STRING[i];
+				break;
+			}
+			to_tmp = POS_STRING[i][0];
+		}
+		if (length(ldat) > 0)
+		{
+			let lt = (tmp-ldat[0])/(to_tmp-ldat[0]);
+			let pos;
+			if (ldat[1] == 0) { pos = GetLinePosition(ldat[2..4], ldat[4..6], lt); }
+			else { pos = GetBezierCurvePosition(ldat[2..4], ldat[4..6], ldat[6..8], lt); }
+			
+			let rpos = Rotate2D_XY(pos[0], pos[1], angle);			
+			// 弾設置
+			let obj = CreateShotA1(x+rpos[0]*scale, y+rpos[1]*scale, 0, angle+90, graphic, delay);
+			ObjShot_SetDeleteFrame(obj, del_timer);
+		}
+		st += shot_timer/shot_count;
+		while(st > 0) { st--; yield; }
+	}
+}
+
+// 座標取得のみ
+function GetHebrewPos(angle, scale, str_num, tpos)
+{
+	let POS_STRING;
+	
+	// [開始,曲線種別,x1,y1,x2,y2,x3,y3]
+	// 開始		ラインを絵描くスタート時間（？）  0～1、全体からの割合
+	// 曲線種別	0：直線 1：ベジエ曲線
+	// x3,y3はベジエ曲線用制御点
+	alternative(str_num%22)
+	case(0)
+	{
+		// alef
+		POS_STRING = [
+			[ 0.0,   1,  0.25,-0.8,  0.5,0.5,  1,-0.8 ],
+			[ 0.3,   0,  -0.8,-0.8,  0.8,0.8,  0,0 ],
+			[ 0.7,   1,  -0.5,-0.5,  -0.6,0.8,  -0.8,-0.5 ],
+			[ 0.95,   0,  -0.6,0.8,  -0.4,0.8,  0,0 ],
+		];
+	}
+	case(1)
+	{
+		// bet
+		POS_STRING = [
+			[ 0.0,   0,  -0.5,-0.65,  0.4,-0.75,  0,0 ],
+			[ 0.25,   1,  0.4,-0.75,  0.3,1,  0,0.5 ],
+			[ 0.7,   0,  -0.6,1,  0.6,1,  0,0 ],
+		];
+	}
+	case(2)
+	{
+		// gimel
+		POS_STRING = [
+			[ 0.0,   1,  -0.5,-0.85,  0,0,  0.25,-1 ],
+			[ 0.4,   1,  0,0,  0.5,1,  0,1 ],
+			[ 0.8,   0,  0,0.5,  -0.6,1,  0,0 ],
+		];
+	}
+	case(3)
+	{
+		// dalet
+		POS_STRING = [
+			[ 0.0,   1,  -0.5,-1,  -0.25,-0.8,  -0.8,-0.8 ],
+			[ 0.25,   0,  -0.25,-0.8,  0.65,-0.8,  0,0 ],
+			[ 0.55,   0,  0.35,-0.8,  0.35,1,  0,0 ],
+		];
+	}
+	case(4)
+	{
+		// he
+		POS_STRING = [
+			[ 0.0,   0,  -0.6,-0.75,  0,-0.8, 0,0 ],
+			[ 0.15,   1,  0,-0.8,  0.6,1, 1,-0.8 ],
+			[ 0.65,   0,  -0.35,-0.5,  -0.5,1, 0,0 ],
+		];
+	}
+	case(5)
+	{
+		// vav
+		POS_STRING = [
+			[ 0.0,   1,  -0.2,-0.85,  0.2,-0.5, 0,-0.5 ],
+			[ 0.35,   1,  0.2,-0.5,  0.2,1, 0,1 ],
+		];
+	}
+	case(6)
+	{
+		// zayin
+		POS_STRING = [
+			[ 0.0,   1,  -0.35,-0.85,  0.25,-0.5, 0,-0.5 ],
+			[ 0.35,   1,  0,-0.35,  0.2,1, -0.25,1 ],
+		];
+	}
+	case(7)
+	{
+		// chet
+		POS_STRING = [
+			[ 0.0,   1,  -0.6,-0.85,  0,-0.65, -0.5,-0.65 ],
+			[ 0.2,   1,  0,-0.65,  0.6,1, 1,-0.8 ],
+			[ 0.7,   0,  -0.45,-0.75,  -0.5,1, 0,0 ],
+		];
+	}
+	case(8)
+	{
+		// tet
+		POS_STRING = [
+			[ 0.0,   0,  -0.6,-0.6,  -0.1,1, 0,0 ],
+			[ 0.35,   1,  -0.1,1,  0.75,0, 0.75,0.5 ],
+			[ 0.7,   1,  0.75,0,  0,-0.6, 0.75,-0.75 ],
+		];
+	}
+	case(9)
+	{
+		// yod
+		POS_STRING = [
+			[ 0.0,   1,  -0.25,-0.5,  0,0.5, 0.5,-0.5 ],
+		];
+	}
+	case(10)
+	{
+		// kaf
+		POS_STRING = [
+			[ 0.0,   1,  -0.5,-0.5,  0.3,1,  1,-1 ],
+			[ 0.65,   0,  -0.6,1,  0.6,1,  0,0 ],
+		];
+	}
+	case(11)
+	{
+		// lamed
+		POS_STRING = [
+			[ 0.0,  1,  -0.4,-0.75,  -0.6,-0.25,  -0.4,-0.25 ],
+			[ 0.25,  0,  -0.6,-0.25,  0.5,-0.25,  0,0 ],
+			[ 0.55,  1,  0.5,-0.25,  -0.4,1,  0.5,0.5 ],
+		];
+	}
+	case(12)
+	{
+		// mem
+		POS_STRING = [
+			[ 0.0,   1,  -0.3,-0.4,  0.6,1, 1,-1 ],
+			[ 0.4,   1,  -0.6,-0.7,  -0.5,1, 0,-0.5 ],
+			[ 0.85,   0,  -0.25,1,  0.5,1, 0,0 ],
+		];
+	}
+	case(13)
+	{
+		// nun
+		POS_STRING = [
+			[ 0.0,   1,  -0.2,-0.85,  0.2,-0.5, 0,-0.5 ],
+			[ 0.3,   1,  0.2,-0.5,  0.2,1, 0,1 ],
+			[ 0.85,   0,  0.2,1,  -0.25,1, 0,0 ],
+		];
+	}
+	case(14)
+	{
+		// samech
+		POS_STRING = [
+			[ 0.0,   0,  -0.6,-0.6,  -0.1,1, 0,0 ],
+			[ 0.35,   1,  -0.1,1,  0.75,-0.35, 0.75,0.5 ],
+			[ 0.7,   1,  0.75,-0.35,  -0.5,-0.4, 0.75,-0.75 ],
+		];
+	}
+	case(15)
+	{
+		// ayin
+		POS_STRING = [
+			[ 0.0,   0,  -0.5,-0.5,  0,0.75, 0,0 ],
+			[ 0.3,   1,  0.6,-0.75,  0.1,0.75, 0.75,0.6 ],
+			[ 0.75,   0,  0.1,0.75,  -0.5,1, 0,0.75 ],
+		];
+	}
+	case(16)
+	{
+		// pe
+		POS_STRING = [
+			[ 0.0,   1,  0,0.25,  -0.3,-0.3, -0.5,0 ],
+			[ 0.2,   1,  -0.3,-0.3,  0.6,1, 1,-1 ],
+			[ 0.75,   0,  -0.25,1,  0.5,1, 0,0 ],
+		];
+	}
+	case(17)
+	{
+		// tsadi
+		POS_STRING = [
+			[ 0.0,   1,  -0.5,-0.6,  0.5,0.8, 0.5,0.5 ],
+			[ 0.4,   1,  0.5,0.8,  -0.5,1, 0.5,1 ],
+			[ 0.75,   1,  0.5,-0.75,  0.25,0, 0.35,0 ],
+		];
+	}
+	case(18)
+	{
+		// kof
+		POS_STRING = [
+			[ 0.0,   0,  -0.5,-0.6,  0.5,-0.6, 0,0 ],
+			[ 0.3,   1,  0.5,-0.6,  -0.15,0.4, 0.5,0.4 ],
+			[ 0.6,   0,  -0.4,-0.5,  -0.2,1, 0,0 ],
+		];
+	}
+	case(19)
+	{
+		// resh
+		POS_STRING = [
+			[ 0.0,   0,  -0.5,-0.65,  0.4,-0.75,  0,0 ],
+			[ 0.4,   1,  0.4,-0.75,  0.3,1,  0,0.5 ],
+		];
+	}
+	case(20)
+	{
+		// shin
+		POS_STRING = [
+			[ 0.0,   0,  -0.6,-0.6,  -0.1,1, 0,0 ],
+			[ 0.35,   1,  -0.1,1,  0.75,-0.5, 0.75,0.75 ],
+			[ 0.75,   1,  -0.2,0.4,  0.25,-0.5, 0.25,0.25 ],
+		];
+	}
+	case(21)
+	{
+		// tav
+		POS_STRING = [
+			[ 0.0,   0,  -0.5,-0.65,  0.4,-0.75,  0,0 ],
+			[ 0.25,   1,  0.4,-0.75,  0.65,1,  0.2,0.5 ],
+			[ 0.6,   1,  -0.25,-0.75,  -0.6,1,  -0.25,0.75 ],
+		];
+	}
+	
+	let tmp = tpos;
+
+	let to_tmp = 1;
+	let ldat = [];
+	descent(i in 0 .. length(POS_STRING))
+	{
+		if (POS_STRING[i][0] <= tmp)
+		{
+			ldat = POS_STRING[i];
+			break;
+		}
+		to_tmp = POS_STRING[i][0];
+	}
+	if (length(ldat) > 0)
+	{
+		let lt = (tmp-ldat[0])/(to_tmp-ldat[0]);
+		let pos;
+		if (ldat[1] == 0) { pos = GetLinePosition(ldat[2..4], ldat[4..6], lt); }
+		else { pos = GetBezierCurvePosition(ldat[2..4], ldat[4..6], ldat[6..8], lt); }
+		let rpos = Rotate2D_XY(pos[0]*scale, pos[1]*scale, angle);
+		return(rpos);
+	}
+	else
+	{
+		return([0,0]);
+	}
+}
+
+function GetBezierCurvePosition(from_pos, to_pos, ctrl_pos, pos_t)
+{
+	return([
+		from_pos[0]*(1-pos_t)^2 + to_pos[0]*pos_t^2 + ctrl_pos[0]*2*pos_t*(1-pos_t),
+		from_pos[1]*(1-pos_t)^2 + to_pos[1]*pos_t^2 + ctrl_pos[1]*2*pos_t*(1-pos_t),
+	]);
+}
+function GetLinePosition(from_pos, to_pos, pos_t)
+{
+	return([
+		from_pos[0]*(1-pos_t) + to_pos[0]*pos_t,
+		from_pos[1]*(1-pos_t) + to_pos[1]*pos_t,
+	]);
+}
+
+
+// かりすまえへくと
+task FumaCharismaOption(objBase, flgDelele)
+{
+	if (IsDrawEffect() < 1) { return; }
+	
+	// フラグ関係
+	if (GetPlayMode() == GAME_SPELL) { flgDelele = true; }
+	let flgOpeningEffect = Obj_GetValueD(objScene, "FUMA_OPTION_DELETED", true);
+	Obj_SetValue(objScene, "FUMA_OPTION_DELETED", flgDelele);
+
+	let offset_pos = [[0,16], [56,-48], [-56,-48], [0,-48]];
+	let rect_pos = [[0,0,256,256], [256,0,448,192], [256,0,448,192], [0,256,320,512]];
+	let dest_pos = [[-128,-128,128,128], [-32,-96,160,96], [32,-96,-160,96], [-160,-192,160,64]];
+	
+	// 効果音
+	FumaCharismaOption_MC(objBase, flgOpeningEffect, flgDelele);
+	
+	let t = 0;
+	while(eAlive && !Obj_IsDeleted(objBase))
+	{
+		let a = aTime(objBase);
+		
+		if (a%3 == 0)
+		{
+			let scale1 = (1 + sin(a*2)/16)*0.75;
+			let scale2 = (1 + sin(a*2+180)/16)*0.75;
+			FumaCharismaOption_sub(objBase, offset_pos[0], rect_pos[0], dest_pos[0], scale1, 2.5);
+			ascent(i in 1 .. 3)
+			{
+				FumaCharismaOption_sub(objBase, offset_pos[i], rect_pos[i], dest_pos[i], scale2, 1.75);
+			}
+			FumaCharismaOption_sub(objBase, offset_pos[3], rect_pos[3], dest_pos[3], scale1, 3);
+		}
+		t++;
+		yield;
+	}
+}
+task FumaCharismaOption_sub(objBase, offset_pos, rect_pos, dest_pos, scale, alpha)
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, priorityAura);
+	ObjPrim_SetTexture(obj, imgEffectFumaOption);
+	ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+	ObjSprite2D_SetSourceRect(obj, rect_pos[0], rect_pos[1], rect_pos[2], rect_pos[3]);
+	ObjSprite2D_SetDestRect(obj, dest_pos[0], dest_pos[1], dest_pos[2], dest_pos[3]);
+	
+	let bx = ObjMove_GetX(objBase);
+	let by = ObjMove_GetY(objBase);
+	ascent(i in 0 .. 60)
+	{
+		if (!Obj_IsDeleted(objBase))
+		{
+			bx = ObjMove_GetX(objBase);
+			by = ObjMove_GetY(objBase);
+			ObjRender_SetPosition(obj, ObjMove_GetX(objBase)+offset_pos[0], ObjMove_GetY(objBase)+offset_pos[1], 0);
+		}
+		ObjRender_SetAlpha(obj, (30-absolute(i-30))*alpha);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+task FumaCharismaOption_MC(objBase, flgOpeningEffect, flgDelele)
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, priorityAura);
+	ObjPrim_SetTexture(obj, imgEffectFumaMC);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 512, 512);
+	ObjSprite2D_SetDestRect(obj, -320, -320, 320, 320);
+	ObjRender_SetAlpha(obj, 192);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	
+	let bx = GetStgFrameWidth/2;
+	let by = 400;
+	if (flgOpeningEffect)
+	{
+		let t = 0;
+		let fx = ObjMove_GetX(objBase);
+		let fy = ObjMove_GetY(objBase);
+		while(eAlive && !Obj_IsDeleted(objBase) && t < 150)
+		{
+			let tmp = sin((t+1)/150*90);
+			let a = aTime(objBase);
+
+			let ba = aTime(objBase)/20 - (1-tmp)*360;
+			ObjRender_SetScaleXYZ(obj, tmp^2, tmp^2, 1);
+			ObjRender_SetAngleX(obj, 70*tmp);
+			ObjRender_SetPosition(obj, fx*(1-tmp)+bx*tmp, fy*(1-tmp)+by*tmp, 0);
+			ObjRender_SetAngleZ(obj, ba);
+			t++;
+			yield;
+		}
+	}
+
+	ObjRender_SetScaleXYZ(obj, 1, 1, 1);
+	ObjRender_SetAngleX(obj, 70);
+	ObjRender_SetPosition(obj, bx, by, 0);
+	while(eAlive && !Obj_IsDeleted(objBase))
+	{
+		let ba = aTime(objBase)/20;
+		ObjRender_SetAngleZ(obj, ba);
+		yield;
+	}
+	if (flgDelele)
+	{
+		// 削除モーション
+	}
+	// 1フレームだけ待機
+	yield;
+	Obj_Delete(obj);
+}
+
+// フーマ＝スゴイ＝ハンド
+task DrawMishandraHand(obj, base_angle, muki)
+{
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityZako);
+	ObjPrim_SetTexture(objImg, imgEffectFumaOption);
+	Obj_SetValue(obj, "IMAGE_ID", objImg);	//IDを記録
+	ObjSprite2D_SetSourceRect(objImg, 352, 192, 512, 352);
+	ObjSprite2D_SetDestRect(objImg, -84*muki, -84, 84*muki, 84);
+	SetMishandraHandAngle(obj, base_angle);
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		let eang = Obj_GetValueD(obj, "E_ANG", 0);
+		let eshf = Obj_GetValueD(obj, "E_SHUFFLE", 0);
+		ObjRender_SetAngleZ(objImg, eang);
+		if (eshf > 0) {
+			ObjRender_SetPosition(objImg, round(ObjMove_GetX(obj)+randEffect(-eshf,eshf)), round(ObjMove_GetY(obj)+randEffect(-eshf,eshf)), 0);
+		} else {
+			ObjRender_SetPosition(objImg, round(ObjMove_GetX(obj)), round(ObjMove_GetY(obj)), 0);
+		}
+		if (t < 30)
+		{
+			let tmp = sin((t+1)/30*90);
+			ObjRender_SetScaleXYZ(objImg, tmp, (1.5-tmp*0.5)^2, 1);
+		}
+		t++;
+		yield;
+	}
+	descent(t in 0 .. 30)
+	{
+		let tmp = sin((t+1)/30*90);
+		ObjRender_SetScaleXYZ(objImg, tmp, (1.5-tmp*0.5)^2, 1);
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+// 手の角度
+function SetMishandraHandAngle(obj, val)
+{
+	Obj_SetValue(obj, "E_ANG", val-90);
+}
+function GetMishandraHandAngle(obj)
+{
+	return(Obj_GetValueD(obj, "E_ANG", 0)+90);
+}
+task ChangeMishandraHandAngle(obj, to_angle, timer)
+{
+	let anime_ct = Obj_GetValueD(obj, "E_ANG_C", 0) + 1;
+	let anime_ang = Obj_GetValueD(obj, "E_ANG", 0);
+	Obj_SetValue(obj, "E_ANG_C", anime_ct);
+	
+	ascent(i in 0 .. timer)
+	{
+		if (!CanShotBullet(obj) || anime_ct < Obj_GetValueD(obj, "E_ANG_C", 0)) { break; }
+		let tmp = sin((i+1)/timer*90);
+		Obj_SetValue(obj, "E_ANG", anime_ang*(1-tmp) + to_angle*tmp - 90);
+		yield;
+	}
+}
+// ｶﾞｸｶﾞｸﾌﾞﾙﾌﾞﾙ
+task ChangeMishandraHandShuffle(obj, timer)
+{
+	Obj_SetValue(obj, "E_SHUFFLE", 0);
+	ascent(t in 0 .. timer)
+	{
+		let tmp = sin((t+1)/timer*90);
+		Obj_SetValue(obj, "E_SHUFFLE", min(1,tmp*2)*8);
+		yield;
+	}
+	Obj_SetValue(obj, "E_SHUFFLE", 0);
+}
+task MishandraHandSearchPlayer(obj)
+{
+	while(!Obj_IsDeleted(obj))
+	{
+		SetMishandraHandAngle(obj, GetAngleToPlayer(obj));
+		yield;
+	}
+}
+
+// レーザーえへくと
+task OpenLaserEffect(x, y, angle, l_length, timer)
+{
+	let graphic = BGW_BEAM_WHITE;
+	let obj = CreateStraightLaserA1(x, y, angle, l_length, 8, 999, graphic, 0);
+	ObjShot_SetAutoDelete(obj, false);
+	ObjShot_SetItemChange(obj, false);
+	ObjShot_SetIntersectionEnable(obj, false);
+	ObjStLaser_SetSource(obj, false);
+	Obj_SetRenderPriorityI(obj, 40);
+	ObjRender_SetColor(obj, 64, 96, 220);
+	ascent(t in 0 .. timer/2)
+	{
+		let tmp = (t+1)/timer*2;
+		ObjRender_SetAlpha(obj, tmp*255);
+		yield;
+	}
+	descent(t in 0 .. timer)
+	{
+		let tmp = (t+1)/timer;
+		ObjRender_SetAlpha(obj, tmp*255);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+
+// ライン表示
+let MLINE_CIRCLE = 0;
+let MLINE_TRIANGLE = 1;
+let MLINE_LINE = 2;
+let MLINE_CIRCLE_EX = 3;	// 分割数が細かい円
+function MishandraLineEffect(obParent, x, y, eff_type)
+{
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjRender_SetPosition(obj, x, y, 0);
+	Obj_SetValue(obj, "R", 0);
+	if (eff_type == MLINE_CIRCLE) { _MishandraLineEffect_Circle(obParent, obj, 24); }
+	else if (eff_type == MLINE_CIRCLE_EX) { _MishandraLineEffect_Circle(obParent, obj, 48); }
+	else if (eff_type == MLINE_TRIANGLE) { _MishandraLineEffect_Triangle(obParent, obj); }
+	else { _MishandraLineEffect_Line(obParent, obj); }
+	return(obj);
+}
+
+task _MishandraLineEffect_Circle(obParent, objImg, cp)
+{
+//	let cp = 24;
+	Obj_SetRenderPriorityI(objImg, 71);
+	ObjPrim_SetTexture(objImg, imgEffectTLine);
+	ObjPrim_SetVertexCount(objImg, (cp+1)*2);
+	ObjPrim_SetPrimitiveType(objImg, PRIMITIVE_TRIANGLESTRIP);
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+
+	// 座標準備
+	let posX = [];
+	let posY = [];
+	ascent(i in 0 .. cp+1)
+	{
+		let a = i/cp*360;
+		posX = posX ~ [cos(a)];
+		posY = posY ~ [sin(a)];
+	}
+	
+	let t = 0;
+	while(!Obj_IsDeleted(objImg) && !Obj_IsDeleted(obParent))
+	{
+		let r = Obj_GetValueD(objImg, "R", 0);
+		ascent(i in 0 .. cp+1)
+		{
+			let tmp = i/cp + t/100;
+			ObjPrim_SetVertexPosition(objImg, i*2+0, posX[i]*(r-5), posY[i]*(r-5), 0);
+			ObjPrim_SetVertexPosition(objImg, i*2+1, posX[i]*(r+5), posY[i]*(r+5), 0);
+			ObjPrim_SetVertexUVT(objImg, i*2+0, tmp*512, 0);
+			ObjPrim_SetVertexUVT(objImg, i*2+1, tmp*512, 32);
+		}
+		t++;
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+task _MishandraLineEffect_Triangle(obParent, objImg)
+{
+	let cp = 3;
+	Obj_SetRenderPriorityI(objImg, 61);
+	ObjPrim_SetTexture(objImg, imgEffectTLine);
+	ObjPrim_SetVertexCount(objImg, (cp+1)*2);
+	ObjPrim_SetPrimitiveType(objImg, PRIMITIVE_TRIANGLESTRIP);
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+
+	// 座標準備
+	let posX = [];
+	let posY = [];
+	ascent(i in 0 .. cp+1)
+	{
+		let a = i/cp*360;
+		posX = posX ~ [cos(a)];
+		posY = posY ~ [sin(a)];
+	}
+	
+	let t = 0;
+	while(!Obj_IsDeleted(objImg) && !Obj_IsDeleted(obParent))
+	{
+		let r = Obj_GetValueD(objImg, "R", 0);
+		ascent(i in 0 .. cp+1)
+		{
+			let tmp = i/cp + t/100;
+			ObjPrim_SetVertexPosition(objImg, i*2+0, posX[i]*(r-8), posY[i]*(r-8), 0);
+			ObjPrim_SetVertexPosition(objImg, i*2+1, posX[i]*(r+8), posY[i]*(r+8), 0);
+			ObjPrim_SetVertexUVT(objImg, i*2+0, tmp*512, 0);
+			ObjPrim_SetVertexUVT(objImg, i*2+1, tmp*512, 32);
+		}
+		t++;
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+task _MishandraLineEffect_Line(obParent, objImg)
+{
+	Obj_SetRenderPriorityI(objImg, 61);
+	ObjPrim_SetTexture(objImg, imgEffectTLine);
+	ObjPrim_SetVertexCount(objImg, 4);
+	ObjPrim_SetPrimitiveType(objImg, PRIMITIVE_TRIANGLESTRIP);
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+	
+	let t = 0;
+	while(!Obj_IsDeleted(objImg) && !Obj_IsDeleted(obParent))
+	{
+		let r = Obj_GetValueD(objImg, "R", 0);
+		ObjPrim_SetVertexPosition(objImg, 0, 0, -5, 0);
+		ObjPrim_SetVertexPosition(objImg, 1, 0, 5, 0);
+		ObjPrim_SetVertexPosition(objImg, 2, r, -5, 0);
+		ObjPrim_SetVertexPosition(objImg, 3, r, 5, 0);
+		let tmp = t*5;
+		ObjPrim_SetVertexUVT(objImg, 0, tmp, 0);
+		ObjPrim_SetVertexUVT(objImg, 1, tmp, 32);
+		ObjPrim_SetVertexUVT(objImg, 2, tmp+128, 0);
+		ObjPrim_SetVertexUVT(objImg, 3, tmp+128, 32);
+		t++;
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+task MishandraLineEffect_Fadeout(objImg)
+{
+	descent(i in 0 .. 60)
+	{
+		let tmp = (i+1)/60;
+		ObjRender_SetAlpha(objImg, tmp*255);
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+// 三角形の座標を取得
+function GetTrianglePos(angle, rotate_angle)
+{
+	let tmp_l = floor(angle/120);
+	let tmp_p = (angle - tmp_l*120)/120;
+	let tmp_r = rotate_angle + tmp_l*120;
+//	let pos = [[1,0],[-0.5,0.866]];
+	let x = 1*(1-tmp_p) - 0.5*tmp_p;
+	let y = 0.866*tmp_p;
+	return(Rotate2D_XY(x, y, tmp_r));
+}
+
+// 簡易魔法陣
+function MishandraMiniCircle(x, y, scale, timer)
+{
+	let objBase = MakeEnemyFamilier(x, y, 99999, ENEMY_M);
+	_MishandraMiniCircle(x, y, scale, timer);
+	return(objBase);
+	
+	task _MishandraMiniCircle(x, y, scale, timer)
+	{
+		CheckLinkLife_Familier(objEnemy, objBase, 0.85);	// ボスと体力連動
+		MishandraMiniCircle_Draw(objBase, scale, timer);
+		SetDropItemCount(objBase, 0, 0);
+		SetEnemyVisible(objBase, false);
+		TAct();
+		WaitForKilledFamilier(objBase, 24, 0);
+	}
+	
+	task TAct()
+	{
+		wait(45);
+		if (Obj_IsDeleted(objBase)) { return; }
+		SetEnemyVisible(objBase, true);
+		loop(timer-45)
+		{
+			if (!eAlive) { break; }
+			yield;
+		}
+		if (Obj_IsDeleted(objBase)) { return; }
+		Obj_Delete(objBase);
+	}
+}
+task MishandraMiniCircle_Draw(objBase, scale, timer)
+{
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityZako);
+	ObjPrim_SetTexture(objImg, imgEffectFumaOption);
+	ObjSprite2D_SetSourceRect(objImg, 384, 384, 512, 512);
+	ObjSprite2D_SetDestCenter(objImg);
+	ObjRender_SetPosition(objImg, ObjMove_GetX(objBase), ObjMove_GetY(objBase), 0);
+	
+	let tmp_alpha = 0;
+	let tmp_scale = 0;
+	let tmp_angle = 0;
+	ascent(i in 0 .. 45)
+	{
+		if (Obj_IsDeleted(objBase)) { break; }
+		let tmp = sin((i+1)/45*90);
+		tmp_alpha = tmp*255;
+		tmp_scale = tmp*scale;
+		tmp_angle = (1-tmp)*360;
+		ObjRender_SetAlpha(objImg, tmp_alpha);
+		ObjRender_SetAngleZ(objImg, tmp_angle);
+		ObjRender_SetScaleXYZ(objImg, tmp_scale, tmp_scale, 1);
+		ObjRender_SetPosition(objImg, ObjMove_GetX(objBase), ObjMove_GetY(objBase), 0);
+		yield;
+	}
+	loop(timer-45)
+	{
+		if (Obj_IsDeleted(objBase)) { break; }
+		ObjRender_SetPosition(objImg, ObjMove_GetX(objBase), ObjMove_GetY(objBase), 0);
+		yield;
+	}
+	descent(i in 0 .. 45)
+	{
+		let tmp = sin((i+1)/45*90);
+		ObjRender_SetAlpha(objImg, tmp_alpha*tmp);
+		yield;
+	}
+	Obj_Delete(objImg);
+}

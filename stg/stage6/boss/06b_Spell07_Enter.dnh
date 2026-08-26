@@ -1,0 +1,252 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ラスペ準備えへくと"]
+#Text["ラスペ準備えへくと"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Mishandra.dnh"
+#include"./06b_Spell07_Func.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(1);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBossTalk(BOSS_ID_MISHANDRA);	//ボスセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	let to_x = CenX;
+	let to_y = 140;
+
+	// 移動先座標をセット
+	ObjMove_SetPosition(objEnemy, to_x, to_y);
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	if (GetStartChapter(6) >= 18)
+	{
+		// practice tool: direct LSC jump - skip talk and entrance
+		let idBG = LoadScript(GetCurrentScriptDirectory() ~ "06c_Background.dnh");
+		StartScript(idBG);
+		PlayMusicWithName(14, 60, 30);
+		NotifyEvent(GetStageBG_ID(), ev_CloseScript, 2);
+		wait(90);
+		Boss_Finalize(objEnemy, false, false);
+		return;
+	}
+
+	ENTER_EFFECT();
+	wait(420);
+	
+	// 会話準備
+	StartTalk();
+	
+	wait(60);
+	
+	// 会話
+	FuncTalk();
+	FinishTalk(true);
+
+	// オプション
+	FumaCharismaOption_LS(objEnemy, true);
+	wait(240);
+	// 魔法陣設置
+	DisplayShake(150, 4);
+	FumaCharismaOption_MC_LS(objEnemy, [GetStgFrameWidth/2, 400], true, true);
+	wait(120);
+	SetFamilier01(GetStgFrameWidth/2+92, 200, 90+45,  1, 0, 150);
+	SetFamilier01(GetStgFrameWidth/2-92, 200, 90-45, -1, 0, 150);
+	CallSound(sndBoon);
+	
+	wait(120);
+	
+	let objDummy = CreateShotA1(GetStgFrameWidth/2, 220, 0, 0, BGW_BALL_S_RED, 0);
+	SetShotDisabled(objDummy);
+	Obj_SetVisible(objDummy, false);
+
+	CallSound(sndPower1);
+	DisplayShake(180, 8);
+	ascent(i in 0 .. 6)
+	{
+		EffectConcentrationLine(objDummy,
+			[EFF_RED,EFF_YELLOW,EFF_GREEN,EFF_SKY,EFF_BLUE,EFF_WHITE][i],
+			75, 6+i);
+		wait(15);
+	}
+	wait(30);
+	Mishandra_HideBossEffect(true);
+	
+	CallSound(sndCallSpellCard);
+	loop(30)
+	{
+		loop(10)
+		{
+			S07DigitalEffect3(GetStgFrameWidth/2+rand(-64,64), 200+rand(-64,64),
+				rand(1, 5), rand(0,360), rand_int(0,1));
+		}
+		yield;
+	}
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 開始演出
+task ENTER_EFFECT()
+{
+	// ボス登場用
+	EnterBoss();
+
+	// 背景配置
+	let idBG = LoadScript(GetCurrentScriptDirectory()~"06c_Background.dnh");
+	StartScript(idBG);
+	
+	// BGM
+	PlayMusicWithName(14, 240, 30);
+	wait(240);
+
+	// ステージ背景削除
+	NotifyEvent(GetStageBG_ID(), ev_CloseScript, 2);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MISHANDRA, true);
+	
+	// 初期設定
+	SetImageFoward(cutinBoss1, true);
+	ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+	BossScene_SetNameVisible(objScene, false);	//ボスネーム表示状態
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNextTimer(60));
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "本は知識の泉、[r]本は先人が生きた魂の証。");
+			wait(105);
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "万巻の書を読み、[r]我が魂は千里の道を知る。");
+			wait(105);
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL3);
+			SetTalkEx(cutinBoss1, "戦の世が終わり、[r]風魔の忍びはもう居ない。");
+			wait(105);
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "フーマとは何なのか？[r]72の悪魔になれぬフーマは何者なのか？");
+			wait(105);
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "ならばフーマは名乗ろう、[r]72の悪魔になれなかった者の名を。");
+			wait(105);
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "ならば風魔の秘術を以て名付けよう。");
+			wait(105);
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL2);
+			SetTalkEx(cutinBoss1, "風魔の術を継ぎ、[r]72の悪魔を統べる者――その名を！");
+			SetFukidashiType(cutinBoss1, FUKIDASHI_ANGER);	// 吹き出しタイプ変更
+			wait(135);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+	
+	let objImg = GetBossImageID(objEnemy);
+	ObjRender_SetAlpha(objImg, 0);
+	wait(420);
+	ascent(t in 0 .. 120)
+	{
+		let tmp = (t+1)/120;
+		ObjRender_SetAlpha(objImg, tmp*255);
+		yield;
+	}
+}
+
+// フーマスゴイハンド
+task SetFamilier01(iniX, iniY, iniAngle, iniMuki, iniValue, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_RED;
+	let item_count = 0;
+	let item_star = 0;
+	let baseAngle = iniAngle;
+	let baseAdd = 0;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 99999, eSize);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawMishandraHand(objFamilier, iniAngle, iniMuki);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 0, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		wait(iniTimer);
+		ChangeMishandraHandShuffle(objFamilier, 180);
+		wait(90);
+		ObjMove_SetSpeed(objFamilier, 0);
+		ObjMove_SetAcceleration(objFamilier, 0.5);
+		ObjMove_SetMaxSpeed(objFamilier, 10);
+		ObjMove_SetAngle(objFamilier, iniAngle+180);
+	}
+	
+}

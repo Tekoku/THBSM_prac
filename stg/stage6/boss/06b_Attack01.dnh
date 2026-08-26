@@ -1,0 +1,172 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ミシャンドラ通常"]
+#Text["ミシャンドラ通常1"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mishandra.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MISHANDRA);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	wait(30);
+	
+	let add_angle = [0.75, 1, 1.33, 1.5][Difficult];
+	
+	CircleShotA01(192, rand(0,360), add_angle*0.8, -90);
+	CallSound(sndBoon);
+	wait(60);
+	CircleShotA01(128, rand(0,360), -add_angle, 90);
+	BossCharge(objEnemy);
+	wait(300);
+	BossCharge(objEnemy);
+	wait(60);
+	TShot02(160);
+}
+
+task TShot02(r)
+{
+	let wt = 15;
+	
+	let base_angle = 0;
+	let add_angle = 360/10.5;
+	while(eAlive)
+	{
+		let sx = ObjMove_GetX(objEnemy) + r*cos(base_angle);
+		let sy = ObjMove_GetY(objEnemy) + r*sin(base_angle);
+		HebrewShot01(sx, sy, base_angle+90);
+		base_angle += add_angle;
+		wait(wt);
+	}
+}
+
+task CircleShotA01(max_r, base_angle, add_angle, offset_angle)
+{
+	let speed = [1.25, 1.75, 2, 2.75][Difficult];
+	let wt = [9, 4, 3, 3][Difficult];
+	let speed_span = [1, 2, 2, 2][Difficult];
+	let graphic = BGW_RICE_M_WHITE;
+	let way = 3;
+
+//	let base_angle = rand(0, 360);
+//	let add_angle = 4;
+//	let offset_angle = -90;
+	
+	let objEff = MishandraLineEffect(objEnemy, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), MLINE_CIRCLE);
+	
+	ascent(t in 0 .. 60)
+	{
+		let tmp = sin((t+1)/60*90);
+		Obj_SetValue(objEff, "R", tmp*max_r);
+		ObjRender_SetPosition(objEff, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0);
+		yield;
+	}
+	let st = 0;
+	let t = 0;
+	while(eAlive)
+	{
+		if (t > 120 && t%wt == 0)
+		{
+			let pflg = (((ObjMove_GetX(objEnemy)-GetPlayerX)^2+(ObjMove_GetY(objEnemy)-GetPlayerY)^2)^0.5 < max_r);
+			ascent(i in 0 .. way)
+			{
+				let sa = base_angle + i*360/way;
+				let sx = ObjMove_GetX(objEnemy) + max_r*cos(sa);
+				let sy = ObjMove_GetY(objEnemy) + max_r*sin(sa);
+				let ta = sa+offset_angle;
+				if (pflg && i == 0) { ta = atan2(GetPlayerY-sy,GetPlayerX-sx); }	// 近くにいるなら自機狙い
+				
+				let ss = speed * (1+(st%speed_span)*0.1);
+				let objShot = CreateShotA1(sx, sy, 0, ta, graphic, 0);
+				ObjMove_AddPatternA2(objShot, 30, NO_CHANGE, NO_CHANGE, ss/60, 0, ss);
+				My_RaiseShotEffectD_AA(objShot, 15);
+				
+				OpenLaserEffect(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					sa, max_r, 20);
+			}
+			CallSound(sndShot2);
+			base_angle += add_angle*wt;
+			st++;
+		}
+		ObjRender_SetPosition(objEff, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0);
+		t++;
+		yield;
+	}
+}
+
+task HebrewShot01(x, y, angle)
+{
+	MishandraMiniCircle(x, y, 0.5, 120+30);
+	wait(60);
+	if (!eAlive) { return; }
+	
+	let speed = 2;
+	let graphic = ADD_BGW_LIGHT_S_YELLOW;
+	let to_graphic = BGW_STAR_S_WHITE;
+	
+	let count = 15;
+	let shot_timer = 15;
+	
+	let char_num = rand_int(0,21);
+	let scale = 30;
+	
+	let timer = 60;
+	let st = 0;
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+
+		let tmp = i/(count-1);
+		let pos = GetHebrewPos(angle, scale, char_num, tmp);
+		
+		let sa = atan2((y+pos[1])-ObjMove_GetY(objEnemy),(x+pos[0])-ObjMove_GetX(objEnemy));
+		HebrewShot01_sub(x+pos[0], y+pos[1], speed, sa, graphic, to_graphic, 15, timer);
+		
+		st += shot_timer/count;
+		while(st > 0) { st--; timer--; yield; }
+	}
+}
+task HebrewShot01_sub(x, y, speed, angle, graphic, to_graphic, delay, timer)
+{
+	let obj = CreateShotA1(x, y, 0, 0, graphic, delay);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+	wait(timer);
+	if (!Obj_IsDeleted(obj))
+	{
+		CreateShotA2(x, y, 0, angle+rand(-15,15), speed/120, speed, to_graphic, delay);
+		ascent(i in 0 .. 3)
+		{
+//		CreateShotA2(x, y, 0, angle+(i-1)*90, speed/120, speed, to_graphic, delay);
+		}
+		CallSound(sndShot2);
+	//	DeleteBulletEffect(obj);
+		ObjShot_FadeDelete(obj);
+	}
+}

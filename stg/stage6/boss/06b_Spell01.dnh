@@ -1,0 +1,409 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["レーザーキーオブソロモン"]
+#Text["レーザーキーオブソロモン"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+let BASE_SPEED = 0;
+let BASE_ANGLE = 0;
+let BASE_ROTATE = 0;
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mishandra.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(80);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 20;		//ダメージ透過率
+
+	bossDropItem = 80;	//アイテム数
+	bossHitToShot = 64;
+	bossDropStarItem = 120;
+	
+	bossNormalDropStar = 8;
+	bossDropStarItemR = 118;
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MISHANDRA);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(52), [0,0,1,2][Difficult], 
+			GetCurrentScriptDirectory()~"06b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 180, [420, 60][GetStartChapter(6) == 8]);	// practice tool: fast entrance on direct jump
+	FumaCharismaOption(objEnemy, false);
+	wait(60);
+	
+	TShot01(0, 0);
+	TShot01(90, 0.5);
+	
+	if (Difficult >= D_LUNA) { TRingShot(); }
+	
+	wait(90);
+	CallSound(sndBoon);
+	DisplayShake(90, 12);
+	wait(60);
+	CallSound(sndPower1);
+	wait(90);
+	CallSpellCard(true);	//スペカ起動
+	BASE_SPEED = 0.01;
+	wait(30);
+	wait(60);
+	CallSound(sndPower2);
+	
+	let max_speed = [0.8, 1, 1.3, 1][Difficult];
+	
+	let t = 0;
+	while(eAlive)
+	{
+		let tmp = min(1, (t+1)/240) * max_speed;
+		BASE_SPEED = 0.1 + 0.9*tmp;
+		BASE_ROTATE -= 0.15*tmp;
+		BASE_ANGLE += 0.5*tmp;
+		t++;
+		yield;
+	}
+}
+
+task TShot01(base_angle, offset_timer)
+{
+	let close_t = 90;
+	
+	let wt = 60;
+	
+	let st = 0;
+	let t = 0;
+	
+	ascent(i in 1 .. 5)
+	{
+		let base_t = (i+offset_timer)*60;
+		let close_delay = base_t+(i+offset_timer+1)*0.25;
+		TriLaser(64, base_angle+st*180, 1, 300, base_t, close_delay, 30, 90);
+		st++;
+		wait(15);
+	}
+	st++;
+	
+	while(eAlive)
+	{
+		TriLaser(64, base_angle+st*180, 1, 300, offset_timer*wt, close_t, 30, 0);
+		while(t < wt) { t += BASE_SPEED; yield; }
+		t -= wt;
+		st++;
+	}
+}
+
+task TriLaser(base_r, offset_angle, muki, timer, base_t, close_delay, close_timer, delay)
+{
+	let obj = [];
+	ascent(i in 0 .. 3)
+	{
+		let tmp_obj = CreateShotA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 0, BGW_BALL_BS_RED, 0);
+		ObjShot_SetAutoDelete(tmp_obj, false);
+		Obj_SetVisible(tmp_obj, false);
+		obj = obj ~ [tmp_obj];
+	}
+	ascent(i in 0 .. 3)
+	{
+		StarLaser(obj[i%3], obj[(i+1)%3], BGW_BEAM_WHITE, delay, base_t, close_delay, close_timer, muki);
+	}
+	
+	let t = base_t;
+	while(t < timer)
+	{
+		if (!eAlive) { break; }
+		let tmp_r = 2^(5-t/timer*5)*base_r;
+		ascent(i in 0 .. 3)
+		{
+			let sa = BASE_ANGLE + offset_angle + i*120;
+			let vx = cos(sa)*tmp_r;
+			let vy = sin(sa)*tmp_r/2;
+			let vpos = Rotate2D_XY(vx, vy, BASE_ROTATE);
+			let sx = ObjMove_GetX(objEnemy) + vpos[0];
+			let sy = ObjMove_GetY(objEnemy) + vpos[1];
+			ObjMove_SetPosition(obj[i], sx, sy);
+			Obj_SetValue(obj[i], "COLOR", t);
+		}
+		t += BASE_SPEED;
+		yield;
+	}
+	ascent(i in 0 .. 3)
+	{
+		Obj_Delete(obj[i]);
+	}
+}
+
+task StarLaser(objFrom, objTo, graphic, delay, base_t, close_delay, close_timer, muki)
+{
+	let timer = 60*60;
+	let obj = My_CreateStraightLaserS1(ObjMove_GetX(objFrom), ObjMove_GetY(objFrom), 0, 0, 8, timer, graphic, delay, true);
+	ObjShot_SetAutoDelete(obj, false);
+
+	let min_rate = [0.55, 0.5, 0.5, 0.5][Difficult];
+	let lr_rate = 1;
+	let lt = 0;
+
+	let st = base_t;
+	let t = 0;
+	while(CanShotBullet(objFrom) && CanShotBullet(objTo))
+	{
+		let lr = ((ObjMove_GetY(objFrom)-ObjMove_GetY(objTo))^2+(ObjMove_GetX(objFrom)-ObjMove_GetX(objTo))^2)^0.5;
+		let la = atan2(ObjMove_GetY(objTo)-ObjMove_GetY(objFrom), ObjMove_GetX(objTo)-ObjMove_GetX(objFrom));
+		if (t < 15)
+		{
+			lr_rate = (t+1)/15;
+		}
+		if (st >= close_delay && lt < close_timer)
+		{
+			let tmp = (lt+1)/close_timer;
+			
+			lr_rate = 1-tmp*min_rate;
+			let tmp_lr = lr*lr_rate;
+			local
+			{
+				let sx = ObjMove_GetX(objFrom) + tmp_lr*cos(la);
+				let sy = ObjMove_GetY(objFrom) + tmp_lr*sin(la);
+				let sr = ((ObjMove_GetX(objEnemy)-sx)^2 + (ObjMove_GetY(objEnemy)-sy)^2)^0.5;
+				let sa = atan2(ObjMove_GetY(objEnemy)-sy, ObjMove_GetX(objEnemy)-sx);
+				OpenLaserEffect(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), sa+180, sr, 10);
+
+				/*
+				ascent(i in 0 .. 2)
+				{
+					let ss = rand(2,4);
+					CreateShotA2(sx, sy, 0, 180+sa+90, ss/30, ss, ADD_BGW_STAR_S_BLUE, 0);
+				}
+				*/
+				BulletEffectS01(sx, sy, rand(0,360));
+				if (lt%5 == 0) { CallSound(sndShot2); }
+			}
+			lt++;
+		}
+		
+		// 色
+		Obj_SetValue(obj, "COLOR", Obj_GetValueD(objFrom, "COLOR", 0)*0.75+120);
+		
+		ObjMove_SetPosition(obj, ObjMove_GetX(objFrom), ObjMove_GetY(objFrom));
+		ObjLaser_SetLength(obj, lr*lr_rate);
+		ObjStLaser_SetAngle(obj, la);
+		t++;
+		st += BASE_SPEED;
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task BulletEffectS01(x, y, angle)
+{
+	let obj = CreateShotA1(x, y, rand(0,2), angle, ADD_BGW_STAR_M_BLUE, 0);
+	SetShotDisabled(obj);
+	descent(t in 0 .. 30)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		let tmp = (t+1)/30;
+		ObjRender_SetScaleXYZ(obj, tmp, tmp, 1);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+
+// 設置レーザー（色変化）
+function My_CreateStraightLaserS1(x, y, angle, l_length, l_width, timer, graphic, delay, flgSource)
+{
+	// 予告線＆操作用
+	let objDummy = CreateStraightLaserA1(x, y, angle, l_length, 2, timer+delay, graphic, 0);
+	ObjStLaser_SetSource(objDummy, false);
+//	ObjShot_SetAutoDelete(objDummy, false);
+	ObjShot_SetItemChange(objDummy, false);
+	ObjShot_SetIntersectionEnable(objDummy, false);
+	ObjRender_SetAlpha(objDummy, 192);
+	
+	My_CreateStraightLaserS1_sub(objDummy, l_width, delay, flgSource);
+	return(objDummy);
+}
+task My_CreateStraightLaserS1_sub(parent, l_width, delay, flgSource)
+{
+	let max_scale = l_width/18;
+	let scale = 0;
+	let t = 0;
+
+	// ディレイえへくと
+	let objEffect = [-1, -1];
+	if (flgSource) { objEffect = [CreateDelayEffect(parent), CreateDelayEffect(parent)]; }
+	descent(i in 0 .. delay)
+	{
+		if (Obj_IsDeleted(parent)) { break; }
+		scale = (1 + (t%4)/8) * max_scale;
+		if (t < 10) { scale *= (t+1)/10; }
+		// 根本
+		ObjRender_SetScaleXYZ(objEffect[0], scale, scale, 1);
+		ObjRender_SetAngleZ(objEffect[0], t*166);
+		ObjRender_SetPosition(objEffect[0], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+		// 先っちょ
+		ObjRender_SetScaleXYZ(objEffect[1], scale, scale, 1);
+		ObjRender_SetAngleZ(objEffect[1], t*166);
+		ObjRender_SetPosition(objEffect[1],
+			ObjMove_GetX(parent)+ObjLaser_GetLength(parent)*cos(ObjStLaser_GetAngle(parent)), ObjMove_GetY(parent)+ObjLaser_GetLength(parent)*sin(ObjStLaser_GetAngle(parent)), 0);
+		t++;
+		yield;
+	}
+	
+	// レーザー本体
+	if (!Obj_IsDeleted(parent))
+	{
+		let obj = [];
+		loop(2)
+		{
+			let tmp_obj = CreateStraightLaserA1(ObjMove_GetX(parent), ObjMove_GetY(parent),
+				ObjStLaser_GetAngle(parent), ObjLaser_GetLength(parent), 0, 99999, ObjShot_GetImageID(parent), 0);
+			ObjLaser_SetGrazeInvalidFrame(tmp_obj, defaultLaserGraze);
+			ObjStLaser_SetSource(tmp_obj, false);
+			ObjShot_SetAutoDelete(tmp_obj, false);
+			obj = obj ~ [tmp_obj];
+		}
+		ObjShot_SetIntersectionEnable(obj[1], false);
+
+		t = 0;
+		while(!Obj_IsDeleted(parent))
+		{
+			if (t < 15)
+			{
+				let tmp = ((t+1)/15)^2;
+				ObjLaser_SetRenderWidth(obj[0], l_width*tmp);
+				ObjLaser_SetIntersectionWidth(obj[0], l_width*tmp/2);
+				ObjLaser_SetRenderWidth(obj[1], l_width*tmp*2);
+				ObjRender_SetAlpha(parent, (1-tmp)*192);
+			}
+			let col = Obj_GetValueD(parent, "COLOR", 0);
+			ObjRender_SetColorHSV(obj[1], col, 255, 255);
+			scale = (1 + (t%4)/8) * max_scale;
+			// レーザー
+			ascent(i in 0 .. 2)
+			{
+				ObjMove_SetPosition(obj[i], ObjMove_GetX(parent), ObjMove_GetY(parent));
+				ObjStLaser_SetAngle(obj[i], ObjStLaser_GetAngle(parent));
+				ObjLaser_SetLength(obj[i], ObjLaser_GetLength(parent));
+				ObjLaser_SetInvalidLength(obj[i], 0, 0);
+			}
+			// 根本
+			ObjRender_SetScaleXYZ(objEffect[0], scale, scale, 1);
+			ObjRender_SetAngleZ(objEffect[0], t*166);
+			ObjRender_SetPosition(objEffect[0], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+			// 先っちょ
+			ObjRender_SetScaleXYZ(objEffect[1], scale, scale, 1);
+			ObjRender_SetAngleZ(objEffect[1], t*166);
+			ObjRender_SetPosition(objEffect[1],
+				ObjMove_GetX(parent)+ObjLaser_GetLength(parent)*cos(ObjStLaser_GetAngle(parent)), ObjMove_GetY(parent)+ObjLaser_GetLength(parent)*sin(ObjStLaser_GetAngle(parent)), 0);
+			t++;
+			yield;
+		}
+		ObjShot_SetIntersectionEnable(obj[0], false);
+		descent(i in 0 .. 15)
+		{
+			if (Obj_IsDeleted(obj)) { break; }
+			let tmp = ((i+1)/15)^2;
+			ObjLaser_SetRenderWidth(obj[0], l_width*tmp);
+			ObjLaser_SetRenderWidth(obj[1], l_width*tmp*2);
+			// 根本
+			ObjRender_SetScaleXYZ(objEffect[0], scale*tmp, scale*tmp, 1);
+			// 先っちょ
+			ObjRender_SetScaleXYZ(objEffect[1], scale*tmp, scale*tmp, 1);
+			yield;
+		}
+		ascent(i in 0 .. 2) { Obj_Delete(obj[i]); }
+	}
+	Obj_Delete(objEffect[0]);
+	Obj_Delete(objEffect[1]);
+}
+
+// リングオブソロモン用
+task TRingShot()
+{
+	let graphics = [ADD_BGW_CROSS_RED, ADD_BGW_CROSS_ORANGE, ADD_BGW_CROSS_YELLOW, ADD_BGW_CROSS_GREEN, ADD_BGW_CROSS_SKY, ADD_BGW_CROSS_BLUE, ADD_BGW_CROSS_PURPLE];
+	let objBase = CreateShotA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 0, BGW_BALL_S_RED, 0);
+	ObjShot_SetAutoDelete(objBase, false);
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	
+	let way = 12;
+	ascent(i in 0 .. way)
+	{
+		ascent(j in 0 .. 7)
+		{
+			let angle = i*360/way + j*3;
+			RingShotSingle(objBase, angle, graphics[j]);
+		}
+	}
+	
+	let rx = 256;
+	let ry = 128;
+	let angle_rotate = 0;
+	let angle = 0;
+	
+	let t = 0;
+	while(!Obj_IsDeleted(objBase))
+	{
+		angle -= 0.33;
+		angle_rotate += 0.15;
+		ry = sin(t/3)*128;
+		rx = 256;
+		if (t < 540)
+		{
+			let tmp = sin((t+1)/540*90);
+			rx += (1-tmp)*512;
+			ry += (1-tmp)*512;
+		}
+		Obj_SetValue(objBase, "C", cos(angle_rotate));
+		Obj_SetValue(objBase, "S", sin(angle_rotate));
+		Obj_SetValue(objBase, "RX", rx);
+		Obj_SetValue(objBase, "RY", ry);
+		Obj_SetValue(objBase, "A", angle);
+		t++;
+		yield;
+	}
+}
+
+task RingShotSingle(objBase, angle, graphic)
+{
+	let obj = CreateShotA1(ObjMove_GetX(objBase), ObjMove_GetY(objBase), 0, 0, graphic, 0);
+	ObjShot_SetSpellResist(obj, true);
+	ObjShot_SetAutoDelete(obj, false);
+	
+	while(!Obj_IsDeleted(obj) && !Obj_IsDeleted(objBase))
+	{
+		let c = Obj_GetValueD(objBase, "C", 0);
+		let s = Obj_GetValueD(objBase, "S", 0);
+		let rx = Obj_GetValueD(objBase, "RX", 0);
+		let ry = Obj_GetValueD(objBase, "RY", 0);
+		let a = Obj_GetValueD(objBase, "A", 0) + angle;
+		let x = rx * cos(a);
+		let y = ry * sin(a);
+		ObjMove_SetPosition(obj,
+			ObjMove_GetX(objBase) + x*c-y*s,
+			ObjMove_GetY(objBase) + x*s+y*c);
+		yield;
+	}
+	Obj_Delete(obj);
+}

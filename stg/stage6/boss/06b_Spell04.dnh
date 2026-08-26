@@ -1,0 +1,1440 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["バアルのような者"]
+#Text["バアルのような者"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mishandra.dnh"
+
+let HAND_ANGLE = 0;
+let HAND_ROTATE = 0;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(1500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 20;		//ダメージ透過率
+
+	bossDropItem = 80;	//アイテム数
+	bossHitToShot = 64;
+	bossDropStarItem = 180;
+	
+	bossNormalDropStar = 8;
+	bossDropStarItemR = 118;
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MISHANDRA);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(55), [9,9,10,11][Difficult], 
+			GetCurrentScriptDirectory()~"06b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 180, 60);
+	FumaCharismaOption(objEnemy, false);
+	wait(60);
+	
+	if (Difficult >= D_LUNA) { FamilierSetLunatic(); }
+	else if (Difficult >= D_HARD) { FamilierSetHard(); }
+	else { FamilierSet(); }
+	
+	wait(60);
+
+	CallSpellCard(true);	//スペカ起動
+
+}
+// フーマスゴイハンド
+task FamilierSetLunatic()
+{
+	let objFamilier = [
+		SetFamilier01(CenX, 50, 90, 1, 1, 0),
+		SetFamilier01(CenX-110, 70, 80, 1, 1, 0),
+		SetFamilier01(CenX-160, 140, 70, 1, 1, 0),
+		SetFamilier01(CenX-100, 220, 80, 1, 1, 0),
+		SetFamilier01(CenX+100, 220, 100, -1, 0, 0),
+		SetFamilier01(CenX+160, 140, 110, -1, 0, 0),
+		SetFamilier01(CenX+110, 70, 100, -1, 0, 0),
+	];
+	CallSound(sndBoon);
+	
+	wait(90);
+	
+	let wt = 50;
+	let wt_min = 20;
+	let wt_rotate = 120;
+	
+	let before_pat1 = -1;
+	let before_pat2 = -1;
+	
+	let t = 0;
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		wait(90);
+		if (!eAlive) { return; }
+		// 抽選
+		let tmp_pat = [0, 1, 2, 3, 4, 5, 6];
+		let pat = [];
+		ascent(i in 0 .. length(tmp_pat))
+		{
+			let tmp = rand_int(0, length(tmp_pat)-1);
+			pat = pat ~ [tmp_pat[tmp]];
+			tmp_pat = erase(tmp_pat, tmp);
+		}
+
+		SetAttack(pat, wt, t);
+		t++;
+		wait(wt_rotate+wt*5);
+		wt = (wt-wt_min)*0.75 + wt_min;
+	}
+	
+	task SetAttack(pat, wt, rotate)
+	{
+		if (rotate%2 == 0)
+		{
+			let base_pat = rand_int(0, 6);
+			ascent(i in 0 .. length(objFamilier))
+			{
+				if (!eAlive) { return; }
+				if (i == 0 || i == length(objFamilier)-1)
+				{
+					Obj_SetValue(objFamilier[(i*2+base_pat)%7], "PATTERN", pat[i]);
+				} else if (i%2 == 0) {
+					Obj_SetValue(objFamilier[(i*2+base_pat)%7], "PATTERN", 20);
+				} else {
+					Obj_SetValue(objFamilier[(i*2+base_pat)%7], "PATTERN", pat[i]+10);
+				}
+				wait(wt);
+			}
+		}
+		else
+		{
+			let base_pat = rand_int(0, 6);
+			ascent(i in 0 .. length(objFamilier))
+			{
+				if (!eAlive) { return; }
+				if (i == 0 || i == length(objFamilier)-1)
+				{
+					Obj_SetValue(objFamilier[(i*5+base_pat)%7], "PATTERN", pat[i]);
+				} else if (i%2 == 1) {
+					Obj_SetValue(objFamilier[(i*5+base_pat)%7], "PATTERN", 20);
+				} else {
+					Obj_SetValue(objFamilier[(i*5+base_pat)%7], "PATTERN", pat[i]+10);
+				}
+				wait(wt);
+			}
+		}
+	}
+}
+task FamilierSetHard()
+{
+	let objFamilier = [
+		SetFamilier01(CenX, 64, 90, 1, 1, 0),
+		SetFamilier01(CenX+140, 120, 100, 1, 1, 0),
+		SetFamilier01(CenX+96, 210, 80, -1, 1, 0),
+		SetFamilier01(CenX-96, 210, 100, 1, 0, 0),
+		SetFamilier01(CenX-140, 120, 80, -1, 0, 0),
+	];
+	CallSound(sndBoon);
+	
+	wait(90);
+
+	let wt = 60;
+	let wt_min = 25;
+	let wt_rotate = 120;
+	
+	let before_pat1 = -1;
+	let before_pat2 = -1;
+	
+	let t = 0;
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		wait(90);
+		if (!eAlive) { return; }
+		// 抽選
+		let tmp_pat = [0, 1, 2, 3, 4];
+		let pat = [];
+		ascent(i in 0 .. length(tmp_pat))
+		{
+			let tmp = rand_int(0, length(tmp_pat)-1);
+			pat = pat ~ [tmp_pat[tmp]];
+			tmp_pat = erase(tmp_pat, tmp);
+		}
+
+		SetAttack(pat, wt, t);
+		t++;
+		wait(wt_rotate+wt*5);
+		wt = (wt-wt_min)*0.75 + wt_min;
+	}
+	
+	task SetAttack(pat, wt, rotate)
+	{
+		if (rotate%2 == 0)
+		{
+			let base_pat = rand_int(0, 4);
+			ascent(i in 0 .. length(objFamilier))
+			{
+				if (!eAlive) { return; }
+				if (i == 0)
+				{
+					Obj_SetValue(objFamilier[(i*2+base_pat)%5], "PATTERN", pat[i]);
+				} else if (i%2 == 0) {
+					Obj_SetValue(objFamilier[(i*2+base_pat)%5], "PATTERN", 20);
+				} else {
+					Obj_SetValue(objFamilier[(i*2+base_pat)%5], "PATTERN", pat[i]+10);
+				}
+				wait(wt);
+			}
+		}
+		else
+		{
+			let base_pat = rand_int(0, 4);
+			ascent(i in 0 .. length(objFamilier))
+			{
+				if (!eAlive) { return; }
+				if (i == 0)
+				{
+					Obj_SetValue(objFamilier[(i*3+base_pat)%5], "PATTERN", pat[i]);
+				} else if (i%2 == 1) {
+					Obj_SetValue(objFamilier[(i*3+base_pat)%5], "PATTERN", 20);
+				} else {
+					Obj_SetValue(objFamilier[(i*3+base_pat)%5], "PATTERN", pat[i]+10);
+				}
+				wait(wt);
+			}
+		}
+	}
+}
+
+task FamilierSet()
+{
+	let objFamilier = [
+		SetFamilier01(CenX+96, 180, 80, 1, 1, 0),
+		SetFamilier01(CenX-96, 180, 100, -1, 0, 0),
+		SetFamilier01(CenX-128, 72, 80, -1, 0, 0),
+		SetFamilier01(CenX+128, 72, 100, 1, 1, 0),
+	];
+	CallSound(sndBoon);
+	
+	wait(90);
+	
+	let wt = 120;
+	let wt_min = 30;
+	let wt_rotate = 120;
+	
+	let before_pat1 = -1;
+	let before_pat2 = -1;
+	
+	let t = 0;
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		wait(90);
+		if (!eAlive) { return; }
+		// 抽選
+		let pat1 = rand_int(0,4);
+		while ( before_pat1 == pat1 ) { pat1 = rand_int(0,4); }
+		before_pat1 = pat1;
+		let pat2 = rand_int(0,4) + 10;
+		while ( before_pat2 == pat2 ) { pat2 = rand_int(0,4) + 10; }
+		before_pat2 = pat2;
+
+		SetAttack(pat1, pat2, wt, t);
+		t++;
+		wait(wt_rotate+wt*2);
+		wt = (wt-wt_min)*0.5 + wt_min;
+	}
+	
+	task SetAttack(pat1, pat2, wt, rotate)
+	{
+		if (rotate%2 == 0)
+		{
+			if (trunc(rotate/2)%2 == 0)
+			{
+				Obj_SetValue(objFamilier[0], "PATTERN", pat1);
+				wait(wt);
+				if (!eAlive) { return; }
+				Obj_SetValue(objFamilier[1], "PATTERN", pat2);
+				wait(wt);
+			}
+			else
+			{
+				Obj_SetValue(objFamilier[1], "PATTERN", pat1);
+				wait(wt);
+				if (!eAlive) { return; }
+				Obj_SetValue(objFamilier[0], "PATTERN", pat2);
+				wait(wt);
+			}
+			if (!eAlive) { return; }
+			Obj_SetValue(objFamilier[2], "PATTERN", 20);
+			Obj_SetValue(objFamilier[3], "PATTERN", 20);
+		}
+		else
+		{
+			if (trunc(rotate/2)%2 == 0)
+			{
+				Obj_SetValue(objFamilier[3], "PATTERN", pat1);
+				wait(wt);
+				if (!eAlive) { return; }
+				Obj_SetValue(objFamilier[2], "PATTERN", pat2);
+				wait(wt);
+			}
+			else
+			{
+				Obj_SetValue(objFamilier[2], "PATTERN", pat1);
+				wait(wt);
+				if (!eAlive) { return; }
+				Obj_SetValue(objFamilier[3], "PATTERN", pat2);
+				wait(wt);
+			}
+			if (!eAlive) { return; }
+			Obj_SetValue(objFamilier[0], "PATTERN", 20);
+			Obj_SetValue(objFamilier[1], "PATTERN", 20);
+		}
+	}
+}
+
+// スゴイハンド配置
+function SetFamilier01(iniX, iniY, iniAngle, iniMuki, iniValue, iniTimer)
+{
+	let eSize = ENEMY_M;
+
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 99999, eSize);
+	_SetFamilier01(objFamilier, iniAngle, iniMuki, iniValue, iniTimer);
+	return(objFamilier);
+}
+task _SetFamilier01(objFamilier, iniAngle, iniMuki, iniValue, iniTimer)
+{
+	let eColor = EFF_RED;
+	let item_count = 0;
+	let item_star = 0;
+	let baseAngle = iniAngle;
+	
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	MishandraOption_SetDamageRate(objFamilier);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawMishandraHand(objFamilier, iniAngle, iniMuki);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 38, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		while(CanShotBullet(objFamilier))
+		{
+			let tmp_pat = Obj_GetValueD(objFamilier, "PATTERN", -1);
+			if (tmp_pat >= 0)
+			{
+				Obj_SetValue(objFamilier, "PATTERN", -1);
+				
+				let muki = [1, -1][iniValue];
+				TShot(objFamilier, tmp_pat, muki);
+				RotateHandAngle(60);
+			}
+			yield;
+		}
+	}
+
+	task TShot(objBase, pattern, muki)
+	{
+		alternative(pattern)
+		/* レーザー */
+		case(0)
+		{
+			EffectConcentrationLine(objBase, EFF_RED, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (!CanShotBullet(objBase)) { return; }
+			local
+			{
+				let ba = GetAngleToPlayer(objBase);
+				SplashLaser(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(1)
+		{
+			EffectConcentrationLine(objBase, EFF_BLUE, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				AquaLaser(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(2)
+		{
+			EffectConcentrationLine(objBase, EFF_GREEN, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				VineLaser(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), iniMuki);
+			}
+		}
+		case(3)
+		{
+			EffectConcentrationLine(objBase, EFF_YELLOW, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				LightLaser(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(4)
+		{
+			EffectConcentrationLine(objBase, EFF_PURPLE, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				DarkLaser(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(5)
+		{
+			EffectConcentrationLine(objBase, EFF_SKY, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				ThunderLaser(muki);
+			}
+		}
+		case(6)
+		{
+			EffectConcentrationLine(objBase, EFF_ORANGE, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				OrangeLaser(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		/* ショット */
+		case(10)
+		{
+			EffectConcentrationLine(objBase, EFF_RED, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				FireShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase), GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(11)
+		{
+			EffectConcentrationLine(objBase, EFF_BLUE, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				IceShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(12)
+		{
+			EffectConcentrationLine(objBase, EFF_GREEN, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				WindShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(13)
+		{
+			EffectConcentrationLine(objBase, EFF_YELLOW, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				ShineShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(14)
+		{
+			EffectConcentrationLine(objBase, EFF_PURPLE, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				DarkShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(15)
+		{
+			EffectConcentrationLine(objBase, EFF_SKY, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				SkyShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(16)
+		{
+			EffectConcentrationLine(objBase, EFF_ORANGE, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				OrangeShot(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+					GetAngleToPlayer(objBase), muki);
+			}
+		}
+		case(20)
+		{
+			EffectConcentrationLine(objBase, EFF_WHITE, 90, 6);
+			CallSound(sndPower4);
+			wait(60);
+			
+			if (CanShotBullet(objBase))
+			{
+				if (Difficult <= D_NORM)
+				{
+					let offset_angle = 90 - muki*30;
+					HebrewShotS04(ObjMove_GetX(objBase), ObjMove_GetY(objBase), 0, offset_angle);
+				}
+				else
+				{
+					TriangleShotLunatic(ObjMove_GetX(objBase), ObjMove_GetY(objBase),
+						GetAngleToPlayer(objBase), muki);
+					CallSound(sndShot4);
+				}
+			}
+		}
+	}
+
+	// 手の角度セット
+	task RotateHandAngle(timer)
+	{
+		let tmp_a = GetMishandraHandAngle(objFamilier);
+		ascent(i in 0 .. timer)
+		{
+			if (Obj_IsDeleted(objFamilier)) { return; }
+			let tmp = (i+1)/75;
+			let to_a = GetAngleToPlayer(objFamilier);
+			baseAngle = tmp_a*(1-tmp) + to_a*tmp;
+			SetMishandraHandAngle(objFamilier, baseAngle);
+			yield;
+		}
+	}
+}
+
+
+let MISHANDRA_FINGER = [[32, 36], [-34, 21], [-30, -18], [-7, -28], [36, -28]];
+function GetMishandraFingerPos(num, angle, muki)
+{
+	let tmp_pos = MISHANDRA_FINGER[num%5];
+	return(Rotate2D_XY(tmp_pos[0], tmp_pos[1]*muki, angle));
+}
+
+
+// ぼふんって感じなレーザー（火）
+task SplashLaser(x, y, angle, muki)
+{
+	let speed = 16;
+	let l_wid = 192;
+	let delay = 120;
+	let graphic = BGW_BALL_S_RED;
+	
+	LaserDelayEffect02(objEnemy, x, y, angle, BGW_BEAM_RED, delay);
+	wait(delay);
+	if (!eAlive) { return; }
+	CallSound(sndShot1);
+	CallSound(sndShot7);
+	descent(i in 0 .. 10)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i+1)/10;
+		let ss = speed*(1-tmp/2);
+		let ll = 120*(2-tmp);
+		let lw = l_wid * (0.25+tmp*0.75);
+		SplashLaser_single(x, y, ss, angle, ll, lw, graphic);
+		yield;
+	}
+}
+task SplashLaser_single(x, y, speed, angle, l_len, l_wid, graphic)
+{
+	// 予告線
+	let obj = CreateLooseLaserA1(x, y, speed, angle, l_len, 0, graphic, 0);
+	ObjMove_AddPatternA2(obj, 0, speed, NO_CHANGE, -speed/90*2/3, 0, speed/3);
+	ObjRender_SetColor(obj, 255, 192, 32);
+	ObjLaser_SetInvalidLength(obj, l_len/4, l_len/4);
+	
+	ascent(i in 0 .. 90)
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		let tmp = sin((i+1)/90*90);
+		ObjLaser_SetRenderWidth(obj, l_wid*tmp);
+		ObjLaser_SetIntersectionWidth(obj, l_wid*tmp/2);
+		yield;
+	}
+}
+
+// レーザーからの破裂泡（水）
+task AquaLaser(x, y, angle, muki)
+{
+	let speed = 12;
+	let way = [8, 12, 12, 12][Difficult];
+	
+	let l_wid = 48;
+	let delay = 90;
+	let graphic = BGW_BALL_S_BLUE;
+	
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + i*360/way;
+		_AquaLaser(x, y, speed, sa, l_wid, delay);
+	}
+	
+	task _AquaLaser(x, y, speed, angle, l_wid, delay)
+	{
+		LaserDelayEffect03(objEnemy, x, y, angle, BGW_BEAM_BLUE, delay);
+		wait(delay);
+
+		if (!eAlive) { return; }
+		CallSound(sndShot4);
+		descent(i in 0 .. 5)
+		{
+			if (!eAlive) { return; }
+			let tmp = (i+1)/5;
+			let ss = speed*(1-tmp*0.25);
+			let ll = 120*(2-tmp);
+			let lw = l_wid * (0.5+tmp*0.5);
+			AquaLaser_single(x, y, ss, angle, ll, lw, graphic, (i==4));
+			yield;
+		}
+	}
+}
+task AquaLaser_single(x, y, speed, angle, l_len, l_wid, graphic, is_splash)
+{
+	// 予告線
+	let obj = CreateLooseLaserA1(x, y, speed, angle, l_len, 0, graphic, 0);
+	ObjMove_AddPatternA2(obj, 0, speed, NO_CHANGE, -speed/90*2/3, 0, speed/3);
+	ObjRender_SetColor(obj, 64, 192, 255);
+	ObjLaser_SetInvalidLength(obj, l_len/4, l_len/4);
+	
+	let i = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (i < 90)
+		{
+			let tmp = sin((i+1)/90*90);
+			ObjLaser_SetRenderWidth(obj, l_wid*tmp);
+			ObjLaser_SetIntersectionWidth(obj, l_wid*tmp/2);
+		}
+		if (is_splash)
+		{
+			if (ObjMove_GetX(obj) < speed/2 || ObjMove_GetX(obj) > GetStgFrameWidth-speed/2 ||
+				ObjMove_GetY(obj) < speed/2 || ObjMove_GetY(obj) > GetStgFrameHeight-speed/2)
+			{
+				is_splash = false;
+				
+				AquaLaser_splash(ObjMove_GetX(obj), ObjMove_GetY(obj), ObjMove_GetAngle(obj));
+				CallSound(sndShot2);
+			}
+		}
+		i++;
+		yield;
+	}
+}
+task AquaLaser_splash(x, y, angle)
+{
+	let way = 64;
+	let shot_span = 8;
+	let shot_way = 3;
+	let speed = 1;
+	let graphic = BGW_BALL_BS_BLUE;
+	
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + i*360/way;
+		AquaLaser_splashshot(x, y, speed, sa, graphic, (i%shot_span)==0, shot_way);
+	}
+
+	task AquaLaser_splashshot(x, y, speed, angle, graphic, is_shot, shot_way)
+	{
+		let obj = CreateShotA2(x, y, 2, angle, -2/60, -2, graphic, 0);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+//		Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+		wait(75);
+		if (!Obj_IsDeleted(obj))
+		{
+			/*
+			if (is_shot)
+			{
+				ascent(i in 0 .. shot_way)
+				{
+					let sa = angle + (i-(shot_way-1)/2)*2;
+					CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, sa, speed/120, speed, graphic, 0);
+				}
+			}
+			ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+			*/
+			ObjShot_FadeDelete(obj);
+		}
+	}
+}
+
+// Floweyのツタ攻撃的な感じ（木）
+task VineLaser(x, y, angle, muki)
+{
+	let speed = 48;
+	let way = [1, 2, 2, 2][Difficult];
+	let way_angle = [3, 3, 5, 5][Difficult];
+	
+	let l_wid = 32;
+	let l_len = 480;
+	let delay = 90;
+
+	let graphic = BGW_FUGU_GREEN;
+	
+	ascent(i in 0 .. length(MISHANDRA_FINGER))
+	{
+		if (!eAlive) { return; }
+		let opos = GetMishandraFingerPos(i, angle, muki);
+		let sx = x+opos[0];
+		let sy = y+opos[1];
+		let ba = atan2(GetPlayerY-sy, GetPlayerX-sx);
+		let tmp_wa = (i+2)*way_angle;
+		ascent(j in 0 .. way)
+		{
+			let sa = ba + (j-(way-1)/2)*tmp_wa;
+			VineLaser_single(sx, sy, speed, sa, l_len, l_wid, graphic, delay);
+		}
+		wait(5);
+	}
+
+}
+task VineLaser_single(x, y, speed, angle, l_len, l_wid, graphic, delay)
+{
+	// 予告線
+	LaserDelayEffect01(objEnemy, x, y, angle, BGW_BEAM_GREEN, delay);
+	CallSound(sndBulletBreak);
+	wait(delay);
+
+	if (!eAlive) { return; }
+	CallSound(sndLaser2);
+	ascent(i in 0 .. 10)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i+1)/10;
+		let ss = speed*(1-tmp*0.75);
+		let l_len = 480;
+		let obj = CreateLooseLaserA1(x, y, ss, angle, l_len, l_wid, graphic, 0);
+		ObjRender_SetColor(obj, 64, 255, 64);
+		ObjLaser_SetInvalidLength(obj, l_len/4, l_len/4);
+		ObjLaser_SetIntersectionWidth(obj, l_wid/4);
+		yield;
+	}
+}
+
+
+
+// 輝き龍レーザー（光）
+task LightLaser(x, y, angle, muki)
+{
+	let speed = 32;
+	let ref_count = [3, 4, 4, 4][Difficult];
+	let way = [6, 6, 6, 6][Difficult];
+	
+	let l_len = 360;
+	let l_wid = 14;
+	let graphic = BGW_SCALE_YELLOW;
+	
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let sa = angle+(i-(way/2))*360/(way+1)*muki;
+		RefrectLaserS04(x, y,
+			speed, sa, l_wid, l_len, graphic, 90, 60, ref_count);
+		CallSound(sndBulletBreak);
+		wait(2);
+	}
+}
+
+task RefrectLaserS04(x, y, speed, angle, l_wid, l_len, graphic, delay, timer, ref_count)
+{
+	let objDummy = CreateShotA1(x, y, speed, angle, graphic, 0);
+	RefrectLaserS04_sub(ObjMove_GetX(objDummy), ObjMove_GetY(objDummy),
+		speed, ObjMove_GetAngle(objDummy), l_wid, l_len, graphic, delay, timer);
+	SetShotDisabled(objDummy);
+	Obj_SetVisible(objDummy, false);
+
+	while(!Obj_IsDeleted(objDummy))
+	{
+		let refflg = false;
+		if (ObjMove_GetY(objDummy) < 0) {
+			ObjMove_SetPosition(objDummy, ObjMove_GetX(objDummy), -ObjMove_GetY(objDummy));
+			ObjMove_SetAngle(objDummy, 360-ObjMove_GetAngle(objDummy));
+			refflg = true;
+		} else if (ObjMove_GetY(objDummy) > GetStgFrameHeight) {
+			ObjMove_SetPosition(objDummy, ObjMove_GetX(objDummy), GetStgFrameHeight*2-ObjMove_GetY(objDummy));
+			ObjMove_SetAngle(objDummy, 360-ObjMove_GetAngle(objDummy));
+			refflg = true;
+		}
+		if (ObjMove_GetX(objDummy) < 0) {
+			ObjMove_SetPosition(objDummy, -ObjMove_GetX(objDummy), ObjMove_GetY(objDummy));
+			ObjMove_SetAngle(objDummy, 180-ObjMove_GetAngle(objDummy));
+			refflg = true;
+		} else if (ObjMove_GetX(objDummy) > GetStgFrameWidth) {
+			ObjMove_SetPosition(objDummy, GetStgFrameWidth*2-ObjMove_GetX(objDummy), ObjMove_GetY(objDummy));
+			ObjMove_SetAngle(objDummy, 180-ObjMove_GetAngle(objDummy));
+			refflg = true;
+		}
+		if (refflg && eAlive)
+		{
+			RefrectLaserS04_sub(ObjMove_GetX(objDummy)-speed*cos(ObjMove_GetAngle(objDummy)), ObjMove_GetY(objDummy)-speed*sin(ObjMove_GetAngle(objDummy)),
+				speed, ObjMove_GetAngle(objDummy), l_wid, l_len, graphic, delay, timer);
+			ref_count--;
+			if (ref_count <= 0) { break; }
+		}
+		delay--;
+		yield;
+	}
+}
+task RefrectLaserS04_sub(x, y, speed, angle, l_wid, l_len, graphic, delay, timer)
+{
+	let obj = CreateStraightLaserA1(x, y, angle, 0, 3, timer, BGW_BEAM_YELLOW, 0);
+	ObjStLaser_SetSource(obj, false);
+	ObjShot_SetAutoDelete(obj, false);
+	ObjShot_SetItemChange(obj, false);
+	SetShotDisabled(obj);
+
+	let t = 0;
+	let tmp_len = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (Obj_IsDeleted(obj)) { return; }
+		if (tmp_len < 600)
+		{
+			tmp_len += speed;
+			ObjLaser_SetLength(obj, tmp_len);
+		}
+		if (t > timer)
+		{
+			CreateLooseLaserA1(x, y, speed, angle, l_len, l_wid, graphic, 0);
+			CallSound(sndLaser2);
+			break;
+		}
+		t++;
+		yield;
+	}
+}
+
+// ぶっといレーザー（闇）
+task DarkLaser(x, y, angle, muki)
+{
+	let l_wid = 64;
+	let way = [1, 1, 3, 3][Difficult];
+	let wid_count = [3, 5, 5, 5][Difficult];
+	let delay = 120;
+	let graphics = [BGW_FIRE_GREEN, BGW_FIRE_PURPLE];
+	
+	ascent(i in 0 .. way)
+	{
+		LaserDelayEffect02(objEnemy, x, y, angle+i*360/way, BGW_BEAM_PURPLE, delay);
+	}
+	wait(delay);
+	if (!eAlive) { return; }
+	CallSound(sndLaser1);
+	ascent(i in 0 .. wid_count)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i+1)/10;
+		let ll = 600;
+		let lw = l_wid;
+		
+		let muki = 1;
+		loop(2)
+		{
+			ascent(j in 0 .. way)
+			{
+				let sa = angle + (i+0.5)*muki*3 + j*360/way;
+				DarkLaser_single(x, y, sa, ll, lw, graphics, 60);
+			}
+			muki = -muki;
+		}
+		wait(12);
+	}
+}
+task DarkLaser_single(x, y, angle, l_len, l_wid, graphic, timer)
+{
+	// 予告線
+	let obj = [CreateStraightLaserA1(x, y, angle, l_len, l_wid, timer, graphic[0], 0), CreateStraightLaserA1(x, y, angle, l_len, l_wid*2, timer, graphic[1], 0)];
+	ObjLaser_SetInvalidLength(obj[0], l_len/4, l_len/4);
+	ObjLaser_SetIntersectionWidth(obj[0], l_wid/4);
+//	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI+1);
+	ObjRender_SetBlendType(obj[0], BLEND_SUBTRACT);
+	ObjShot_SetIntersectionEnable(obj[1], false);
+	ObjStLaser_SetSource(obj[0], false);
+	ObjStLaser_SetSource(obj[1], false);
+}
+
+// 雷レーザー
+task ThunderLaser(muki)
+{
+	let count = 15;
+	let delay = 90;
+	
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let tmp = ((i+1+rand(-0.5,-0.5))/count-0.5)*muki;
+		let sx = CenX + tmp*CenX*2;
+		let sy = 0;
+		let sa = rand(60,120);
+		_ThunderLaser(sx, sy, sa, delay);
+		CallSound(sndBulletBreak);
+		wait(2);
+	}
+}
+
+task _ThunderLaser(x, y, angle, delay)
+{
+	LaserDelayEffect03(objEnemy, x, y, angle, BGW_BEAM_BLUE, delay);
+	wait(delay);
+
+	if (!eAlive) { return; }
+	CallSound(sndShot4);
+	let obj = CreateStraightLaserA1(x, y, angle, 0, 0, 45, BGW_THUNDER_BLUE, 0);
+	ObjShot_SetAutoDelete(obj, false);
+	ObjStLaser_SetSource(obj, false);
+	
+	ascent(t in 0 .. 75)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		let tmp = sin((t+1)/75*90);
+		let ll = tmp*1200;
+		let lw = (1-tmp)*64;
+		ObjMove_SetPosition(obj, x-ll*cos(angle)*0.1, y-ll*sin(angle)*0.1);
+		ObjLaser_SetLength(obj, ll);
+		ObjLaser_SetInvalidLength(obj, ll/4, ll/4);
+		ObjLaser_SetRenderWidth(obj, lw);
+		ObjLaser_SetIntersectionWidth(obj, lw/3);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+// 橙レーザー
+task OrangeLaser(x, y, angle, muki)
+{
+	let speed = 3;
+	let way = 12;
+	let add_angle = 1*muki;
+	let timer = 180;
+	let graphic = BGW_RICE_M_ORANGE;
+	
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + i*360/way;
+		_OrangeLaser(x, y, speed, sa, add_angle, timer, graphic);
+	}
+	CallSound(sndLaser1);
+
+	task _OrangeLaser(x, y, speed, angle, add_angle, timer, graphic)
+	{
+		let obj = CreateStraightLaserA1(x, y, angle, 100, 32, timer+60, graphic, 0);
+		ObjStLaser_SetSource(obj, false);
+
+		let l_len = 0;
+		ascent(t in 0 .. timer)
+		{
+			if (Obj_IsDeleted(obj)) { break; }
+			let tmp = (t+1)/timer;
+			ObjLaser_SetInvalidLength(obj, l_len/3, l_len/3);
+			ObjLaser_SetLength(obj, l_len);
+			ObjStLaser_SetAngle(obj, angle);
+			l_len += speed;
+			angle += (1-tmp)*add_angle;
+			if (tmp > 0.9) { ObjLaser_SetRenderWidth(obj, (1-tmp)*10*32); }
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+
+// 火ショット
+task FireShot(x, y, angle, muki)
+{
+	let speed = [1.33, 1.5, 1.5, 1.5][Difficult];
+	let timer = [180, 180, 180, 60][Difficult];
+	let shot_wt = [6, 6, 6, 4][Difficult];
+	let shot_count = [2, 3, 4, 5][Difficult];
+	let way = 2;
+	let graphic = [BGW_FIRE_RED, BGW_FIRE_RED, BGW_BALL_S_RED, BGW_FIRE_RED][Difficult];
+	let add_sr = [0.5, 0.5, 0.5, 1][Difficult];
+	let add_sa = [3, 3, 3, 6][Difficult];
+	
+	let st = 0;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%shot_wt == 0)
+		{
+			let sr = t*add_sr;
+			ascent(i in 0 .. way)
+			{
+				let sa = angle + i*360/way + t*muki*add_sa;
+				let sx = x + cos(sa)*sr;
+				let sy = y + sin(sa)*sr;
+
+				ascent(j in 0 .. shot_count)
+				{
+					let oa = -90*muki + (j-(shot_count-1)/2)*5;
+					let ss = speed * (1-t/timer/2) * rand(1, 1.25);
+					CreateShotA1(sx, sy, ss, sa+oa, graphic, 15);
+				}
+				CallSound(sndFire);
+			}
+			st++;
+		}
+		yield;
+	}
+}
+// 氷ショット
+task IceShot(x, y, angle, muki)
+{
+	let speed = [1.5, 1.5, 1.5, 1.5][Difficult];
+	let timer = [45, 60, 60, 30][Difficult];
+	let shot_wt = [5, 5, 5, 4][Difficult];
+	let way = 6;
+	let sway = [4, 4, 4, 4][Difficult];
+	let graphic = [BGW_ICE_BLUE, BGW_ICE_BLUE, BGW_BALL_S_BLUE, BGW_ICE_BLUE][Difficult];
+	
+	let st = 0;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%shot_wt == 0)
+		{
+			let sr = t;
+			ascent(i in 0 .. way)
+			{
+				let sa = angle + i*360/way + 90*st*muki;
+				let sx = x + cos(sa)*sr;
+				let sy = y + sin(sa)*sr;
+				
+				ascent(j in 0 .. sway-1)
+				{
+					let ss = speed * (1-t/timer/2) * (1-j*0.05);
+					let obj = CreateShotA1(sx, sy, ss, sa+180, graphic, 15);
+					ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, 0, (sway-j-1)*0.02, ss);
+				}
+				ascent(j in 0 .. sway)
+				{
+					let ss = speed * (1-t/timer/2) * (1-j*0.05);
+					let obj = CreateShotA1(sx, sy, ss, sa+180, graphic, 15);
+					ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, 0, -(sway-j-1)*0.02, ss);
+				}
+				CallSound(sndBulletBreak);
+			}
+			st++;
+		}
+		yield;
+	}
+}
+// 木ショット
+task WindShot(x, y, angle, muki)
+{
+	let speed = [1.75, 2, 2, 2][Difficult];
+	let timer = [120, 120, 120, 45][Difficult];
+	let shot_wt = [6, 6, 6, 6][Difficult];
+	let shot_ct = [3, 4, 4, 4][Difficult];
+	let way = [16, 16, 18, 16][Difficult];
+	
+	let graphic = [BGW_ICE_GREEN, BGW_ICE_GREEN, BGW_BALL_S_GREEN, BGW_ICE_GREEN][Difficult];
+	let add_sr = [0.5, 0.5, 0.5, 1][Difficult];
+	let add_sa = [90, 90, 90, 90][Difficult];
+	let wt = [3, 3, 2, 1][Difficult];
+	
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0 && trunc(t/wt)%shot_wt < shot_ct)
+		{
+			ascent(i in 0 .. way)
+			{
+				let sr = t*add_sr;
+				let sa = angle + i*360/way;
+				let sx = x + cos(sa)*sr;
+				let sy = y + sin(sa)*sr;
+				let oa = t/timer*add_sa*muki + 180;
+				let ss = speed * (1-t/timer/2);
+				CreateShotA1(sx, sy, ss, sa+oa, graphic, 15);
+				CallSound(sndShot2);
+			}
+		}
+		yield;
+	}
+}
+// 光ショット
+task ShineShot(x, y, angle, muki)
+{
+	let speed = [2.5, 3, 3, 3][Difficult];
+	let timer = [120, 120, 120, 60][Difficult];
+	let shot_wt = [3, 2, 2, 1][Difficult];
+	let way = [1, 1, 1, 1][Difficult];
+	
+	let graphic = [BGW_RICE_S_YELLOW, BGW_RICE_S_YELLOW, BGW_BALL_S_YELLOW, BGW_RICE_S_YELLOW][Difficult];
+	
+	let st = 0;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%shot_wt == 0)
+		{
+			let sr = t/6;
+			ascent(i in 0 .. way)
+			{
+				let sa = angle + i*360/way + st*muki*222.4922;
+				let sx = x + cos(sa)*sr;
+				let sy = y + sin(sa)*sr;
+
+				ascent(j in 0 .. 6)
+				{
+					let ss1 = 0.25 * (j+1);
+					let ss2 = speed * (1-t/timer/2) * (1 + j*0.1);
+					let obj = CreateShotA2(sx, sy, ss1, sa, -ss1/45, 0, graphic, 15);
+					ObjMove_AddPatternA2(obj, 45, NO_CHANGE, NO_CHANGE, ss2/45, 0, ss2);
+				}
+				CallSound(sndBulletBreak);
+			}
+			st++;
+		}
+		yield;
+	}
+}
+// 闇ショット
+task DarkShot(x, y, angle, muki)
+{
+	let speed = 1;
+	let way = 3;
+	let way2 = [8, 12, 12, 12][Difficult];
+	let count = [2, 2, 2, 1][Difficult];
+	let graphic = [BGW_SCALE_PURPLE, BGW_SCALE_PURPLE, BGW_BALL_S_PURPLE, BGW_SCALE_PURPLE][Difficult];
+	
+	ascent(k in 0 .. count)
+	{
+		let tmp_way = way2;
+		let st = 0;
+		ascent(i in 0 .. 8)
+		{
+			if (!eAlive) { return; }
+			ascent(j in 0 .. way)
+			{
+				let sa = angle + j*360/way + i*7*muki + k*180;
+				let ss = speed;
+				CreateShotWayA2(x, y, ss+2, sa, -2/10, ss, graphic, 0, tmp_way, 5, 0);
+			}
+			if (i == 0) { CallSound(sndShot7); }
+			tmp_way-=2;
+			if (tmp_way <= 0) { break; }
+			wait(5);
+			st++;
+		}
+		wait(90-5*8);
+	}
+}
+
+// 空色ショット
+task SkyShot(x, y, angle, muki)
+{
+	let speed = 2.5;
+	let timer = [120, 120, 60, 60][Difficult];
+	let shot_wt = [2, 2, 2, 2][Difficult];
+	let shot_ct = [6, 6, 6, 6][Difficult];
+	let way = [16, 16, 16, 16][Difficult];
+	let graphic = [BGW_SCALE_SKY, BGW_SCALE_SKY, BGW_BALL_S_SKY, BGW_SCALE_SKY][Difficult];
+	let add_angle = 1*muki;
+	
+	let st = 0;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%shot_wt == 0)
+		{
+			let tmp = t/timer;
+			let sr = (1-tmp)*64;
+			let sa = angle - st*222.4922/6*muki;
+			let sx = x - sr*cos(sa);
+			let sy = y - sr*sin(sa);
+			let ss = speed*(1-tmp/3);
+			_SkyShot(sx, sy, ss, sa, graphic, 15, add_angle, shot_ct);
+			CallSound(sndShot2);
+			st++;
+		}
+		yield;
+	}
+	
+	task _SkyShot(x, y, speed, angle, graphic, delay, add_angle, count)
+	{
+		loop(count)
+		{
+			if (!eAlive) { break; }
+			SkyShot_single(x, y, speed, angle, graphic, delay, add_angle);
+			wait(6);
+		}
+	}
+
+	task SkyShot_single(x, y, speed, angle, graphic, delay, add_angle)
+	{
+		let obj = CreateShotA2(x, y, speed*3, angle, -speed/15, speed, graphic, delay);
+		wait(delay);
+		
+		descent(t in 0 .. 480)
+		{
+			if (Obj_IsDeleted(obj)) { break; }
+			let tmp = (t+1)/480;
+			ObjMove_SetAngle(obj, angle);
+			angle += tmp*add_angle;
+			yield;
+		}
+	}
+}
+
+// 橙ショット
+task OrangeShot(x, y, angle, muki)
+{
+	let speed = 2;
+	let timer = [120, 120, 60, 60][Difficult];
+	let shot_wt = [6, 6, 5, 5][Difficult];
+	let way = [2, 2, 2, 2][Difficult];
+	let graphic = [BGW_BALL_M_ORANGE, BGW_BALL_M_ORANGE, BGW_BALL_M_ORANGE, BGW_BALL_M_ORANGE][Difficult];
+	let graphic2 = [BGW_BALL_BS_ORANGE, BGW_BALL_BS_ORANGE, BGW_BALL_BS_ORANGE, BGW_BALL_BS_ORANGE][Difficult];
+	let add_angle = 1*muki;
+	
+	let st = 0;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%shot_wt == 0)
+		{
+			let tmp = t/timer;
+			let sr = 24+tmp*24;
+			let ba = angle - st*222.4922/3*muki;
+			let ss = speed*(1-tmp/2);
+			ascent(i in 0 .. way)
+			{
+				let sa = ba + i*360/way;
+				OrangeShot_single(x, y, ss, sa, graphic, graphic2, 15, sr);
+			}
+			CallSound(sndShot2);
+			st++;
+		}
+		yield;
+	}
+	
+	task OrangeShot_single(x, y, speed, angle, graphic, graphic2, delay, r)
+	{
+		ascent(i in 0 .. 6)
+		{
+			let sa = angle + (i+0.5)*60;
+			let sx = x + r*cos(sa);
+			let sy = y + r*sin(sa);
+			CreateShotA2(sx, sy, 0, angle, speed/60, speed, graphic2, delay);
+		}
+		CreateShotA2(x, y, 0, angle, speed/60, speed, graphic, delay);
+	}
+}
+
+// 文字ショット
+task HebrewShotS04(x, y, angle, offset_angle)
+{
+	let graphic = ADD_BGW_LIGHT_S_WHITE;
+	let to_graphic = BGW_BALL_BS_WHITE;
+
+	let speed = [1.25, 1.5, 1.5, 1.5][Difficult];
+	let to_way = [6, 10, 10, 10][Difficult];
+	let to_count = 2;
+	
+	let count = 20;
+	let shot_timer = 15;
+	
+	let char_num = rand_int(0,21);
+	let scale = 40;
+	let ox = scale * cos(offset_angle)/2;
+	let oy = scale * sin(offset_angle)/2;
+	
+	let timer = 60;
+	let st = 0;
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+
+		let tmp = i/(count-1);
+		let pos = GetHebrewPos(angle, scale, char_num, tmp);
+		HebrewShot01_sub(x+pos[0], y+pos[1], pos[0]/15, pos[1]/15, graphic, 15, timer);
+		
+		st += shot_timer/count;
+		while(st > 0) { st--; timer--; yield; }
+	}
+	if (Difficult <= D_NORM)
+	{
+		wait(40+timer);
+		if (eAlive)
+		{
+			let sa = atan2(GetPlayerY-y, GetPlayerX-x);
+			
+			ascent(i in 0 .. to_count)
+			{
+				let ss = speed * (1+0.1*i);
+				TriangleShot(x, y, ss, sa, to_graphic, 30, to_way);
+				TriangleShot(x, y, ss, sa+180, to_graphic, 30, to_way);
+			}
+		}
+	}
+}
+task HebrewShot01_sub(x, y, vx, vy, graphic, delay, timer)
+{
+	let obj = CreateShotA1(x, y, 0, 0, graphic, delay);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+2);
+	ObjShot_SetSpellResist(obj, true);
+	wait(timer);
+	if (!Obj_IsDeleted(obj))
+	{
+		HebrewShot01_sub2(x, y, vx, vy, graphic, 30);
+		CallSound(sndShot2);
+		ObjShot_FadeDelete(obj);
+	}
+}
+task HebrewShot01_sub2(x, y, vx, vy, graphic, delay)
+{
+	let obj = CreateShotB2(x, y, 0, 0, -vx/60, -vy/60, -vx*2, -vy*2, graphic, 0);
+	ObjShot_SetSpellResist(obj, true);
+	My_RaiseShotEffectB(obj, delay);
+	wait(40);
+	Obj_Delete(obj);
+}
+task TriangleShot(x, y, speed, angle, graphic, delay, way)
+{
+	let bposx = [1, -0.5, -0.5];
+	let bposy = [0, 0.866, -0.866];
+	
+	let bx = [];
+	let by = [];
+	ascent(k in 0 .. 3)
+	{
+		let pos = Rotate2D_XY(bposx[k]*speed, bposy[k]*speed, angle);
+		bx = bx ~ [pos[0]];
+		by = by ~ [pos[1]];
+	}
+	
+	ascent(i in 0 .. 3)
+	{
+		ascent(j in 0 .. way)
+		{
+			let tmp = j/way;
+			let vx = bx[i]*(1-tmp) + bx[(i+1)%3]*tmp;
+			let vy = by[i]*(1-tmp) + by[(i+1)%3]*tmp;
+			let vs = ((vx^2+vy^2)^0.5);
+			let va = atan2(vy, vx);
+			let os = CreateShotA1(x, y, vs, va, graphic, 0);
+			My_RaiseShotEffectB(os, delay);
+		}
+	}
+}
+
+// 射出するよ
+task TriangleShotLunatic(x, y, angle, muki)
+{
+	let speed = 1;
+	let way = 6;
+	let size = 128;
+	let add_angle = 0.5*muki;
+	let graphic = BGW_BALL_BS_WHITE;
+
+	let bposx = [1, -0.5];
+	let bposy = [0, 0.866];
+	
+	ascent(j in 0 .. way)
+	{
+		let tmp = j/way;
+		let vx = bposx[0]*(1-tmp) + bposx[1]*tmp;
+		let vy = bposy[0]*(1-tmp) + bposy[1]*tmp;
+		let vs = ((vx^2+vy^2)^0.5) * size;
+		let va = atan2(vy, vx) + angle;
+		ascent(i in 0 .. 3)
+		{
+			_TriangleShotLunatic(x, y, speed, angle, graphic, 15, va+i*120, add_angle, vs);
+		}
+	}
+}
+task _TriangleShotLunatic(x, y, speed, angle, graphic, delay, offset_angle, add_angle, max_r)
+{
+	let obj = CreateShotA1(x, y, 0, 0, graphic, 0);
+	My_RaiseShotEffectB(obj, delay);
+	
+	let bx = x;
+	let by = y;
+	let ba = offset_angle;
+	let vx = cos(angle)*speed;
+	let vy = sin(angle)*speed;
+	let r = 0;
+	
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (t < 360)
+		{
+			let tmp = sin((t+1)/360*90);
+			r = max_r*tmp;
+		}
+		ObjMove_SetPosition(obj, bx+cos(ba)*r, by+sin(ba)*r);
+		bx += vx;
+		by += vy;
+		ba += add_angle;
+		t++;
+		yield;
+	}
+}

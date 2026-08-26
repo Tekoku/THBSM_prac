@@ -1,0 +1,336 @@
+//東方弾幕風[Stage]
+#ScriptVersion[3]
+#Title["StageBase"]
+#Text["StageBase"]
+#System["./../system/system.dnh"]
+
+#include "../lib/lib_Common.dnh"
+#include "../lib/lib_File.dnh"
+#include "../lib/lib_Zako.dnh"
+#include "../lib/lib_Stage.dnh"
+
+
+let PATH_STAGE = [stageDir ~ "stage1/Road01.dnh",
+		stageDir ~ "stage2/Road02.dnh",
+		stageDir ~ "stage3/Road03.dnh",
+		stageDir ~ "stage4/Road04.dnh",
+		stageDir ~ "stage5/Road05.dnh",
+		stageDir ~ "stage6/Road06.dnh",
+		stageDir ~ "stage7/Road07.dnh",		// Extra
+		stageDir ~ "stage6/RoadX.dnh",		// エンディング（デバッグ用）
+		];
+
+
+@Initialize
+{
+	LoadSystemCommonData();
+	StageInitialize();
+	TMain();
+}
+
+@MainLoop
+{
+	yield;
+}
+
+@Finalize
+{
+}
+
+// 初期化です
+// 主に残機やら
+task StageInitialize()
+{
+	if( GetPlayMode() == GAME_MAIN )
+	{
+		//　本編の時
+		if (IsFirstStage())
+		{
+			SetPlayerLife(2);
+			SetPlayerSpell(2);
+		}
+	}
+	else if( GetPlayMode() == GAME_PRACTICE )
+	{
+		//　ステージプラクティスの時
+		SetPlayerLife(GetPracLife());
+		SetPlayerSpell(GetPracSpell());
+	}
+	else if( GetPlayMode() == GAME_SPELL )
+	{
+		//　スペルプラクティスの時
+		SetPlayerLife(0);
+		SetPlayerSpell(0);
+	}
+	// 最大得点セット
+	if (IsFirstStage())
+	{
+		alternative(Difficult())
+		case(D_EASY) { AddMaxScore(0); }
+		case(D_NORM) { AddMaxScore(5000); }
+		case(D_HARD) { AddMaxScore(10000); }
+		case(D_LUNA) { AddMaxScore(15000); }
+		case(D_EXTRA) { AddMaxScore(20000); }
+		
+		// 撮影用デバッグモード
+		if (DEBUG_FILMING_MODE)
+		{
+			AddMaxScore(51500);
+			SetPlayerLife(7);
+			SetPlayerSpell(3);
+			AddGraze(698);
+			SetMagnitude(1);
+			SetAreaCommonData(CAREA_SYSTEM, "MagnitudeScoreRate", 4);
+			AddScore(1720591020);
+			SetAreaCommonData(CAREA_STAGE, "StageIndex", 5);
+		}
+	}
+	
+	//　終了待機
+	STEND();
+	
+	//　描画優先度クリア　しないと歪みエフェクトの影響で色々狂う
+	ClearInvalidRenderPriority();
+}
+
+//　メインです
+task TMain()
+{
+	// こんてぬー
+	if (IsFirstStage()) { AddScore(GetContinueCount()); }
+	
+	if( GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_PRACTICE )
+	{
+		if (GetStageIndex() == 0) {
+			// プレイヤー機能停止
+			SetAreaCommonData(CAREA_SYSTEM, "PlayerDisabled", true);
+		}
+		
+		// 画像のロード
+//		LoadStageAllTexture(GetStageIndex());
+		// BGM停止
+		PlayMusic(-1, 0, 0);
+		
+		wait(30);
+
+		if (GetStageIndex() == STAGE_EXTRA)
+		{
+			StartStgScript(PATH_STAGE[6]);
+		}
+		else
+		{
+			alternative(GetStageIndex())
+			case(1) { StartStgScript(PATH_STAGE[0]); }
+			case(2) { StartStgScript(PATH_STAGE[1]); }
+			case(3) { StartStgScript(PATH_STAGE[2]); }
+			case(4) { StartStgScript(PATH_STAGE[3]); }
+			case(5) { StartStgScript(PATH_STAGE[4]); }
+			case(6) { StartStgScript(PATH_STAGE[5]); }
+		}
+		// 画像のアンロード
+//		UnoadStageAllTexture(GetStageIndex());
+	}
+	else if( GetPlayMode() == GAME_SPELL ){
+		//　スペルプラクティスの時
+		wait(90);
+		SpellPractice( GetStageIndex() );
+	}
+	else if ( GetPlayMode() == GAME_DEBUG ) {
+		// エンディング確認用
+		wait(60);
+		StartStgScript(PATH_STAGE[7]);
+	}
+
+	// コモンデータ保存後終了
+	My_CloseStageScene();
+}
+
+
+
+
+//----------------------------------------------------------------------------------------------------------------
+//　ユーティリティ
+//----------------------------------------------------------------------------------------------------------------
+
+//  ステージスクリプト開始・待機処理
+function StartStgScript(pathScript)
+{
+	let idScript = LoadScriptInThread(pathScript);
+	wait(30);
+	StartScript(idScript);
+	
+	// 終了まで待機
+	while(!IsCloseScript(idScript)) { yield; }
+}
+
+//　終了待機
+task STEND()
+{
+	//　ｹﾞｰﾑｵｰﾊﾞｰまで待機
+	while( GetPlayerState() != STATE_END ){ yield; }
+	
+	//　1.5秒待機
+	wait(90);
+	
+	// リプレイ用コモンデータ保存
+	FinalizeSystemCommonData();
+			
+	//　ステージスクリプト終了
+	CloseStgScene();
+}
+
+
+
+
+
+// -------------------------------------
+// スペプラ
+// -------------------------------------
+function SpellPractice(idSpell)
+{
+	let path = GetSpellCardPath(idSpell, Difficult());
+	let bg = GetSpellCardBackGround(idSpell, Difficult());
+	let music = GetSpellCardMusic(idSpell, Difficult());
+
+	if (length(path) <= 0) { return; }
+
+	//  背景配置
+	SetStageBackGround(bg);
+	//  BGM
+	if (music >= 0) { PlayMusic( music, 120, 30 ); }
+
+	// ボスシーンを作成します。
+	let objBossScene = ObjEnemyBossScene_Create();
+	ObjEnemyBossScene_Add(objBossScene, 0, path);
+	ObjEnemyBossScene_LoadInThread(objBossScene);
+	wait(60);
+	
+	// ボスシーン開始
+	ObjEnemyBossScene_Regist(objBossScene);
+	//敵ボスシーンが終了するまで待機
+	while(!Obj_IsDeleted(objBossScene))
+	{
+		yield;
+	}
+	wait(120);
+}
+
+
+function GetSpellCardPath(idSpell, idDifficult)
+{
+	let disStg = GetCurrentScriptDirectory();
+	
+	alternative(idSpell)
+	/* 1面 */
+	case(1) { return(disStg ~ "stage1/boss/01b_Spell01.dnh"); }
+	case(2) { return(disStg ~ "stage1/boss/01b_Spell02.dnh"); }
+	case(3) { return(disStg ~ "stage1/boss/01b_Spell03.dnh"); }
+	/* 2面 */
+	case(11) { return(disStg ~ "stage2/boss/02a_Spell01.dnh"); }
+	case(12) { return(disStg ~ "stage2/boss/02b_Spell01.dnh"); }
+	case(13) { return(disStg ~ "stage2/boss/02b_Spell02.dnh"); }
+	case(14) { return(disStg ~ "stage2/boss/02b_Spell03.dnh"); }
+	/* 3面 */
+	case(21) { return(disStg ~ "stage3/boss/03a_Spell01.dnh"); }
+	case(22) { return(disStg ~ "stage3/boss/03b_Spell01.dnh"); }
+	case(23) { return(disStg ~ "stage3/boss/03b_Spell02.dnh"); }
+	case(24) { return(disStg ~ "stage3/boss/03b_Spell03.dnh"); }
+	case(25) { return(disStg ~ "stage3/boss/03b_Spell04.dnh"); }
+	/* 4面 */
+	case(31) { return(disStg ~ "stage4/boss/04a_Spell01.dnh"); }
+	case(32) { return(disStg ~ "stage4/boss/04b_Spell01.dnh"); }
+	case(33) { return(disStg ~ "stage4/boss/04b_Spell02.dnh"); }
+	case(34) { return(disStg ~ "stage4/boss/04b_Spell03.dnh"); }
+	case(35) { return(disStg ~ "stage4/boss/04b_Spell04.dnh"); }
+	/* 5面 */
+	case(41) { return(disStg ~ "stage5/boss/05a_Spell01.dnh"); }
+	case(42) { return(disStg ~ "stage5/boss/05a_Spell02.dnh"); }
+	case(43) { return(disStg ~ "stage5/boss/05a_Spell03.dnh"); }
+	case(44) { return(disStg ~ "stage5/boss/05b_Spell01.dnh"); }
+	case(45)
+	{
+		alternative(GetPlayerType())
+		case(PLAYER_REIMU_A)  { return(disStg ~ "stage5/boss/05b_Spell02a.dnh"); }
+		case(PLAYER_MARISA_A) { return(disStg ~ "stage5/boss/05b_Spell02b.dnh"); }
+		case(PLAYER_SANAE_A)  { return(disStg ~ "stage5/boss/05b_Spell02c.dnh"); }
+	}
+	case(46) { return(disStg ~ "stage5/boss/05b_Spell03.dnh"); }
+	case(47) { return(disStg ~ "stage5/boss/05b_Spell04.dnh"); }
+	/* 6面 */
+	case(51) { return(disStg ~ "stage6/boss/06a_Spell01.dnh"); }
+	case(52) { return(disStg ~ "stage6/boss/06b_Spell01.dnh"); }
+	case(53) { return(disStg ~ "stage6/boss/06b_Spell02.dnh"); }
+	case(54) { return(disStg ~ "stage6/boss/06b_Spell03.dnh"); }
+	case(55) { return(disStg ~ "stage6/boss/06b_Spell04.dnh"); }
+	case(56) { return(disStg ~ "stage6/boss/06b_Spell05.dnh"); }
+	case(57) { return(disStg ~ "stage6/boss/06b_Spell06.dnh"); }
+	case(58) { return(disStg ~ "stage6/boss/06b_Spell07.dnh"); }
+	/* Ex */
+	case(61) { return(disStg ~ "stage7/boss/07a_Spell01.dnh"); }
+	case(62) { return(disStg ~ "stage7/boss/07a_Spell02.dnh"); }
+	case(63) { return(disStg ~ "stage7/boss/07a_Spell03.dnh"); }
+	case(71) { return(disStg ~ "stage7/boss/07b_Spell01.dnh"); }
+	case(72) { return(disStg ~ "stage7/boss/07b_Spell02.dnh"); }
+	case(73) { return(disStg ~ "stage7/boss/07b_Spell03.dnh"); }
+	case(74) { return(disStg ~ "stage7/boss/07b_Spell04.dnh"); }
+	case(75) { return(disStg ~ "stage7/boss/07b_Spell05.dnh"); }
+	case(76) { return(disStg ~ "stage7/boss/07b_Spell06.dnh"); }
+	case(77) { return(disStg ~ "stage7/boss/07b_Spell07.dnh"); }
+	case(78) { return(disStg ~ "stage7/boss/07b_Spell08.dnh"); }
+	case(79) { return(disStg ~ "stage7/boss/07b_Spell09.dnh"); }
+	case(80) { return(disStg ~ "stage7/boss/07b_Spell10.dnh"); }
+	/* LW */
+	case(101) { return(disStg ~ "stage1/boss/01b_SpellLW.dnh"); }
+	case(102) { return(disStg ~ "stage2/boss/02b_SpellLW.dnh"); }
+	case(103) { return(disStg ~ "stage3/boss/03b_SpellLW.dnh"); }
+	case(104) { return(disStg ~ "stage4/boss/04a_SpellLW.dnh"); }
+	case(105) { return(disStg ~ "stage4/boss/04b_SpellLW.dnh"); }
+	case(106) { return(disStg ~ "stage5/boss/05b_SpellLW.dnh"); }
+	case(107) { return(disStg ~ "stage6/boss/06b_SpellLW.dnh"); }
+
+	return("");
+}
+
+function GetSpellCardBackGround(idSpell, idDifficult)
+{
+	let disStg = GetCurrentScriptDirectory();
+	
+	if (idSpell <= 10 || idSpell == 101)
+		{ return(disStg ~ "stage1/BackgroundWorld01.dnh"); }
+	else if (idSpell <= 20 || idSpell == 102)
+		{ return(disStg ~ "stage2/BackgroundWorld02.dnh"); }
+	else if (idSpell <= 30 || idSpell == 103)
+		{ return(disStg ~ "stage3/BackgroundWorld03.dnh"); }
+	else if (idSpell <= 40 || idSpell == 104 || idSpell == 105)
+		{ return(disStg ~ "stage4/BackgroundWorld04.dnh"); }
+	else if (idSpell <= 50 || idSpell == 106)
+		{ return(disStg ~ "stage5/BackgroundWorld05.dnh"); }
+	else if (idSpell == 58)
+		{ return(disStg ~ "stage6/boss/06c_Background.dnh"); }
+	else if (idSpell <= 60 || idSpell == 107)
+		{ return(disStg ~ "stage6/BackgroundWorld06.dnh"); }
+	else if (idSpell < 90)
+		{ return(disStg ~ "stage6/BackgroundWorld06.dnh"); }
+
+	return("");
+}
+
+function GetSpellCardMusic(idSpell, idDifficult)
+{
+	if (idSpell <= 10 || idSpell == 101) { return(3); }
+	else if (idSpell <= 11) { return(4); }
+	else if (idSpell <= 20 || idSpell == 102) { return(5); }
+	else if (idSpell <= 21) { return(6); }
+	else if (idSpell <= 30 || idSpell == 103) { return(7); }
+	else if (idSpell <= 31 || idSpell == 104) { return(8); }
+	else if (idSpell <= 40 || idSpell == 105) { return(9); }
+	else if (idSpell <= 43) { return(10); }
+	else if (idSpell <= 50 || idSpell == 106) { return(11); }
+	else if (idSpell <= 51) { return(12); }
+	else if (idSpell == 58) { return(14); }
+	else if (idSpell <= 60 || idSpell == 107) { return(13); }
+	else if (idSpell <= 70) { return(15); }
+	else if (idSpell < 90) { return(16); }
+
+	return(-1);
+}

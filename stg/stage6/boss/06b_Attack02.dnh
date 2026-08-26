@@ -1,0 +1,258 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ミシャンドラ通常"]
+#Text["ミシャンドラ通常2"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mishandra.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(4000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MISHANDRA);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 110, 60);
+	FumaCharismaOption(objEnemy, false);
+	wait(30);
+	
+	CallSound(sndBoon);
+	CircleShotA02(CenX, -64, 64+192+32-48, -1);
+	wait(30);
+	CircleShotA02(CenX, -64, 64+192-48, 1);
+	wait(180);
+	TShot02();
+	
+	wait(180);
+	
+	let speed = [5, 6, 7.5, 10][Difficult];
+	let way = [10, 10, 10, 10][Difficult];
+	let wt = [180, 110, 95, 80][Difficult];
+	let wt2 = [20, 20, 15, 15][Difficult];
+	
+	let st = 0;
+	while(eAlive)
+	{
+		TShot_sub(st%2);
+		st++;
+		wait(wt);
+	}
+	
+	task TShot_sub(seed)
+	{
+		ascent(i in 0 .. 10)
+		{
+			if (!eAlive) { return; }
+			let tmp = i/(way-1);
+			if (seed) { tmp = (i+0.5)/(way-1); }
+			if (tmp <= 1 && tmp >= 0)
+			{
+				let sx = GetStgFrameWidth*tmp;
+				let sy = -4;
+				let sa = 90 - (tmp-0.5)*90;
+				BirdShot(sx, sy, speed, sa, 1);
+				CallSound(sndShot7);
+			}
+			wait(wt2);
+		}
+	}
+}
+
+task TShot02()
+{
+	let wt = 8;
+	let r = 300;
+	
+	let base_angle = 90-35;
+	let add_angle = 360/80 + 120;
+	while(eAlive)
+	{
+		let sx = CenX + r*cos(base_angle);
+		let sy = -64 + r*sin(base_angle);
+		if (CheckDispINEx(sx, sy, 16))
+		{
+			HebrewShot01(sx, sy, base_angle-90);
+		}
+		base_angle += add_angle;
+		wait(wt);
+	}
+}
+
+task CircleShotA02(x, y, max_r, muki)
+{
+	let objEff = MishandraLineEffect(objEnemy, x, y, MLINE_CIRCLE_EX);
+	
+	let tmp_r = max_r;
+	ascent(t in 0 .. 120)
+	{
+		let tmp = sin((t+1)/120*90);
+		Obj_SetValue(objEff, "R", tmp*max_r);
+		yield;
+	}
+	A02_Shot();
+	let t = 0;
+	while(eAlive)
+	{
+		yield;
+	}
+	MishandraLineEffect_Fadeout(objEff);
+	
+	task A02_Shot()
+	{
+		let wt = [210, 180, 150, 90][Difficult];
+
+		while(eAlive)
+		{
+			A02_Shot_sub();
+			wait(wt);
+		}
+	}
+
+	task A02_Shot_sub()
+	{
+		let speed = [2, 2, 3, 4][Difficult];
+		let wt = [15, 12, 8, 6][Difficult];
+		let graphic = BGW_RICE_M_WHITE;
+		let way = [24, 24, 28, 24][Difficult];
+		let offset_angle = -90*muki;
+
+		ascent(i in 0 .. way)
+		{
+			if (!eAlive) { break; }
+			let tmp = i/(way-1);
+
+			let sa = 90 + (tmp-0.5)*135*muki;
+			let sx = x + max_r*cos(sa);
+			let sy = y + max_r*sin(sa);
+
+			let ta = sa+offset_angle;
+			
+			let objShot = CreateShotA1(sx, sy, 0, ta, graphic, 0);
+			ObjMove_AddPatternA2(objShot, 60, NO_CHANGE, NO_CHANGE, 0.25/30, 0, 0.25);
+			ObjMove_AddPatternB2(objShot, 90, NO_CHANGE, NO_CHANGE, 0, speed/120, 99, speed);
+			My_RaiseShotEffectD_AA(objShot, 15);
+			
+			CallSound(sndShot2);
+			wait(wt);
+		}
+	}
+}
+
+
+task BirdShot(x, y, speed, angle, scale)
+{
+	let graphic = BGW_SCALE_WHITE;
+
+	let objBase = CreateShotA1(x, y, 0, angle, graphic, 0);
+	My_RaiseShotEffectA(objBase, 15);
+//	ObjShot_SetAutoDelete(objBase, false);
+	ObjMove_AddPatternA2(objBase, 30, NO_CHANGE, NO_CHANGE, speed/240, 0, speed);
+	ascent(i in 1 .. 6) { PhenixShot_sub(i*8, -i*5); PhenixShot_sub(-i*8, -i*5); }
+	ascent(i in 1 .. 4) { PhenixShot_sub(i*3, -i*12); PhenixShot_sub(-i*3, -i*12); }
+	/*
+	wait(90);
+	ObjShot_SetAutoDelete(objBase, true);
+	wait(105);
+	if (!Obj_IsDeleted(objBase) && CheckDispIN(objBase, 0))
+	{
+		HebrewShot01(ObjMove_GetX(objBase), ObjMove_GetY(objBase), angle-90);
+	}
+	*/
+
+	task PhenixShot_sub(vx, vy)
+	{
+		let bx = x+cos(angle)*vy*scale;
+		let by = y+sin(angle)*vy*scale;
+		let mvx = cos(angle+90)*vx*scale;
+		let mvy = sin(angle+90)*vx*scale;
+		let obj = CreateShotA1(bx, by, 0, angle, graphic, 0);
+		My_RaiseShotEffectA(obj, 15);
+		ObjShot_SetAutoDelete(obj, false);
+		ascent(i in 0 .. 30)
+		{
+			if (Obj_IsDeleted(obj)) { return; }
+			let tmp = sin((i+1)/30*90);
+			ObjMove_SetPosition(obj, bx+mvx*tmp, by+mvy*tmp);
+			yield;
+		}
+		ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, speed/240, 0, speed);
+		while(!Obj_IsDeleted(obj))
+		{
+			if (Obj_IsDeleted(objBase))
+			{
+				ObjShot_SetAutoDelete(obj, true);
+				break;
+			}
+			yield;
+		}
+	}
+}
+
+task HebrewShot01(x, y, angle)
+{
+	MishandraMiniCircle(x, y, 0.5, 180);
+	wait(60);
+	if (!eAlive) { return; }
+	
+	let speed = 2;
+	let graphic = ADD_BGW_LIGHT_S_YELLOW;
+	let to_graphic = BGW_STAR_S_WHITE;
+	
+	let count = 15;
+	let shot_timer = 15;
+	
+	let char_num = rand_int(0,21);
+	let scale = 30;
+	
+	let timer = 60;
+	let st = 0;
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+
+		let tmp = i/(count-1);
+		let pos = GetHebrewPos(angle, scale, char_num, tmp);
+		
+		let sa = -90;
+		HebrewShot01_sub(x+pos[0], y+pos[1], speed, sa, graphic, to_graphic, 15, timer);
+		
+		st += shot_timer/count;
+		while(st > 0) { st--; timer--; yield; }
+	}
+}
+task HebrewShot01_sub(x, y, speed, angle, graphic, to_graphic, delay, timer)
+{
+	let obj = CreateShotA1(x, y, 0, 0, graphic, delay);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+	wait(timer);
+	if (!Obj_IsDeleted(obj))
+	{
+		CreateShotA2(x, y, 0, angle+rand(-10,10), speed/120, speed, to_graphic, delay);
+		CallSound(sndShot2);
+	//	DeleteBulletEffect(obj);
+		ObjShot_FadeDelete(obj);
+	}
+}

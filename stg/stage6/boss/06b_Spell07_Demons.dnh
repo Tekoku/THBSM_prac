@@ -1,0 +1,1368 @@
+let DEMON_TIMER = 60*60;
+let DEMON_KILLED = 0;
+let SPELL_PHASE = 0;
+
+// 72柱汎用処理
+function SetDemons(iniX, iniY, iniValue, iniDrawType)
+{
+	let eSize = ENEMY_M;
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 300, eSize);
+	_SetDemons(objFamilier, iniX, iniY, iniValue, iniDrawType);
+	return(objFamilier);
+}
+task _SetDemons(objFamilier, iniX, iniY, iniValue, iniDrawType)
+{
+	let eColor = EFF_RED;
+	let dmgRange = [54, 28][iniDrawType==0];
+
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	SetDropItemCount(objFamilier, 0, 0);
+	TDraw(objFamilier, iniValue, iniDrawType);
+	TAct();
+	WaitForKilledFamilier(objFamilier, dmgRange, 0);
+	Obj_Delete(objFamilier);
+	CallSound(sndShot6);
+	DEMON_KILLED++;
+
+	task TAct()
+	{
+		alternative(iniValue)
+		case( 1) { DEMON01(objFamilier, iniX, iniY); }
+		case( 2) { DEMON02(objFamilier, iniX, iniY); }
+		case( 3) { DEMON03(objFamilier, iniX, iniY); }
+		case( 4) { DEMON04(objFamilier, iniX, iniY); }
+		case( 5) { DEMON05(objFamilier, iniX, iniY); }
+		case( 6) { DEMON06(objFamilier, iniX, iniY); }
+		case( 7) { DEMON07(objFamilier, iniX, iniY); }
+		case( 8) { DEMON08(objFamilier, iniX, iniY); }
+		case( 9) { DEMON09(objFamilier, iniX, iniY); }
+		case(10) { DEMON10(objFamilier, iniX, iniY); }
+		case(11) { DEMON11(objFamilier, iniX, iniY); }
+		case(12) { DEMON12(objFamilier, iniX, iniY); }
+		case(13) { DEMON13(objFamilier, iniX, iniY); }
+		case(14) { DEMON14(objFamilier, iniX, iniY); }
+		case(15) { DEMON15(objFamilier, iniX, iniY); }
+		case(16) { DEMON16(objFamilier, iniX, iniY); }
+		case(17) { DEMON17(objFamilier, iniX, iniY); }
+		case(18) { DEMON18(objFamilier, iniX, iniY); }
+		case(19) { DEMON19(objFamilier, iniX, iniY); }
+		case(20) { DEMON20(objFamilier, iniX, iniY); }
+		case(21) { DEMON21(objFamilier, iniX, iniY); }
+		case(22) { DEMON22(objFamilier, iniX, iniY); }
+		case(23) { DEMON23(objFamilier, iniX, iniY); }
+		case(24) { DEMON24(objFamilier, iniX, iniY); }
+		case(25) { DEMON25(objFamilier, iniX, iniY); }
+		case(26) { DEMON26(objFamilier, iniX, iniY); }
+		case(27) { DEMON27(objFamilier, iniX, iniY); }
+		case(28) { DEMON28(objFamilier, iniX, iniY); }
+		case(29) { DEMON29(objFamilier, iniX, iniY); }
+		case(30) { DEMON30(objFamilier, iniX, iniY); }
+		case(31) { DEMON31(objFamilier, iniX, iniY); }
+		case(32) { DEMON32(objFamilier, iniX, iniY); }
+		case(33) { DEMON33(objFamilier, iniX, iniY); }
+		case(34) { DEMON34(objFamilier, iniX, iniY); }
+		case(35) { DEMON35(objFamilier, iniX, iniY); }
+		case(36) { DEMON36(objFamilier, iniX, iniY); }
+		case(37) { DEMON37(objFamilier, iniX, iniY); }
+		case(38) { DEMON38(objFamilier, iniX, iniY); }
+		case(39) { DEMON39(objFamilier, iniX, iniY); }
+		case(40) { DEMON40(objFamilier, iniX, iniY); }
+		case(41) { DEMON41(objFamilier, iniX, iniY); }
+		case(42) { DEMON42(objFamilier, iniX, iniY); }
+		case(43) { DEMON43(objFamilier, iniX, iniY); }
+		case(44) { DEMON44(objFamilier, iniX, iniY); }
+		case(45) { DEMON45(objFamilier, iniX, iniY); }
+		case(46) { DEMON46(objFamilier, iniX, iniY); }
+		case(47) { DEMON47(objFamilier, iniX, iniY); }
+		case(48) { DEMON48(objFamilier, iniX, iniY); }
+		case(49) { DEMON49(objFamilier, iniX, iniY); }
+		case(50) { DEMON50(objFamilier, iniX, iniY); }
+		case(51) { DEMON51(objFamilier, iniX, iniY); }
+		case(52) { DEMON52(objFamilier, iniX, iniY); }
+		case(53) { DEMON53(objFamilier, iniX, iniY); }
+		case(54) { DEMON54(objFamilier, iniX, iniY); }
+		case(55) { DEMON55(objFamilier, iniX, iniY); }
+		case(56) { DEMON56(objFamilier, iniX, iniY); }
+		case(57) { DEMON57(objFamilier, iniX, iniY); }
+		case(58) { DEMON58(objFamilier, iniX, iniY); }
+		case(59) { DEMON59(objFamilier, iniX, iniY); }
+		case(60) { DEMON60(objFamilier, iniX, iniY); }
+		case(61) { DEMON61(objFamilier, iniX, iniY); }
+		case(62) { DEMON62(objFamilier, iniX, iniY); }
+		case(63) { DEMON63(objFamilier, iniX, iniY); }
+		case(64) { DEMON64(objFamilier, iniX, iniY); }
+		case(65) { DEMON65(objFamilier, iniX, iniY); }
+		case(66) { DEMON66(objFamilier, iniX, iniY); }
+		case(67) { DEMON67(objFamilier, iniX, iniY); }
+		case(68) { DEMON68(objFamilier, iniX, iniY); }
+		case(69) { DEMON69(objFamilier, iniX, iniY); }
+		case(70) { DEMON70(objFamilier, iniX, iniY); }
+		case(71) { DEMON71(objFamilier, iniX, iniY); }
+		case(72) { DEMON72(objFamilier, iniX, iniY); }
+		wait(DEMON_TIMER+120);
+		EraseEnemy(objFamilier);
+	}
+	
+	// 描画タスク
+	task TDraw(objFamilier, demonNum, drawType)
+	{
+		let scale = 1.25;
+		if (!drawType) { scale = 0.8; }
+		
+		let ix = (demonNum%8)*64;
+		let iy = trunc(demonNum/8)*64;
+		let objImg = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+		ascent(i in 0 .. 2)
+		{
+			Obj_SetRenderPriorityI(objImg[i], priorityZako);
+			ObjPrim_SetTexture(objImg[i], imgEffectDemons);
+			ObjSprite2D_SetSourceRect(objImg[i], ix, iy, ix+64, iy+64);
+			ObjSprite2D_SetDestCenter(objImg[i]);
+		}
+		Obj_SetRenderPriorityI(objImg[1], 69);
+		ObjRender_SetBlendType(objImg[1], BLEND_ADD_ARGB);
+		
+		let tmp_alpha = 0;
+		let tmp_scale = 0;
+		let tmp_angle = 0;
+		let t = demonNum;
+		ascent(i in 0 .. 45)
+		{
+			if (Obj_IsDeleted(objFamilier)) { break; }
+			let tmp = sin((i+1)/45*90);
+			let tmp_st = sin(t*5);
+			tmp_alpha = tmp*192;
+			tmp_scale = tmp*scale;
+			tmp_angle = (1-tmp)*360;
+			ascent(j in 0 .. 2)
+			{
+				ObjRender_SetAngleZ(objImg[j], tmp_angle);
+				ObjRender_SetPosition(objImg[j], ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0);
+			}
+			ObjRender_SetScaleXYZ(objImg[0], tmp_scale, tmp_scale, 1);
+			ObjRender_SetScaleXYZ(objImg[1], tmp_scale*1.33, tmp_scale*1.33, 1);
+			ObjRender_SetAlpha(objImg[0], tmp_alpha);
+			ObjRender_SetAlpha(objImg[1], tmp_alpha*(0.5+tmp_st/4));
+			t++;
+			yield;
+		}
+		while(!Obj_IsDeleted(objFamilier))
+		{
+			let tmp_st = sin(t*5);
+			ascent(j in 0 .. 2)
+			{
+				ObjRender_SetPosition(objImg[j], ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0);
+			}
+			ObjRender_SetAlpha(objImg[1], tmp_alpha*(0.5+tmp_st/4));
+			t++;
+			yield;
+		}
+		descent(i in 0 .. 45)
+		{
+			let tmp = sin((i+1)/45*90);
+			ObjRender_SetAlpha(objImg[0], tmp_alpha*tmp);
+			ObjRender_SetAlpha(objImg[1], tmp_alpha*tmp);
+			t++;
+			yield;
+		}
+		ascent(j in 0 .. 2) { Obj_Delete(objImg[j]); }
+	}
+}
+// 開幕えへくと
+function DemonEnterEffect(objFamilier, eff_color)
+{
+	EffectConcentrationLine(objFamilier, eff_color, 120, 8);
+	CallSound(sndPower1);
+	wait(90);
+}
+
+// バエル
+task DEMON01(objFamilier, iniX, iniY)
+{
+	FamilierEffect_LifeCircle(objFamilier, 72);	//ライフゲージ
+	EffectConcentrationLine(objFamilier, EFF_WHITE, 120, 8);
+	wait(90);
+	
+	let add_a1 = [12.5, 9, 7, 5.5][Difficult];
+	let add_a2 = [-16, -14, -12, -9][Difficult];
+	
+	TShot_sub(DEMON_TIMER, 1, 9);
+	TShot_sub(DEMON_TIMER, 0.75, -14);
+	
+	task TShot_sub(timer, speed_rate, add_a)
+	{
+		let way = [5, 7, 7, 7][Difficult];
+		let wt = [21, 18, 12, 8][Difficult];
+
+		let speed = [1, 1.25, 1.5, 2][Difficult];
+		let base_angle = rand(0, 360);
+		let graphic = BGW_BALL_M_WHITE;
+		let graphic2 = BGW_LIGHT_L_WHITE;
+		
+		speed *= speed_rate;
+		
+		ascent(t in 0 .. timer)
+		{
+			if (!CanShotBullet(objFamilier)) { break; }
+			if (t%wt == 0)
+			{
+				ascent(i in 0 .. way)
+				{
+					let sa = base_angle + i*360/way;
+					let sx = ObjMove_GetX(objFamilier) - 64*cos(sa);
+					let sy = ObjMove_GetY(objFamilier) - 64*sin(sa);
+					D01Shot(sx, sy, speed, sa, graphic, graphic2, 15);
+				}
+				CallSound(sndShot2);
+				base_angle += add_a;
+			}
+			yield;
+		}
+	}
+	
+	// ダーク☆ショット
+	task D01Shot(x, y, speed, angle, graphic, graphic2, delay)
+	{
+		let scale = 1.15;
+		let scale2 = 1.2;
+		let obj = [CreateShotA1(x, y, speed, angle, graphic2, 0), CreateShotA1(x, y, speed, angle, graphic, 0)];
+		ObjRender_SetBlendType(obj[0], BLEND_ADD_ARGB);
+		Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI-2);
+		ObjRender_SetScaleXYZ(obj[0], scale, scale, 1);
+		ObjRender_SetBlendType(obj[1], BLEND_SUBTRACT);
+		Obj_SetRenderPriorityI(obj[1], GetShotRenderPriorityI-1);
+		ObjShot_SetItemChange(obj[1], false);
+
+		ObjShot_SetIntersectionEnable(obj[0], false);
+		ObjShot_SetIntersectionEnable(obj[1], false);
+		ascent(i in 0 .. delay)
+		{
+			let tmp_s = 1;
+			let tmp_a = (i+1)/delay*255;
+			ObjRender_SetScaleXYZ(obj[0], tmp_s*scale, tmp_s*scale, 1);
+			ObjRender_SetScaleXYZ(obj[1], tmp_s*scale2, tmp_s*scale2, 1);
+			ObjRender_SetAlpha(obj[0], tmp_a);
+			ObjRender_SetAlpha(obj[1], tmp_a);
+			yield;
+		}
+		if (!Obj_IsDeleted(obj[0]))
+		{
+			ObjShot_SetIntersectionEnable(obj[0], true);
+			ObjShot_SetIntersectionEnable(obj[1], true);
+			ObjRender_SetScaleXYZ(obj[0], scale, scale, 1);
+			ObjRender_SetScaleXYZ(obj[1], scale2, scale2, 1);
+			ObjRender_SetAlpha(obj[0], 255);
+			ObjRender_SetAlpha(obj[1], 255);
+			
+			while(!Obj_IsDeleted(obj[0]))
+			{
+				ObjShot_SetIntersectionCircleA1(obj[0], 8);
+				ObjShot_SetIntersectionCircleA1(obj[1], 8);
+				yield;
+			}
+		}
+	}
+}
+
+// 汎用モーションその１
+task TMove_Phase01(objFamilier, iniX, iniY, iniAngle, iniR, iniMuki)
+{
+	let t = 0;
+	let ea = 0;
+	let add_angle = 0.25*iniMuki;
+	while(!Obj_IsDeleted(objFamilier))
+	{
+		let er = iniR;
+		if (t < 180)
+		{
+			let tmp_before = sin(t/180*90);
+			let tmp = sin((t+1)/180*90);
+			er *= tmp;
+			ea += (tmp-tmp_before)*iniAngle*iniMuki;
+		}
+		let ex = iniX + er*cos(ea);
+		let ey = iniY + er*sin(ea)*0.6;
+		ObjMove_SetPosition(objFamilier, ex, ey);
+		Obj_SetValue(objFamilier, "SHOT_ANGLE", ea-90*iniMuki);
+		ea += add_angle;
+		t++;
+		yield;
+	}
+}
+
+task TShot_Phase01(objFamilier, graphic)
+{
+	TShot_Phase01B(objFamilier, graphic);
+	wait(120);
+	
+	let speed = [1, 1, 1, 1][Difficult];
+	let wt = 15;
+	while(CanShotBullet(objFamilier))
+	{
+		let sa = -90 + rand(-5,5);
+		let ss = speed * rand(0.9, 1);
+		let obj = CreateShotA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+			ss, sa, graphic, 0);
+		My_RaiseShotEffectD_AA(obj, 15);
+		wait(wt);
+	}
+}
+task TShot_Phase01B(objFamilier, graphic)
+{
+	let speed = [1, 1, 1.15, 1.25][Difficult];
+	let way = [24, 24, 24, 24][Difficult];
+	let way_space = [0.33, 0.275, 0.25, 0.25][Difficult];
+	
+	let sx = ObjMove_GetX(objFamilier);
+	let sy = ObjMove_GetY(objFamilier);
+	let tmp_phase = SPELL_PHASE;
+	while(CanShotBullet(objFamilier))
+	{
+		sx = ObjMove_GetX(objFamilier);
+		sy = ObjMove_GetY(objFamilier);
+		yield;
+	}
+	if (tmp_phase == SPELL_PHASE)
+	{
+		let sa = atan2(GetPlayerY-sy, GetPlayerX-sx);
+		TriangleShot01B(sx, sy, speed, sa, graphic, 15, way, way_space);
+		TriangleShot01B(sx, sy, speed, sa+180, graphic, 15, way, way_space);
+	}
+
+	task TriangleShot01B(x, y, speed, angle, graphic, delay, way, way_space)
+	{
+		let bposx = [1, -0.5, -0.5];
+		let bposy = [0, 0.866, -0.866];
+		
+		let bx = [];
+		let by = [];
+		ascent(k in 0 .. 3)
+		{
+			let pos = Rotate2D_XY(bposx[k]*speed, bposy[k]*speed, angle);
+			bx = bx ~ [pos[0]];
+			by = by ~ [pos[1]];
+		}
+		
+		ascent(i in 0 .. 3)
+		{
+			ascent(j in 0 .. way)
+			{
+				let tmp = j/way;
+				if (absolute(tmp-0.5) > way_space)
+				{
+					let vx = bx[i]*(1-tmp) + bx[(i+1)%3]*tmp;
+					let vy = by[i]*(1-tmp) + by[(i+1)%3]*tmp;
+					let vs = ((vx^2+vy^2)^0.5);
+					let va = atan2(vy, vx);
+					let os = CreateShotA1(x, y, vs, va, graphic, 0);
+					My_RaiseShotEffectD_AA(os, delay);
+				}
+			}
+		}
+	}
+}
+
+// アガレス
+task DEMON02(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 0/10*360, 256, 1);
+	TShot_Phase01(objFamilier, ADD_BGW_BALL_M_YELLOW);
+}
+
+
+// ウァサゴ
+task DEMON03(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 200, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 1/10*360, 256, 1);
+	TShot_Phase01(objFamilier, ADD_BGW_CROSS_GREEN);
+}
+
+// ガミジン
+task DEMON04(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 50, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 2/10*360, 256, 1);
+	TShot_Phase01(objFamilier, ADD_BGW_FIRE_BLUE);
+}
+
+// マルバス
+task DEMON05(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 3/10*360, 256, 1);
+	TShot_Phase01(objFamilier, ADD_BGW_VIRUS_PURPLE);
+}
+
+// ウァレフォル
+task DEMON06(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 75, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 4/10*360, 256, 1);
+	TShot_Phase01(objFamilier, ADD_BGW_FUGU_SKY);
+}
+
+// アモン
+task DEMON07(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 300, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 5/10*360, 256, 1);
+	TShot_Phase01(objFamilier, ADD_BGW_FIRE_RED);
+}
+
+// バルバトス
+task DEMON08(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 6/10*360, 256, 1);
+	TShot_Phase01(objFamilier, ADD_BGW_ARROW_YELLOW);
+}
+
+// パイモン
+task DEMON09(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 50, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 7/10*360, 256, 1);
+	TShot_Phase01(objFamilier, ADD_BGW_NOTE_GREEN);
+}
+
+// ブエル
+task DEMON10(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 200, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 8/10*360, 256, 1);
+	TShot_Phase01(objFamilier, ADD_BGW_SHURIKEN_S_WHITE);
+}
+
+// グシオン
+task DEMON11(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 75, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 9/10*360, 256, 1);
+	TShot_Phase01(objFamilier, ADD_BGW_HEART_BLUE);
+}
+
+// シトリー
+task DEMON12(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 0/10*360, 380, -1);
+	TShot_Phase01(objFamilier, ADD_BGW_HEART_PURPLE);
+}
+
+// ベレト
+task DEMON13(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 50, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 1/10*360, 380, -1);
+	TShot_Phase01(objFamilier, ADD_BGW_KNIFE_BLUE);
+}
+
+// レラジェ
+task DEMON14(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 200, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 2/10*360, 380, -1);
+	TShot_Phase01(objFamilier, ADD_BGW_MISSILE_RED);
+}
+
+// エリゴス
+task DEMON15(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 50, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 3/10*360, 380, -1);
+	TShot_Phase01(objFamilier, ADD_BGW_NEEDLE_WHITE);
+}
+
+// ゼパル
+task DEMON16(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 4/10*360, 380, -1);
+	TShot_Phase01(objFamilier, ADD_BGW_KNIFE_RED);
+}
+
+// ボティス
+task DEMON17(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 75, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 5/10*360, 380, -1);
+	TShot_Phase01(objFamilier, ADD_BGW_RICE_M_YELLOW);
+}
+
+// バティン
+task DEMON18(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 300, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 6/10*360, 380, -1);
+	TShot_Phase01(objFamilier, ADD_BGW_ICE_GREEN);
+}
+
+// サレオス
+task DEMON19(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 50, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 7/10*360, 380, -1);
+	TShot_Phase01(objFamilier, ADD_BGW_SCALE_RED);
+}
+
+// プルソン
+task DEMON20(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 8/10*360, 380, -1);
+	TShot_Phase01(objFamilier, ADD_BGW_LIGHT_S_PURPLE);
+}
+
+// モラクス
+task DEMON21(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 200, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase01(objFamilier, iniX, iniY, 9/10*360, 380, -1);
+	TShot_Phase01(objFamilier, ADD_BGW_ICE_WHITE);
+}
+
+// イポス
+task DEMON22(objFamilier, iniX, iniY)
+{
+	FamilierEffect_LifeCircle(objFamilier, 72);	//ライフゲージ
+	TLaser();
+	DemonEnterEffect(objFamilier, EFF_RED);
+	
+	TShot(DEMON_TIMER);
+
+	// 本体から
+	task TShot(timer)
+	{
+		let speed = [1.5, 1.5, 1.75, 2][Difficult];
+		let way = [8, 12, 12, 16][Difficult];
+		let count = [4, 4, 5, 5][Difficult];
+		let count2 = [4, 5, 5, 6][Difficult];
+		let wt = [360, 270, 270, 240][Difficult];
+		let graphic = BGW_BUTTERFLY_WHITE;
+		
+		let st = 0;
+		let muki = rand_dir();
+		wait(30);
+		ascent(t in 0 .. timer)
+		{
+			if (!CanShotBullet(objFamilier)) { break; }
+			if (t%wt == 0)
+			{
+				TShot_sub(muki, st%3==0);
+				CallSound(sndShot7);
+				muki = -muki;
+				st++;
+			}
+			yield;
+		}
+		
+		task TShot_sub(muki, to_jiki)
+		{
+			let base_angle = rand(0, 360);
+			// ３回に１度自機狙い
+			if (to_jiki) { base_angle = GetAngleToPlayer(objFamilier)+15*muki; }
+			
+			loop(count2)
+			{
+				if (!CanShotBullet(objFamilier)) { break; }
+				let sa = base_angle;
+				BloomCircle(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					speed, sa, graphic, 15, way, count);
+				base_angle += 2*muki;
+				CallSound(sndShot2);
+				wait(30);
+			}
+		}
+	}
+	
+	task BloomCircle(x, y, speed, angle, graphic, delay, way, count)
+	{
+		ascent(i in 0 .. way)
+		{
+			let sa = angle + i*360/way;
+			ascent(j in 0 .. count)
+			{
+				let ss = speed * (1+j*0.15);
+				BloomShot(x, y, ss, sa, graphic, delay, 1);
+				BloomShot(x, y, ss, sa, graphic, delay, -1);
+			}
+		}
+	}
+	task BloomShot(x, y, speed, angle, graphic, delay, muki)
+	{
+		let obj = CreateShotA1(x, y, 2, angle, graphic, delay);
+		ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, -2/120, 1*muki, speed/4);
+		ObjMove_AddPatternA2(obj, 90, NO_CHANGE, NO_CHANGE, speed/30, 0, speed);
+	}
+	
+	// ツインブレス
+	task TLaser()
+	{
+		wait(30);
+		DarkLaser(objFamilier, ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+			16, 90+60, 64, 60, [BGW_FIRE_SKY, BGW_FIRE_YELLOW]);
+		DarkLaser(objFamilier, ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+			16, 90-60, 64, 60, [BGW_FIRE_YELLOW, BGW_FIRE_SKY]);
+	}
+
+	// ぶっといレーザー（闇）
+	task DarkLaser(objBase, x, y, speed, angle, l_wid, delay, graphics)
+	{
+		LaserDelayEffect02(objEnemy, x, y, angle, BGW_BEAM_PURPLE, delay);
+		wait(delay+30);
+		if (!eAlive) { return; }
+		CallSound(sndLaser1);
+		ascent(i in 0 .. 8)
+		{
+			if (!eAlive) { return; }
+			let tmp = (i+1)/10;
+			let ss = speed*(1-tmp*0.75);
+			let ll = 600;
+			let lw = l_wid;
+			
+			let muki = 1;
+			loop(2)
+			{
+				let sa = angle + (i+0.5)*muki*3;
+				DarkLaser_single(objBase, x, y, sa, ll, lw, graphics);
+				muki = -muki;
+			}
+			wait(12);
+		}
+	}
+	task DarkLaser_single(objBase, x, y, angle, l_len, l_wid, graphic)
+	{
+		// 予告線
+		let obj = [CreateStraightLaserA1(x, y, angle, l_len, l_wid, 60*999, graphic[0], 0), CreateStraightLaserA1(x, y, angle, l_len, l_wid*2, 60*999, graphic[1], 0)];
+		ObjLaser_SetInvalidLength(obj[0], 0, 0);
+		ObjLaser_SetIntersectionWidth(obj[0], l_wid/4);
+		Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI+1);
+		ObjRender_SetBlendType(obj[0], BLEND_SUBTRACT);
+		ObjShot_SetIntersectionEnable(obj[1], false);
+		ObjStLaser_SetSource(obj[0], false);
+		ObjStLaser_SetSource(obj[1], false);
+		
+		while(!Obj_IsDeleted(obj[0]))
+		{
+			if (Obj_IsDeleted(objBase))
+			{
+				ascent(i in 0 .. 2)
+				{
+					ObjShot_FadeDelete(obj[i]);
+				}
+				break;
+			}
+			yield;
+		}
+	}
+}
+
+// 汎用モーションその２
+task TMove_Phase02(objFamilier, iniX, iniY, iniAngle, iniR, iniMuki)
+{
+	let tmpY = iniY;
+	let t = 0;
+	let ea = iniAngle;
+	let add_angle = 0.425*iniMuki;
+	while(!Obj_IsDeleted(objFamilier))
+	{
+		let er = iniR;
+		if (t < 180)
+		{
+			let tmp_before = sin(t/180*90);
+			let tmp = sin((t+1)/180*90);
+			let tmp2 = (1-cos((t+1)/180*180))/2;
+			er *= tmp;
+			ea += (1-tmp)*3*iniMuki;
+			tmpY = iniY + 220*tmp2;
+		}
+		let ex = iniX + er*cos(ea);
+		let ey = tmpY + er*sin(ea)*0.4;
+		ObjMove_SetPosition(objFamilier, ex, ey);
+		Obj_SetValue(objFamilier, "SHOT_ANGLE", ea-90*iniMuki);
+		ea += add_angle;
+		t++;
+		yield;
+	}
+}
+
+task TShot_Phase02(objFamilier, graphic)
+{
+	TShot_Phase02B(objFamilier, graphic);
+	wait(300);
+	
+	let speed =  [0.75, 0.75, 0.75, 0.75][Difficult];
+	let wt =  [20, 14, 11, 11][Difficult];
+	let graphic2 = (graphic-1)%8 + BGW_FUGU_RED;
+	
+	while(CanShotBullet(objFamilier))
+	{
+		let angle = Obj_GetValueD(objFamilier, "SHOT_ANGLE", 0);
+		let sa = sin(angle)*45-90 + rand(-10,10);
+		let ss = speed;
+		if (cos(angle) < 0)
+		{
+			let obj = CreateShotA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+				ss, sa, graphic2, 0);
+			My_RaiseShotEffectD_AA(obj, 15);
+		}
+		else
+		{
+			let obj = CreateShotA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+				ss, sa, graphic, 0);
+			My_RaiseShotEffectD_AA(obj, 15);
+		}
+		CallSound(sndShot2);
+		wait(wt);
+	}
+}
+task TShot_Phase02B(objFamilier, graphic)
+{
+	let speed = [1, 1, 1.15, 1.25][Difficult];
+	let way = [24, 24, 24, 24][Difficult];
+	let way_space = [0.33, 0.275, 0.25, 0.25][Difficult];
+	
+	let sx = ObjMove_GetX(objFamilier);
+	let sy = ObjMove_GetY(objFamilier);
+	let tmp_phase = SPELL_PHASE;
+	while(CanShotBullet(objFamilier))
+	{
+		sx = ObjMove_GetX(objFamilier);
+		sy = ObjMove_GetY(objFamilier);
+		yield;
+	}
+	if (tmp_phase == SPELL_PHASE)
+	{
+		let sa = atan2(GetPlayerY-sy, GetPlayerX-sx);
+		TriangleShot01B(sx, sy, speed, sa, graphic, 15, way, way_space);
+		TriangleShot01B(sx, sy, speed, sa+180, graphic, 15, way, way_space);
+	}
+
+	task TriangleShot01B(x, y, speed, angle, graphic, delay, way, way_space)
+	{
+		let bposx = [1, -0.5, -0.5];
+		let bposy = [0, 0.866, -0.866];
+		
+		let bx = [];
+		let by = [];
+		ascent(k in 0 .. 3)
+		{
+			let pos = Rotate2D_XY(bposx[k]*speed, bposy[k]*speed, angle);
+			bx = bx ~ [pos[0]];
+			by = by ~ [pos[1]];
+		}
+		
+		ascent(i in 0 .. 3)
+		{
+			ascent(j in 0 .. way)
+			{
+				let tmp = j/way;
+				if (absolute(tmp-0.5) > way_space)
+				{
+					let vx = bx[i]*(1-tmp) + bx[(i+1)%3]*tmp;
+					let vy = by[i]*(1-tmp) + by[(i+1)%3]*tmp;
+					let vs = ((vx^2+vy^2)^0.5);
+					let va = atan2(vy, vx);
+					let os = CreateShotA1(x, y, vs, va, graphic, 0);
+					My_RaiseShotEffectD_AA(os, delay);
+				}
+			}
+		}
+	}
+}
+
+
+// アイム
+task DEMON23(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 0/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_FIRE_RED);
+}
+
+// ナベリウス
+task DEMON24(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 50, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 1/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_FUGU_YELLOW);
+}
+
+// グラシャラボラス
+task DEMON25(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 250, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 2/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_BALL_BS_WHITE);
+}
+
+// ブネ
+task DEMON26(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 75, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 3/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_VIRUS_BLUE);
+}
+
+// ロノウェ
+task DEMON27(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 4/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_HEART_GREEN);
+}
+
+// ベリト
+task DEMON28(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 300, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 5/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_COIN_YELLOW);
+}
+
+// アスタロト
+task DEMON29(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 50, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 6/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_CROSS_GREEN);
+}
+
+// フォルネウス
+task DEMON30(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 7/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_WATER_BLUE);
+}
+
+// フォラス
+task DEMON31(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 200, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 8/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_ICE_PURPLE);
+}
+
+// アスモデウス
+task DEMON32(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 75, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 9/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_BALL_S_BLUE);
+}
+
+// ガープ
+task DEMON33(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 10/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_SCALE_ORANGE);
+}
+
+// フルフル
+task DEMON34(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 400, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 11/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_CROSS_YELLOW);
+}
+
+// マルコシアス
+task DEMON35(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 50, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 12/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_FIRE_PURPLE);
+}
+
+// ストラス
+task DEMON36(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 100, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 13/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_RICE_M_GREEN);
+}
+
+// フェニックス
+task DEMON37(objFamilier, iniX, iniY)
+{
+	ObjEnemy_SetDamageRate(objFamilier, 75, 0);
+	TDemonRate(objFamilier);
+	TMove_Phase02(objFamilier, iniX, iniY, 14/15*360, 380, -1);
+	TShot_Phase02(objFamilier, ADD_BGW_ICE_RED);
+}
+
+// ハルファス
+task DEMON38(objFamilier, iniX, iniY)
+{
+//	BossEffect_LifeCircle(objFamilier);	//ライフゲージ
+	Obj_SetValue(objFamilier, "ENUM", 0/3-1/3);
+	Obj_SetValue(objFamilier, "ER", 64);
+	Obj_SetValue(objFamilier, "EADD", 1);
+
+	TMove_Phase03A(objFamilier, iniX, iniY);
+}
+// マルファス
+task DEMON39(objFamilier, iniX, iniY)
+{
+//	BossEffect_LifeCircle(objFamilier);	//ライフゲージ
+	Obj_SetValue(objFamilier, "ENUM", 1/3-1/3);
+	Obj_SetValue(objFamilier, "ER", 64);
+	Obj_SetValue(objFamilier, "EADD", 1);
+
+	TMove_Phase03A(objFamilier, iniX, iniY);
+}
+// ラウム
+task DEMON40(objFamilier, iniX, iniY)
+{
+//	BossEffect_LifeCircle(objFamilier);	//ライフゲージ
+	Obj_SetValue(objFamilier, "ENUM", 2/3-1/3);
+	Obj_SetValue(objFamilier, "ER", 64);
+	Obj_SetValue(objFamilier, "EADD", 1);
+
+	TMove_Phase03A(objFamilier, iniX, iniY);
+}
+// 汎用モーションその３（ボス用）
+task TMove_Phase03A(objFamilier, iniX, iniY)
+{
+	let tmpY = iniY;
+	let t = 0;
+	
+	let er = 0;
+	let angle = 0;
+	let offset_angle = Obj_GetValueD(objFamilier, "ENUM", 0) * 360;
+	let add_angle = 1;
+
+	while(!Obj_IsDeleted(objFamilier))
+	{
+		let ea = angle + offset_angle;
+		er = er*0.975 + Obj_GetValueD(objFamilier, "ER", 64)*0.025;
+		let ex = iniX + er*cos(ea);
+		let ey = tmpY + er*sin(ea);
+		ObjMove_SetPosition(objFamilier, ex, ey);
+		
+		angle += Obj_GetValueD(objFamilier, "EADD", 0);
+		offset_angle = offset_angle*0.98 + Obj_GetValueD(objFamilier, "ENUM", 0)*360*0.02;
+		t++;
+		yield;
+	}
+}
+// 汎用モーションその３（その他用）
+task TMove_Phase03B(objFamilier, iniX, iniY)
+{
+	ObjMove_AddPatternA2(objFamilier, 0, 0, 90, 1/120, 0, 1);
+
+	while(!Obj_IsDeleted(objFamilier))
+	{
+		if (ObjMove_GetY(objFamilier) > GetStgFrameHeight)
+		{
+			ObjEnemy_AddLife(objFamilier, -9999);
+			break;
+		}
+		yield;
+	}
+}
+task TShot_Phase03(objFamilier, graphic)
+{
+	TDemonRate(objFamilier);
+
+	TShot_Phase03B(objFamilier, graphic);
+	wait(120);
+	
+	let speed = 0.75;
+	let wt = 11;
+	
+	while(CanShotBullet(objFamilier))
+	{
+		let angle = Obj_GetValueD(objFamilier, "SHOT_ANGLE", 0);
+		let sa = -90 + rand(-10,10);
+		let ss = speed;
+		let obj = CreateShotA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+			ss, sa, graphic, 0);
+		My_RaiseShotEffectD_AA(obj, 15);
+		CallSound(sndShot2);
+		wait(wt);
+	}
+}
+task TShot_Phase03B(objFamilier, graphic)
+{
+	let speed = [1, 1, 1.15, 1.25][Difficult];
+	let way = [24, 24, 24, 24][Difficult];
+	let way_space = [0.33, 0.275, 0.25, 0.25][Difficult];
+	
+	let sx = ObjMove_GetX(objFamilier);
+	let sy = ObjMove_GetY(objFamilier);
+	let tmp_phase = SPELL_PHASE;
+	while(CanShotBullet(objFamilier))
+	{
+		sx = ObjMove_GetX(objFamilier);
+		sy = ObjMove_GetY(objFamilier);
+		yield;
+	}
+	if (tmp_phase == SPELL_PHASE)
+	{
+		let sa = atan2(GetPlayerY-sy, GetPlayerX-sx);
+		TriangleShot01B(sx, sy, speed, sa, graphic, 15, way, way_space);
+		TriangleShot01B(sx, sy, speed, sa+180, graphic, 15, way, way_space);
+	}
+
+	task TriangleShot01B(x, y, speed, angle, graphic, delay, way, way_space)
+	{
+		let bposx = [1, -0.5, -0.5];
+		let bposy = [0, 0.866, -0.866];
+		
+		let bx = [];
+		let by = [];
+		ascent(k in 0 .. 3)
+		{
+			let pos = Rotate2D_XY(bposx[k]*speed, bposy[k]*speed, angle);
+			bx = bx ~ [pos[0]];
+			by = by ~ [pos[1]];
+		}
+		
+		ascent(i in 0 .. 3)
+		{
+			ascent(j in 0 .. way)
+			{
+				let tmp = j/way;
+				if (absolute(tmp-0.5) > way_space)
+				{
+					let vx = bx[i]*(1-tmp) + bx[(i+1)%3]*tmp;
+					let vy = by[i]*(1-tmp) + by[(i+1)%3]*tmp;
+					let vs = ((vx^2+vy^2)^0.5);
+					let va = atan2(vy, vx);
+					let os = CreateShotA1(x, y, vs, va, graphic, 0);
+					My_RaiseShotEffectD_AA(os, delay);
+				}
+			}
+		}
+	}
+}
+
+
+// フォカロル
+task DEMON41(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_SCALE_GREEN);
+}
+
+// ウェパル
+task DEMON42(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_WATER_PURPLE);
+}
+
+// サブナック
+task DEMON43(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_RICE_R_WHITE);
+}
+
+// シャックス
+task DEMON44(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_COIN_WHITE);
+}
+
+// ヴィネ
+task DEMON45(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_WATER_BLUE);
+}
+
+// ビフロンス
+task DEMON46(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_FIRE_PURPLE);
+}
+
+// ウヴァル
+task DEMON47(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_HEART_YELLOW);
+}
+
+// ハーゲンティ
+task DEMON48(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_LIGHT_S_PURPLE);
+}
+
+// クロケル
+task DEMON49(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_WATER_RED);
+}
+
+// フルカス
+task DEMON50(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_NEEDLE_RED);
+}
+
+// バラム
+task DEMON51(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_SCALE_WHITE);
+}
+
+// アロケル
+task DEMON52(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_BALL_BS_RED);
+}
+
+// カイム
+task DEMON53(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_FIRE_RED);
+}
+
+// ムルムル
+task DEMON54(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_NOTE_BLUE);
+}
+
+// オロバス
+task DEMON55(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_STAR_S_GREEN);
+}
+
+// グレモリー
+task DEMON56(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_HEART_PURPLE);
+}
+
+// オセ
+task DEMON57(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_KUNAI_BLUE);
+}
+
+// アミー
+task DEMON58(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_KNIFE_RED);
+}
+
+// オリアス
+task DEMON59(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGB_BALL_BS_WHITE);
+}
+
+// ウァプラ
+task DEMON60(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_SHURIKEN_S_BLUE);
+}
+
+// ザガン
+task DEMON61(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_WATER_RED);
+}
+
+// ウァラク
+task DEMON62(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGB_KUNAI_GREEN);
+}
+
+// アンドラス
+task DEMON63(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_SAW_WHITE);
+}
+
+// フラウロス
+task DEMON64(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_CROSS_RED);
+}
+
+// アンドレアルフス
+task DEMON65(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGB_SCALE_YELLOW);
+}
+
+// キマリス
+task DEMON66(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_FIRE_BLUE);
+}
+
+// アムドゥスキアス
+task DEMON67(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_NOTE_BLUE);
+}
+
+// ベリアル
+task DEMON68(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_FIRE_WHITE);
+}
+
+// デカラビア
+task DEMON69(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_STAR_M_YELLOW);
+}
+
+// セーレ
+task DEMON70(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_SCALE_SKY);
+}
+
+// ダンタリオン
+task DEMON71(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_VIRUS_WHITE);
+}
+
+// アンドロマリウス
+task DEMON72(objFamilier, iniX, iniY)
+{
+	TMove_Phase03B(objFamilier, iniX, iniY);
+	TShot_Phase03(objFamilier, BGW_BALL_SS_RED);
+}
+
+
+// 汎用ショットその１　滝
+task DEMONSHOT_FALL(objFamilier, graphics)
+{
+	let wt = 240;
+	let count = 3;
+	
+	let t = 0;
+	while(t < DEMON_TIMER-60-15*count)
+	{
+		ascent(i in 0 .. count)
+		{
+			if (!CanShotBullet(objFamilier)) { break; }
+			TShot_sub(45, 1-i*0.1);
+			wait(15);
+		}
+		t += wt;
+		wait(wt-10*count);
+	}
+	
+	task TShot_sub(timer, speed_rate)
+	{
+		let speed = 1.5;
+		let base_angle = 90;
+		
+		
+		ascent(t in 0 .. timer)
+		{
+			if (!CanShotBullet(objFamilier)) { break; }
+			let tmp = (t+1)/timer;
+			let muki = 1;
+			loop(2)
+			{
+				let sx = ObjMove_GetX(objFamilier) + tmp*480*muki;
+				if (sx > 0 && sx < GetStgFrameWidth)
+				{
+					let sy = ObjMove_GetY(objFamilier) + rand(-16,16);
+					let sa = base_angle + rand(-15, 15);
+					let sg = graphics[trunc(rand(0,length(graphics)))];
+					let ss = speed * speed_rate * rand(0.5, 1);
+					let obj = CreateShotA2(sx, sy, -ss, sa, ss/30, ss, sg, 0);
+					My_RaiseShotEffectD_AA(obj, 30);
+					CallSound(sndShot2);
+				}
+				muki = -muki;
+			}
+			yield;
+		}
+	}
+}
+
+
+task TDemonRate(objFamilier)
+{
+	let rs = ObjEnemy_GetInfo(objFamilier, INFO_DAMAGE_RATE_SHOT);
+	let rb = ObjEnemy_GetInfo(objFamilier, INFO_DAMAGE_RATE_SPELL);
+	ObjEnemy_SetDamageRate(objFamilier, rs*0, rb*0);
+	wait(60);
+	ascent(t in 0 .. 300)
+	{
+		let tmp = (t+1)/300;
+		ObjEnemy_SetDamageRate(objFamilier, rs*tmp, rb*tmp);
+		yield;
+	}
+}

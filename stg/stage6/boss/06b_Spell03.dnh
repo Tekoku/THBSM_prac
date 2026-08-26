@@ -1,0 +1,316 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["フーマシュリケーン"]
+#Text["フーマシュリケーン"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mishandra.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(1100);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(80);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 20;		//ダメージ透過率
+
+	bossDropItem = 80;	//アイテム数
+	bossHitToShot = 64;
+	bossDropStarItem = 120;
+	
+	bossNormalDropStar = 8;
+	bossDropStarItemR = 118;
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MISHANDRA);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(54), [6,6,7,8][Difficult], 
+			GetCurrentScriptDirectory()~"06b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 150, 60);
+	FumaCharismaOption(objEnemy, false);
+	wait(60);
+	
+	CallSpellCard(true);	//スペカ起動
+	
+	let wt = [630, 540, 540, 540][Difficult];
+	let eway = [5, 5, 6, 8][Difficult];
+	let rotate_angle = [0.5, 0.5, 0.45, 0.4][Difficult];
+	
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		wait(90);
+		if (!eAlive) { return; }
+		let ba = rand(0,360);
+		ascent(i in 0 .. eway)
+		{
+			SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), ba+i*360/eway, 1*muki, i, rotate_angle*muki, 72, 660);
+		}
+		CallSound(sndBoon);
+		muki = -muki;
+		wait(wt-90-30);
+	}
+}
+
+// フーマスゴイハンド
+task SetFamilier01(iniX, iniY, iniAngle, iniMuki, iniValue, iniValue2, iniR, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_RED;
+	let item_count = 0;
+	let item_star = 0;
+	let baseAngle = iniAngle;
+	let baseAdd = 0;
+	let baseR = iniR;
+	
+	let objFamilier = MakeEnemyFamilier(-256, -256, 99999, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	MishandraOption_SetDamageRate(objFamilier);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawMishandraHand(objFamilier, iniAngle, iniMuki);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 38, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		wait(120);
+		TShot();
+	}
+	
+	task TMove()
+	{
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			if (t > iniTimer)
+			{
+				EraseEnemy(objFamilier);
+				break;
+			}
+			
+			let ex = iniX + cos(baseAngle)*baseR;
+			let ey = iniY + sin(baseAngle)*baseR;
+			ObjMove_SetPosition(objFamilier, ex, ey);
+			SetMishandraHandAngle(objFamilier, baseAngle+180);
+			baseAngle += baseAdd;
+
+			if (t < 120)
+			{
+				baseAdd = iniValue2 * (t+1)/120;
+			}
+			baseR += iniR/iniTimer;
+			t++;
+			yield;
+		}
+	}
+	
+	task TShot()
+	{
+		let speed = [2, 2.5, 2.5, 2.5][Difficult];
+		let to_speed = [1, 1, 1, 1][Difficult];
+		let wt = [5, 4, 4, 4][Difficult];
+		
+		let graphic1 = ADD_BGW_STAR_M_YELLOW;
+		let graphic2 = BGW_SHURIKEN_S_YELLOW;
+		let graphic3 = [BGW_STAR_S_YELLOW, BGW_STAR_S_GREEN, BGW_STAR_S_SKY, BGW_STAR_S_BLUE, BGW_STAR_S_SKY, BGW_STAR_S_GREEN];
+		let graphic4 = BGW_STAR_M_YELLOW;
+		
+		if (Difficult >= D_LUNA)
+		{
+			graphic1 = ADD_BGW_STAR_M_RED;
+			graphic2 = BGW_SHURIKEN_S_RED;
+			graphic3 = [BGW_STAR_S_WHITE, BGW_STAR_S_PURPLE, BGW_STAR_S_RED, BGW_STAR_S_WHITE, BGW_STAR_S_RED, BGW_STAR_S_PURPLE];
+			graphic4 = BGW_STAR_M_RED;
+		}
+		else if (Difficult >= D_HARD)
+		{
+			graphic1 = ADD_BGW_STAR_M_GREEN;
+			graphic2 = BGW_SHURIKEN_S_GREEN;
+			graphic3 = [BGW_STAR_S_GREEN, BGW_STAR_S_SKY, BGW_STAR_S_BLUE, BGW_STAR_S_YELLOW, BGW_STAR_S_BLUE, BGW_STAR_S_SKY];
+			graphic4 = BGW_STAR_M_GREEN;
+		}
+		
+		let rotation = 6;
+		let rotation_all = 0;
+		
+		// ショットのパターン
+		let shot_flg = [];
+		loop(rotation) { shot_flg = shot_flg ~ [99999]; rotation_all++; }
+		loop(rotation/2) { shot_flg = shot_flg ~ [99999, 80]; rotation_all++; }
+		loop(2) { shot_flg = shot_flg ~ [80]; rotation_all++; }
+		loop(rotation/2-1) { shot_flg = shot_flg ~ [99999, 80]; rotation_all++; }
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			let ss = speed * baseR/iniR;
+			let sa = baseAngle-150*iniMuki;
+			let ts = to_speed * rand(0.95, 1);
+			let deltime = shot_flg[t%length(shot_flg)];
+			if (Difficult >= D_LUNA)
+			{
+				WinderShotLuna(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					ss, sa, graphic1, graphic2, 5, ts, graphic3[t%6], graphic4, deltime, iniMuki);
+			}
+			else
+			{
+				WinderShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					ss, sa, graphic1, graphic2, 5, ts, graphic3[t%6], graphic4, deltime, iniMuki);
+			}
+			CallSound(sndShot2);
+			t++;
+			wait(wt);
+		}
+	}
+
+}
+
+task WinderShot(x, y, speed, angle, graphic, graphic2, delay, to_speed, to_graphic, to_graphic2, timer, muki)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, 0);
+	ObjMove_AddPatternA2(obj, 60, speed, angle-135*muki, 0, 0, speed);
+	My_RaiseShotEffectA(obj, 5);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (t > 80 && !CheckDispIN(obj, -2))
+		{
+			let to_a = -1;
+			let ss = to_speed;
+			let tg = to_graphic;
+			if (ObjMove_GetX(obj) < 2) { to_a = 180+ObjMove_GetAngle(obj); tg = to_graphic; }
+			if (ObjMove_GetX(obj) > GetStgFrameWidth-2) { to_a = 180+ObjMove_GetAngle(obj); tg = to_graphic; }
+			if (ObjMove_GetY(obj) < 2) { to_a = 180+ObjMove_GetAngle(obj); tg = to_graphic; }
+		//	if (ObjMove_GetX(obj) < 2) { to_a = 0; }
+		//	if (ObjMove_GetX(obj) > GetStgFrameWidth-2) { to_a = 180; }
+		//	if (ObjMove_GetX(obj) < 2) { to_a = 270+rand(15,30); ss = 3; tg = to_graphic2; }
+		//	if (ObjMove_GetX(obj) > GetStgFrameWidth-2) { to_a = 270-rand(15,30); ss = 3; tg = to_graphic2; }
+		//	if (ObjMove_GetY(obj) < 2) { to_a = 90; ss = to_speed; tg = to_graphic; }
+
+			if (to_a >= 0)
+			{
+				CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj),
+					0, to_a, ss/30, ss, tg, 0);
+				CallSound(sndBulletBreak);
+			}
+			
+			DeleteBulletEffect(obj);
+			break;
+		}
+		else if (t >= timer)
+		{
+			if ((ObjMove_GetX(objEnemy)-GetPlayerX)^2 + (ObjMove_GetY(objEnemy)-GetPlayerY)^2 < 2500)
+			{
+				ObjMove_SetAngle(obj, GetAngleToPlayer(obj));
+				ObjMove_SetSpeed(obj, 0);
+				ObjMove_SetAcceleration(obj, speed/30);
+				ObjMove_SetMaxSpeed(obj, speed/2);
+				break;
+			}
+			else
+			{
+				ObjShot_FadeDelete(obj);
+				break;
+			}
+		}
+		else if (t == 80)
+		{
+			ObjShot_SetGraphic(obj, graphic2);
+			Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI);
+		}
+		t++;
+		yield;
+	}
+}
+
+task WinderShotLuna(x, y, speed, angle, graphic, graphic2, delay, to_speed, to_graphic, to_graphic2, timer, muki)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, 0);
+	ObjMove_AddPatternA2(obj, 60, speed, angle-135*muki, 0, 0, speed);
+	ObjMove_AddPatternA2(obj, 70, speed, angle, 0, 0, speed);
+	ObjMove_AddPatternA2(obj, 80, speed, angle-135*muki, 0, 0, speed);
+	My_RaiseShotEffectA(obj, 5);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (t > 80 && !CheckDispIN(obj, -2))
+		{
+			let to_a = -1;
+			let ss = to_speed;
+			let tg = to_graphic;
+			if (ObjMove_GetX(obj) < 2) { to_a = 180+ObjMove_GetAngle(obj); tg = to_graphic; }
+			if (ObjMove_GetX(obj) > GetStgFrameWidth-2) { to_a = 180+ObjMove_GetAngle(obj); tg = to_graphic; }
+			if (ObjMove_GetY(obj) < 2) { to_a = 180+ObjMove_GetAngle(obj); tg = to_graphic; }
+//			if (ObjMove_GetY(obj) > GetStgFrameHeight-2) { to_a = 180+ObjMove_GetAngle(obj); tg = to_graphic; }
+
+			if (to_a >= 0)
+			{
+				CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj),
+					0, to_a, ss/30, ss, tg, 0);
+				CallSound(sndBulletBreak);
+			}
+			
+			DeleteBulletEffect(obj);
+			break;
+		}
+		else if (t > timer)
+		{
+			if ((ObjMove_GetX(objEnemy)-GetPlayerX)^2 + (ObjMove_GetY(objEnemy)-GetPlayerY)^2 < 2500)
+			{
+				ObjMove_SetAngle(obj, GetAngleToPlayer(obj));
+				ObjMove_SetSpeed(obj, 0);
+				ObjMove_SetAcceleration(obj, speed/30);
+				ObjMove_SetMaxSpeed(obj, speed/2);
+				break;
+			}
+			else
+			{
+				ObjShot_FadeDelete(obj);
+				break;
+			}
+			/*
+			ObjMove_SetAngle(obj, GetAngleToPlayer(obj)+180);
+			ObjMove_SetSpeed(obj, 0);
+			ObjMove_SetAcceleration(obj, speed/30);
+			ObjMove_SetMaxSpeed(obj, speed*2);
+			break;
+			*/
+		}
+		else if (t == 100)
+		{
+			ObjShot_SetGraphic(obj, graphic2);
+			Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI);
+		}
+		t++;
+		yield;
+	}
+}

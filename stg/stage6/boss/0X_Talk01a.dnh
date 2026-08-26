@@ -1,0 +1,176 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["霊夢エンディング"]
+#Text["霊夢エンディング"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(180);
+	TEndingImage(imgEDReimu[2], 120);
+	//  BGM
+	PlayMusic( 17, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [255, 108, 108];
+	let COL2 = [108, 108, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]博麗神社", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]異変は解決したが、勿論参拝客が増えたりはしない。", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「って！　なんでよ！[r]　なんでいつもそうなのよ！」", COL1);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "フーマ[r]「当たり前だ。妖怪が出入りする君の神社は、[r]　麓の人里でも有名なオカルトスポットだよ」", COL2);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「そして何勝手に上り込んでる！？」", COL1);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "フーマ[r]「本は魔力の源であり、知識の泉である。[r]　現代の幻想郷のしきたりは調べておいたよ。[r]　異変の後は巫女の神社へ行き酒を飲む」", COL2);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「無い無い！　そんなしきたり無い！」", COL1);
+		}
+		case(7)
+		{
+			TEndingImage(imgEDReimu[3], 30);
+			SetTalkEx(cutinDescri, "フーマ[r]「それからフーマのオカルトはミシャンドラ。[r]　新時代を象徴するネット都市伝説でオカルトボールは[r]　頂くよ」", COL2);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "霊夢[r]「それももう終わってるから！」", COL1);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r]フーマが名乗るミシャンドラの名。[r]それはソロモン72柱の悪魔の、知られざる73番目。", COL0);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "[r]いかなる記録も文献も残されていないが、[r]それは召喚者に自らを記録・記憶させない呪いをかける為。", COL0);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "[r]…という設定で、インターネットを介し都市伝説となった架空の悪魔。[r]つまりどこかの誰かのオリジナルキャラクターなのだ。", COL0);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "フーマ[r]「だが構わん。元はと言えばサタンもベリアルも[r]　似たような物だ。[r]　主と目的を失いフーマは自分が何者なのかを忘れた」", COL2);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "フーマ[r]「だがフーマがその名を名乗る事で、[r]　73番目の悪魔はここに確かに顕現する」", COL2);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "[r]時代と共に姿は変われども、誰かの記憶の中に残り続け、[r]語り継がれる限り、魂は不滅。", COL0);
+		}
+		case(15)
+		{
+			SetTalkEx(cutinDescri, "[r]かつて霊夢たちが用いた、怪異伝承を武器として身に付ける発想。[r]フーマはこれが、自分のような名も無き存在に光明をもたらす秘策であると確信した。", COL0);
+		}
+		case(16)
+		{
+			SetTalkEx(cutinDescri, "[r]彼女は本ならではの豊富な知識と、風魔ならではの名付けの特技を活かし幻想郷各地の消え行く妖怪や神様を、新しい存在として昇華させて回る。", COL0);
+		}
+		case(17)
+		{
+			SetTalkEx(cutinDescri, "[r]かくして人里は新たな都市伝説で溢れ、以前の異変で見た事の無い新種のオカルトボールまで幻想郷中に出現。[r]またまた霊夢は解決に奔走する事になるのだが、それはまた別の話である。", COL0);
+		}
+		case(18)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r][r]　　　　　　　　　Ending.01　深秘は続くよどこまでも", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,934 @@
+// ÉLÉãÉJÉEÉìÉg
+task DemonNumber()
+{
+	let before_kill = DEMON_KILLED;
+	
+	DemonNumber_single(GetStgFrameWidth/2, 48, DEMON_KILLED);
+	
+	while(before_kill < 72)
+	{
+		if (DEMON_KILLED > before_kill)
+		{
+			before_kill++;
+			DemonNumber_single(GetStgFrameWidth/2, 48, before_kill);
+			wait(3);
+		}
+		yield;
+	}
+	DEMON_KILLED++;
+	
+	task DemonNumber_single(x, y, num)
+	{
+		//écã@
+		let offset_x = 0;
+		if ((num+1) < 10) { offset_x = -15; }
+		
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetTexture(obj, imgEffectFumaNumber);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetVertexCount(obj, 2*6);
+		Obj_SetRenderPriorityI(obj, 71);
+		ObjRender_SetPosition(obj, x, y, 0);
+		ascent(iObj in 0 .. 2)
+		{
+			SetNumber_Base(obj, iObj, iObj*30-32+offset_x, -64*0.85/2, 48*0.85, 64*0.85);
+		}
+		SetNumber(obj, 1, (num+1)%10);
+		SetNumber(obj, 0, [trunc((num+1)/10), -1][(num+1)<10]);
+		
+		let t = 0;
+		while(num == DEMON_KILLED || t < 15)
+		{
+			if (t < 15)
+			{
+				let tmp = sin((t+1)/15*90);
+				ObjRender_SetAngleY(obj, (1-tmp)*90);
+				ObjRender_SetX(obj, x+(1-tmp)*32);
+			}
+			t++;
+			yield;
+		}
+		if (num >= 72)
+		{
+			ascent(t in 0 .. 60)
+			{
+				let tmp = (1-cos((t+1)/60*180))/2;
+				ObjRender_SetY(obj, y+tmp*96);
+				t++;
+				yield;
+			}
+			wait(30);
+			descent(t in 0 .. 30)
+			{
+				let tmp = sin((t+1)/30*90);
+				ObjRender_SetAngleY(obj, (1-tmp)*90);
+				yield;
+			}
+		}
+		else
+		{
+			descent(t in 0 .. 15)
+			{
+				let tmp = sin((t+1)/15*90);
+				ObjRender_SetAngleY(obj, (1-tmp)*90);
+				ObjRender_SetX(obj, x-(1-tmp)*32);
+				yield;
+			}
+		}
+		Obj_Delete(obj);
+	}
+
+	//êîéöóp
+	function SetNumber(obj, keta, num)
+	{
+		if (num < 0)
+		{
+			ascent(i in 0 .. 6)
+			{
+				ObjPrim_SetVertexUVT(obj, keta*6+i, 0, 0);
+			}
+		}
+		else
+		{
+			let ix = num*48;
+			ObjPrim_SetVertexUVT(obj, keta*6  , ix, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+1, ix+48, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+2, ix, 64);
+			ObjPrim_SetVertexUVT(obj, keta*6+3, ix+48, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+4, ix, 64);
+			ObjPrim_SetVertexUVT(obj, keta*6+5, ix+48, 64);
+		}
+	}
+
+	function SetNumber_Base(obj, keta, x, y, w, h)
+	{
+		ObjPrim_SetVertexPosition(obj, keta*6  , x, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+1, x+w, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+2, x, y+h, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+3, x+w, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+4, x, y+h, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+5, x+w, y+h, 0);
+	}
+}
+
+// íiäKÉ`ÉFÉìÉW
+function PHASE_SHIFT()
+{
+	wait(30);
+	CallSound(sndPower2);
+	wait(45);
+	DeleteShotAll_Delay(CenX, 64);
+	wait(45);
+}
+
+// ÉtÅ[É}ÅEÉ~ÉVÉÉÉìÉhÉâÅiñ{ï“Åj
+function PHASE_LAST()
+{
+	let DEL_R = 16;
+	let DEL_CHANGE = false;
+	
+	SetEnemyVisible(objEnemy, true);
+
+	TShot_book();
+	wait(60);
+	
+	let fam_rotate = [0.4, 0.4, 0.5, 0.6][Difficult];
+	let circle_wt = [480, 420, 270, 180][Difficult];
+	ascent(i in 0 .. 3)
+	{
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), i*120, 1, fam_rotate, 128, i);
+	}
+	ascent(i in 0 .. 3)
+	{
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), i*120+60, -1, fam_rotate, 128, (i+2)%3);
+	}
+	
+	let t = 0;
+	wait(300);
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		wait(120);
+		if (!eAlive) { return; }
+		TCircle();
+		wait(circle_wt);
+	}
+	
+	task TCircle()
+	{
+		let objEff = MishandraLineEffect(objEnemy, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), MLINE_CIRCLE);
+		let r = 0;
+		
+		DEL_CHANGE = true;
+		ascent(t in 0 .. 60)
+		{
+			if (!eAlive) { break; }
+			let tmp = 1-cos((t+1)/60*90);
+			DEL_R = max(16, tmp*400);
+			Obj_SetValue(objEff, "R", tmp*400);
+			yield;
+		}
+		DEL_R = 16;
+		DEL_CHANGE = false;
+		Obj_Delete(objEff);
+	}
+	
+	task TShot_book()
+	{
+		let graphics = [BGW_BILL_RED, BGW_BILL_ORANGE, BGW_BILL_YELLOW, BGW_BILL_GREEN, BGW_BILL_SKY, BGW_BILL_BLUE, BGW_BILL_PURPLE];
+		let t = 0;
+		
+		let wt = [1.5, 1.5, 1.5, 1.5][Difficult];
+		let wt_dec = [0.75, 0.85, 1, 1][Difficult];
+		let speed = [2, 2, 2, 2][Difficult];
+		let speed_acc = [2, 3, 4, 4][Difficult];
+		
+		let st = 0;
+		while(eAlive)
+		{
+			let rt = 1-GetBossLifeRate(objEnemy);
+			let shot_wt = wt - rt*wt_dec;
+			let tmp_speed = speed + rt*speed_acc;
+			let sr = 350;
+			if (t < 240)
+			{
+				let tmp = sin((t+1)/240*90);
+				sr *= tmp;
+				shot_wt *= (0.25 + tmp*0.75);
+			}
+			
+			let sa = -90 + rand(-142,142);
+			let sx = ObjMove_GetX(objEnemy) + sr*cos(sa);
+			let sy = ObjMove_GetY(objEnemy) + sr*sin(sa);
+			BookShot(sx, sy, tmp_speed, sa+180, graphics[trunc(t/16)%7], 15, sr);
+			st += shot_wt;
+			while(st > 0) { st--; t++; yield; }
+		}
+	}
+	
+	task BookShot(x, y, speed, angle, graphic, delay, r)
+	{
+		let obj = CreateShotA1(x, y, speed, angle, graphic, delay);
+		ObjShot_SetAutoDelete(obj, false);
+		wait(delay);
+		
+		while(!Obj_IsDeleted(obj))
+		{
+			r -= speed;
+			if (r <= DEL_R)
+			{
+				ObjMove_SetAcceleration(obj, -speed/10);
+				descent(t in 0 .. 10)
+				{
+					let tmp = t/10;
+					ObjRender_SetScaleX(obj, tmp);
+					yield;
+				}
+				if (!Obj_IsDeleted(obj) && DEL_CHANGE)
+				{
+					if (CheckDispIN(obj, 0))
+					{
+						DigitalShot(ObjMove_GetX(obj), ObjMove_GetY(obj), rand(0,360));
+						CallSound(sndBulletBreak);
+					}
+				}
+				Obj_Delete(obj);
+				break;
+			}
+			yield;
+		}
+	}
+	
+	task DigitalShot(x, y, angle)
+	{
+		let speed = [1.75, 1.75, 2, 3][Difficult];
+		let base_angle = GetAngleToPlayer(objEnemy);
+
+		let vs = 1;
+		let vx = vs*cos(angle);
+		let vy = vs*sin(angle);
+		let flash = rand_int(5, 15);
+		let num = rand_int(0, 1);
+		
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, 70);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjPrim_SetTexture(obj, imgEffectDigital);
+		ObjSprite2D_SetSourceRect(obj, 0+num*16, 0, 16+num*16, 32);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetColor(obj, 0, 255, 0);
+		ObjRender_SetScaleXYZ(obj, 1.5, 1.5, 1);
+
+		let t = 0;
+		let alpha = 0;
+		while(alpha < 255)
+		{
+			if (!eAlive) { break; }
+			alpha += 5;
+			ObjRender_SetAlpha(obj, alpha);
+			ObjRender_SetPosition(obj, x, y, 0);
+			Obj_SetVisible(obj, trunc(t/flash)%2==0);
+			x += vx; y += vy;
+			t++;
+			yield;
+		}
+		descent(i in 0 .. 60)
+		{
+			alpha -= 1;
+			let tmp = (i+1)/60;
+			ObjRender_SetPosition(obj, x, y, 0);
+			Obj_SetVisible(obj, trunc(t/flash)%2==0);
+			x += vx*tmp; y += vy*tmp;
+			t++;
+			yield;
+		}
+		if (eAlive)
+		{
+			let ss = speed * rand(0.33, 1);
+			let sa = base_angle + rand(-5,5);
+			if (Difficult <= D_EASY && rand_int(0,1)) { sa += 180; }
+			let graphic = [BGW_BILL_WHITE, BGW_KUNAI_WHITE, BGW_KNIFE_WHITE, BGW_STAR_S_WHITE, BGW_CROSS_WHITE][rand_int(0,4)];
+			My_CreateShotA2(x, y, 0, sa, ss/120, ss, graphic, 30);
+		}
+		while(alpha > 0)
+		{
+			alpha -= 5;
+			ObjRender_SetAlpha(obj, alpha);
+			ObjRender_SetPosition(obj, x, y, 0);
+			Obj_SetVisible(obj, trunc(t/flash)%2==0);
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	// ÉtÅ[É}ÉXÉSÉCÉnÉìÉh
+	task SetFamilier01(iniX, iniY, iniAngle, iniMuki, iniValue, iniR, iniGraphic)
+	{
+		let eSize = ENEMY_M;
+		let eColor = EFF_RED;
+		let item_count = 0;
+		let item_star = 0;
+		let baseAngle = iniAngle;
+		let baseAdd = iniValue;
+		let baseR = iniR;
+		
+		let objFamilier = MakeEnemyFamilier(-256, -256, 99999, eSize);
+		CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// É{ÉXÇ∆ëÃóÕòAìÆ
+		MishandraOption_SetDamageRate(objFamilier);
+		SetDropItemCount(objFamilier, item_count, item_star);
+		DrawMishandraHand(objFamilier, iniAngle, iniMuki);
+		TAct();
+		WaitForKilledFamilier(objFamilier, 38, 0);
+		ZakoFinalize(objFamilier, eColor);
+		
+		task TAct()
+		{
+			TMove();
+			wait(120);
+			TShot();
+		}
+		
+		task TMove()
+		{
+			let r = 0;
+			let t = 0;
+			while(CanShotBullet(objFamilier))
+			{
+				baseR = iniR + 48*sin(t/2)*iniMuki;
+				if (t < 120)
+				{
+					let tmp = sin((t+1)/120*90);
+					baseR *= tmp;
+				}
+				let ex = iniX + cos(baseAngle)*baseR;
+				let ey = iniY + sin(baseAngle)*baseR;
+				ObjMove_SetPosition(objFamilier, ex, ey);
+				SetMishandraHandAngle(objFamilier, baseAngle+180);
+				baseAngle += baseAdd;
+				t++;
+				yield;
+			}
+		}
+		
+		task TShot()
+		{
+			let speed = [1.25, 1.25, 1.25, 1.25][Difficult];
+			let graphic = [BGW_STAR_M_BLUE, BGW_STAR_M_RED, BGW_STAR_M_PURPLE][iniGraphic%3];
+			let wt = [4, 3, 3, 2][Difficult];
+			let swt = 3;
+			
+			let muki = 1;
+			
+			let t = 0;
+			while(CanShotBullet(objFamilier))
+			{
+				let ss = speed;
+				if (trunc(t/swt)%2==1 && t%swt == 0) { ss *= 0.75; }
+				let sa = baseAngle-165*muki;
+				let tt = round((baseR-128)/128*45);
+				S07StarShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					ss, sa, graphic, 15, tt, muki, t%swt==0);
+				if (t%2 == 0) { CallSound(sndShot2); }
+				t++;
+				wait(wt);
+			}
+		}
+		
+		task S07StarShot(x, y, speed, angle, graphic, delay, timer, muki, move_flg)
+		{
+			let obj = CreateShotA1(x, y, 0, angle, graphic, 0);
+			ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		//	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+			
+			let tmp_r = 0;
+			while(tmp_r < baseR)
+			{
+				if (Obj_IsDeleted(obj)) { break; }
+				let tmp = tmp_r/baseR;
+				let sx = iniX + (baseR*cos(baseAngle))*(1-tmp) + (baseR*cos(baseAngle-120))*tmp;
+				let sy = iniY + (baseR*sin(baseAngle))*(1-tmp) + (baseR*sin(baseAngle-120))*tmp;
+				ObjMove_SetPosition(obj, sx, sy);
+				tmp_r += 2.5;
+				yield;
+			}
+			if (move_flg)
+			{
+				ObjMove_AddPatternA2(obj, 0, 2.5, baseAngle+210, (speed-2.5)/60, 0, speed);
+				/*
+				wait(timer+90);
+				if (!Obj_IsDeleted(obj))
+				{
+					let obj2 = CreateShotA1(ObjMove_GetX(obj), ObjMove_GetY(obj), ObjMove_GetSpeed(obj), ObjMove_GetAngle(obj), graphic, 0);
+					ObjMove_AddPatternA2(obj2, 0, NO_CHANGE, NO_CHANGE, (speed-2.5)/60, 0, speed);
+					
+					ObjShot_SetIntersectionEnable(obj, false);
+					ascent(t in 0 .. 45)
+					{
+						let tmp = (t+1)/45;
+						ObjRender_SetAlpha(obj, (1-tmp)*255);
+						ObjRender_SetAlpha(obj2, tmp*255);
+						yield;
+					}
+					Obj_Delete(obj);
+				}
+				*/
+			}
+			else
+			{
+				ObjMove_AddPatternA1(obj, 0, 2.5, baseAngle+210);
+				ObjMove_AddPatternB2(obj, 1, NO_CHANGE, NO_CHANGE, 0, -2/30, 99, -2.5);
+			}
+		}
+	}
+}
+/*
+// ñvî≈
+function PHASE_LAST()
+{
+	SetEnemyVisible(objEnemy, true);
+
+	TShot_book();
+	wait(60);
+	
+	let graphics = [BGW_BALL_BS_WHITE, BGW_STAR_S_WHITE, BGW_KNIFE_WHITE, BGW_SHURIKEN_S_WHITE, BGW_STAR_M_WHITE, BGW_KUNAI_WHITE, BGW_FUGU_WHITE, BGW_BILL_WHITE, BGW_CROSS_WHITE];
+	
+	let rotate_angle = 0.66;
+	let speed = 0.5;
+	let way = 36;
+	
+	let t = 0;
+	let muki = 1;
+	while(eAlive)
+	{
+		let sa = rand(0,360);
+		let tmp_g = graphics[t%9];
+		TriangleShotS07(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			speed, sa, tmp_g, 120, 120, rotate_angle*muki, way);
+		TriangleShotS07(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			speed, sa+180, tmp_g, 120, 120, rotate_angle*muki, way);
+			muki = -muki;
+			t++;
+		wait(300);
+	}
+	
+	task TriangleShotS07(x, y, speed, angle, graphic, delay, r, add_angle, way)
+	{
+		let bposx = [1, -0.5];
+		let bposy = [0, 0.866];
+
+		ascent(i in 0 .. way)
+		{
+			if (!eAlive) { return; }
+			let tmp = i/way;
+			let vx = bposx[0]*(1-tmp) + bposx[1]*tmp;
+			let vy = bposy[0]*(1-tmp) + bposy[1]*tmp;
+			let vr = r * (vx^2+vy^2)^0.5;
+			let va = atan2(vy, vx);
+			let ma = angle + (tmp-0.5)*360;
+			RotateShotS07(x, y, speed, angle, va, ma, graphic, delay-i*2, vr, add_angle);
+			wait(2);
+		}
+	}
+	
+	task RotateShotS07(x, y, speed, angle, offset_angle, move_angle, graphic, delay, r, add_angle)
+	{
+		let BASE_ANGLE = angle;
+		let objBase = CreateShotA1(x, y, 0, move_angle, graphic, 0);
+		ObjMove_AddPatternA2(objBase, delay+90, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+		SetShotDisabled(objBase);
+		Obj_SetVisible(objBase, false);
+		
+		ascent(i in 0 .. 3)
+		{
+			RotateShotS07_sub(x, y, speed, offset_angle+i*120, graphic, 30, r, add_angle);
+		}
+		wait(delay+90);
+		let t = 0;
+		while(!Obj_IsDeleted(objBase))
+		{
+			if (t < 120) { BASE_ANGLE += add_angle*t/120; }
+			else { BASE_ANGLE += add_angle; }
+			t++;
+			yield;
+		}
+
+		task RotateShotS07_sub(x, y, speed, angle, graphic, delay, r, add_angle)
+		{
+			let sa = BASE_ANGLE + angle;
+			S07DigitalEffect2(ObjMove_GetX(objBase)+cos(sa)*r, ObjMove_GetY(objBase)+sin(sa)*r, rand_int(0,1));
+			wait(90);
+			if (Obj_IsDeleted(objBase)) { return; }
+			CallSound(sndShot2);
+			
+			let obj = CreateShotA1(x, y, speed, angle, graphic, 0);
+			My_RaiseShotEffectB(obj, delay);
+			
+			while(!Obj_IsDeleted(obj) && !Obj_IsDeleted(objBase))
+			{
+				sa = BASE_ANGLE + angle;
+				ObjMove_SetPosition(obj, ObjMove_GetX(objBase)+cos(sa)*r, ObjMove_GetY(objBase)+sin(sa)*r);
+				ObjMove_SetAngle(obj, sa);
+				yield;
+			}
+			DeleteBulletEffect(obj);
+		}
+	}
+	
+	task TShot_book()
+	{
+		let graphics = [BGW_BILL_RED, BGW_BILL_ORANGE, BGW_BILL_YELLOW, BGW_BILL_GREEN, BGW_BILL_SKY, BGW_BILL_BLUE, BGW_BILL_PURPLE];
+		let t = 0;
+		
+		let st = 0;
+		while(eAlive)
+		{
+			let rt = 1-GetBossLifeRate(objEnemy);
+			let shot_wt = 1 - rt*0.66;
+			let speed = 2 + rt*3;
+			let sr = 350;
+			if (t < 240)
+			{
+				let tmp = sin((t+1)/240*90);
+				sr *= tmp;
+				shot_wt *= (0.25 + tmp*0.75);
+			}
+			
+			let sa = -90 + rand(-150,150);
+			let sx = ObjMove_GetX(objEnemy) + sr*cos(sa);
+			let sy = ObjMove_GetY(objEnemy) + sr*sin(sa);
+			BookShot(sx, sy, speed, sa+180, graphics[trunc(t/16)%7], 15, sr-rand(16,72));
+			st += shot_wt;
+			while(st > 0) { st--; t++; yield; }
+		}
+	}
+	
+	task BookShot(x, y, speed, angle, graphic, delay, r)
+	{
+		let obj = CreateShotA1(x, y, speed, angle, graphic, delay);
+		ObjShot_SetAutoDelete(obj, false);
+		wait(delay);
+		
+		while(!Obj_IsDeleted(obj))
+		{
+			r -= speed;
+			if (r <= 0)
+			{
+				ObjMove_SetAcceleration(obj, -speed/10);
+				descent(t in 0 .. 10)
+				{
+					let tmp = t/10;
+					ObjRender_SetScaleX(obj, tmp);
+					yield;
+				}
+				Obj_Delete(obj);
+				break;
+			}
+			yield;
+		}
+	}
+}
+*/
+
+// é◊
+function PHASE01()
+{
+	let objP01Familier = SetDemons(CenX, 80, 1, 1);
+	ObjEnemy_SetDamageRate(objP01Familier, 5, 0);
+	
+	let objSubFamilier = [];
+	ascent(i in 2 .. 11+1)
+	{
+		objSubFamilier = objSubFamilier ~ [SetDemons(CenX, 80, i, 0)];
+	}
+	ascent(i in 12 .. 21+1)
+	{
+		objSubFamilier = objSubFamilier ~ [SetDemons(CenX, 80, i, 0)];
+	}
+	
+	let kill_dec = DEMON_KILLED;
+	let kill_count = DEMON_KILLED;
+
+	// èIóπÇ‹Ç≈ë“ã@
+	while(!Obj_IsDeleted(objP01Familier))
+	{
+		if (kill_count < DEMON_KILLED)
+		{
+			kill_count = DEMON_KILLED;
+			let tmp = (DEMON_KILLED-kill_dec)/length(objSubFamilier);
+			let rate = 5 + 50*tmp;
+			// éGãõåÇîjêîÇ…âûÇ∂Çƒè_ÇÁÇ©Ç≠Ç»ÇÈ
+			ObjEnemy_SetDamageRate(objP01Familier, rate, 0);
+		}
+		yield;
+	}
+	
+	// éüÇÃíiäKÇ÷
+	SPELL_PHASE++;
+	
+	// éGãõåÇîj
+	ascent(i in 0 .. length(objSubFamilier))
+	{
+		if (!Obj_IsDeleted(objSubFamilier[i]))
+		{
+			EraseEnemy(objSubFamilier[i]);
+		}
+	}
+}
+
+// ì±
+function PHASE02()
+{
+	let objP01Familier = SetDemons(CenX, 80, 22, 1);
+	ObjEnemy_SetDamageRate(objP01Familier, 5, 0);
+	
+	let objSubFamilier = [];
+	ascent(i in 23 .. 37+1)
+	{
+		objSubFamilier = objSubFamilier ~ [SetDemons(CenX, 80, i, 0)];
+	}
+	
+	let kill_dec = DEMON_KILLED;
+	let kill_count = DEMON_KILLED;
+
+	// èIóπÇ‹Ç≈ë“ã@
+	while(!Obj_IsDeleted(objP01Familier))
+	{
+		if (kill_count < DEMON_KILLED)
+		{
+			kill_count = DEMON_KILLED;
+			let tmp = (DEMON_KILLED-kill_dec)/length(objSubFamilier);
+			let rate = 5 + 50*tmp;
+			// éGãõåÇîjêîÇ…âûÇ∂Çƒè_ÇÁÇ©Ç≠Ç»ÇÈ
+			ObjEnemy_SetDamageRate(objP01Familier, rate, 0);
+		}
+		yield;
+	}
+	
+	// éüÇÃíiäKÇ÷
+	SPELL_PHASE++;
+	
+	// éGãõåÇîj
+	ascent(i in 0 .. length(objSubFamilier))
+	{
+		if (!Obj_IsDeleted(objSubFamilier[i]))
+		{
+			EraseEnemy(objSubFamilier[i]);
+		}
+	}
+}
+
+// ìç
+function PHASE03
+{
+	DEMON_TIMER = 60*90;	// Ç±ÇÃíiäKÇæÇØêßå¿éûä‘í∑Çﬂ
+	
+	let flgP3Finish = false;
+	let objP3Familiers = [];
+	let objSubFamilier = [];
+	ascent(i in 38 .. 40+1)
+	{
+		objP3Familiers = objP3Familiers ~ [SetDemons(CenX, 80, i, 1)];
+	}
+	ascent(i in 0 .. length(objP3Familiers)) { ObjEnemy_SetDamageRate(objP3Familiers[i], 40, 0); }
+	TFamilier();
+
+	wait(60);
+	SunShot(CenX, 80);
+	CallSound(sndFlare);
+	
+	while(length(objP3Familiers) > 0)
+	{
+		// åÇîjéûèàóù
+		ascent(i in 0 .. length(objP3Familiers))
+		{
+			if (Obj_IsDeleted(objP3Familiers[i]))
+			{
+				objP3Familiers = erase(objP3Familiers, i);
+				
+				let ct = length(objP3Familiers);
+				if (ct > 0)
+				{
+					let add_a = [3, -1][ct<=1];
+					let er = (ct-1)*48;
+					let rate = [40, 20][ct<=1];
+					ascent(j in 0 .. ct)
+					{
+						Obj_SetValue(objP3Familiers[j], "ENUM", (j-(ct-1)/2)/ct);
+						Obj_SetValue(objP3Familiers[j], "EADD", add_a);
+						Obj_SetValue(objP3Familiers[j], "ER", er);
+						ObjEnemy_SetLife(objP3Familiers[j], 300);
+						ObjEnemy_SetDamageRate(objP3Familiers[j], rate, 0);
+					}
+					CallSound(sndPower1);
+				}
+				break;
+			}
+		}
+		yield;
+	}
+	flgP3Finish = true;
+	
+	// éüÇÃíiäKÇ÷
+	SPELL_PHASE++;
+	
+	// éGãõåÇîj
+	ascent(i in 0 .. length(objSubFamilier))
+	{
+		if (!Obj_IsDeleted(objSubFamilier[i]))
+		{
+			EraseEnemy(objSubFamilier[i]);
+		}
+	}
+	yield;
+	DEMON_KILLED = 72;
+
+	// égÇ¢ñÇóéÇ∆Çµ
+	task TFamilier()
+	{
+		wait(180);
+		ascent(i in 41 .. 72+1)
+		{
+			if (length(objP3Familiers) <= 0) { break; }
+			objSubFamilier = objSubFamilier ~ [SetDemons(rand(0+32, GetStgFrameWidth-32), 0, i, 0)];
+			wait(150);
+		}
+	}
+	
+	// É_Å[ÉNëæózóéÇ∆Çµ
+	task SunShot(x, y)
+	{
+		let objShot = DarkNuclearShot(x, y, [255, 0, 0], 320, 120);
+		ObjShot_SetAutoDelete(objShot, false);
+		
+		let sy = -240;
+		MoveTo(objShot, CenX, sy, 120);
+		wait(120);
+		
+		TShot01();
+		TShot02();
+		TShot03();
+		
+		let speed = 0;
+		while(sy < -64)
+		{
+			sy += speed;
+			ObjMove_SetPosition(objShot, CenX, sy);
+			speed = min(0.25, speed+0.01);
+			yield;
+		}
+		
+		// ëÊàÍíiäK
+		task TShot01()
+		{
+			let wt = [210, 180, 120, 75][Difficult];
+			
+			while(!Obj_IsDeleted(objShot))
+			{
+				TShot01_sub();
+				wait(wt);
+			}
+			
+			task TShot01_sub()
+			{
+				let speed = [1, 1, 1.25, 1.5][Difficult];
+				let wt = [10, 8, 8, 8][Difficult];
+				let timer = 180;
+				let graphic = BGW_BALL_S_RED;
+				
+				let wt_offset = rand_int(0, wt);
+				ascent(t in 0 .. timer)
+				{
+					if (Obj_IsDeleted(objShot)) { break; }
+					if ((t-wt_offset)%wt == 0)
+					{
+						let tmp = t/(timer-1);
+						let sa = 90 + (tmp-0.5)*90;
+						let sr = 300;
+						let sx = ObjMove_GetX(objShot) + cos(sa)*sr;
+						let sy = ObjMove_GetY(objShot) + sin(sa)*sr;
+						CreateShotA2(sx, sy, -speed*2, sa, speed/15, speed, graphic, 15);
+						CallSound(sndShot2);
+					}
+					yield;
+				}
+			}
+		}
+
+		// ëÊìÒíiäK
+		task TShot02()
+		{
+			let wt = [180, 150, 120, 90][Difficult];
+			
+			while (length(objP3Familiers) >= 3) { yield; }
+			
+			while(!Obj_IsDeleted(objShot))
+			{
+				TShot02_sub();
+				wait(wt);
+			}
+			
+			task TShot02_sub()
+			{
+				let speed = [1.25, 1.25, 1.5, 1.75][Difficult];
+				let way = [12, 16, 16, 16][Difficult];
+				let graphic = ADD_BGW_LIGHT_L_RED;
+
+				let base_angle = 90 + rand(-1,1)*90/way;
+				ascent(i in 0 .. way)
+				{
+					let tmp = i/(way-1);
+					let sa = base_angle + (tmp-0.5)*90;
+					let sr = 300;
+					let sx = ObjMove_GetX(objShot) + cos(sa)*sr;
+					let sy = -64 + sin(sa)*sr-210;
+					My_CreateShotA2(sx, sy, 0, sa, speed/15, speed, graphic, 15);
+				}
+			}
+		}
+
+		// ëÊéOíiäK
+		task TShot03()
+		{
+			let wt = [35, 25, 18, 12][Difficult];
+			
+			while (length(objP3Familiers) >= 2) { yield; }
+			
+			while(!Obj_IsDeleted(objShot))
+			{
+				TShot03_sub();
+				wait(wt);
+			}
+			
+			task TShot03_sub()
+			{
+				let speed = [1.5, 1.5, 1.75, 2][Difficult];
+				let way = [6, 6, 6, 6][Difficult];
+				let graphic = BGW_FIRE_RED;
+
+				let base_angle = 90 + rand(-1,1)*90/way;
+				ascent(i in 0 .. way)
+				{
+					let tmp = i/(way-1);
+					let sa = base_angle + (tmp-0.5)*90;
+					let sr = 300;
+					let sx = ObjMove_GetX(objShot) + cos(sa)*sr;
+					let sy = ObjMove_GetY(objShot) + sin(sa)*sr-120;
+					My_CreateShotA2(sx, sy, 0, sa, speed/15, speed, graphic, 15);
+				}
+			}
+		}
+
+		// É_Å[ÉNäjíe
+		function DarkNuclearShot(x, y, color, size, delay)
+		{
+			let obj = CreateShotA1(x, y, 0, 0, BGW_BALL_S_RED, 0);
+			SetShotDisabled(obj);
+			Obj_SetVisible(obj, false);
+			Obj_SetValue(obj, "COLOR", color);
+			Obj_SetValue(obj, "SIZE", size);
+			
+			_DarkNuclearShot(obj, delay);
+			return(obj);
+		}
+
+		task _DarkNuclearShot(parent, delay)
+		{
+			let obj = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+			ascent(i in 0 .. 2)
+			{
+				Obj_SetRenderPriorityI(obj[i], GetShotRenderPriorityI());
+				ObjPrim_SetTexture(obj[i], imgEffectNuclear);
+				ObjSprite2D_SetSourceRect(obj[i], 0, 0+i*256, 256, 256+i*256);
+				ObjSprite2D_SetDestCenter(obj[i]);
+				ObjRender_SetBlendType(obj[i], BLEND_ADD_ARGB);
+			}
+		//	ObjRender_SetBlendType(obj[0], BLEND_SUBTRACT);
+		//	ObjRender_SetBlendType(obj[1], BLEND_SUBTRACT);
+			Obj_SetRenderPriorityI(obj[1], GetShotRenderPriorityI()-1);
+			
+			let t = 0;
+			let sz = 0;
+			while(!Obj_IsDeleted(parent))
+			{
+				sz = Obj_GetValueD(parent, "SIZE", 0);
+				if (t < delay)
+				{
+					sz *= sin((t+1)/delay*90);
+				}
+				
+				let sc = (sz+8)/60;
+				let col = Obj_GetValueD(parent, "COLOR", [255,0,0]);
+				ObjRender_SetColor(obj[1], col[0], col[1], col[2]);
+				ObjRender_SetColor(obj[0], 255-col[0]/2, 255-col[1]/2, 255-col[2]/2);
+				
+				ObjShot_SetIntersectionCircleA1(parent, sz);
+				ascent(i in 0 .. 2)
+				{
+					ObjRender_SetPosition(obj[i], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+					ObjRender_SetScaleXYZ(obj[i], sc, sc, 1);
+				}
+				ObjRender_SetAngleZ(obj[0], -t/3);
+				ObjRender_SetAngleZ(obj[1], t/3);
+				t++;
+				yield;
+			}
+			descent(i in 0 .. 30)
+			{
+				let sc = ((sz+8)*sin((i+1)/30*90))/60;
+				ascent(i in 0 .. 2)
+				{
+					ObjRender_SetScaleXYZ(obj[i], sc, sc, 1);
+				}
+				ObjRender_SetAngleZ(obj[0], -t/3);
+				ObjRender_SetAngleZ(obj[1], t/3);
+				t++;
+				yield;
+			}
+			ascent(i in 0 .. 2)
+			{
+				Obj_Delete(obj[i]);
+			}
+		}
+	}
+}

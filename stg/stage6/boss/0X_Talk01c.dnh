@@ -1,0 +1,219 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["早苗エンディング"]
+#Text["早苗エンディング"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(180);
+	TEndingImage(imgEDSanae[2], 120);
+	//  BGM
+	PlayMusic( 17, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [108, 255, 108];
+	let COL2 = [108, 255, 255];
+	let COL3 = [255, 108, 128];
+	let COL4 = [255, 255, 108];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]守矢神社", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]外の世界から魔宝を追って来たものの、帰る方法の分からない望月一曜が滞在している。", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "一曜[r]「今だ！　火遁！　火の玉アタック！」", COL2);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "早苗[r]「ウィンドウォール発動！[r]　炎を貫き防ぎ、そのまま攻撃！　勝負あり…」", COL1);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "一曜[r]「危ない所だった…これぞ身代わりの術！」", COL2);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "早苗[r]「何ですって！？　では私も、守矢忍法・水遁の術！」", COL1);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "一曜[r]「ただの雨！　ただの雨ですよそれは！」", COL2);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "[r]同年代の早苗とは意気投合。[r]打倒博麗霊夢を掲げて共に鍛錬に励む。", COL0);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "[r]妖精にも負けず劣らず飽きっぽい早苗がいつまで続くか、[r]守矢神社の二柱は生暖かくそれを見守っていた。", COL0);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r]無論、一曜の火遁で時折飛んで来る炎の流れ弾を、神社に直撃せぬよう逸らしながら。", COL0);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "諏訪子[r]「これ神奈子、あれは何なんじゃ」", COL4);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "神奈子[r]「おや諏訪子、あれは忍者じゃ」", COL3);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "諏訪子[r]「なんか私の知ってる忍者とずいぶん違うのだが」", COL4);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "神奈子[r]「神様も忍者も時代に応じた姿があるんだよ、[r]　私のように」", COL3);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "諏訪子[r]「神奈子はただ小狡いだけだ」", COL4);
+		}
+		case(15)
+		{
+			SetTalkEx(cutinDescri, "[r]そろそろお気づきかも知れないが、自ら幻想郷の結界を超えて来たこの二柱なら、内側から外へ出る事もお手の物。[r]一曜を外の世界に帰してやる事など、実は朝飯前である。", COL0);
+		}
+		case(16)
+		{
+			SetTalkEx(cutinDescri, "[r]しかし、もはや現代の外界は、煌びやかな五色の忍者が合体ロボを操ったり、戦に負けた忍者が爆発したりする末法の世界。", COL0);
+		}
+		case(17)
+		{
+			SetTalkEx(cutinDescri, "[r]古来からの由緒正しい忍者系譜の末裔である彼女。[r]幻想郷から帰れなくなったのは、もしかしたら不慮の事態ではなく、定められた運命だったのかも知れない。", COL0);
+		}
+		case(18)
+		{
+			SetTalkEx(cutinDescri, "[r]果たしてどちらで生きる方が幸せか。[r]そう考えると神奈子も諏訪子も、ついつい話を切り出せなかったのだ。", COL0);
+		}
+		case(19)
+		{
+			TEndingImage(imgEDSanae[3], 30);
+			SetTalkEx(cutinDescri, "[r]しかし数日後、外の世界で通っている学校のテストが迫って来たと言われ、結局一曜は外の世界へ送還されて行く。", COL0);
+		}
+		case(20)
+		{
+			SetTalkEx(cutinDescri, "[r]女子高生。[r]外の世界で唯一無二の最強種族の筈だが、単位を落とす事は出来ない。", COL0);
+		}
+		case(21)
+		{
+			SetTalkEx(cutinDescri, "[r]彼女は、完全に外の世界への未練を捨てた早苗とは違ったのだ。", COL0);
+		}
+		case(22)
+		{
+			SetTalkEx(cutinDescri, "[r]早苗と一曜は、以後もときおり神奈子・諏訪子の力を通して連絡を交わした。", COL0);
+		}
+		case(23)
+		{
+			SetTalkEx(cutinDescri, "[r]その後一曜は大学へ進学し、次第に忍者の跡継ぎを諦めて、普通の現代人として大人になって行く。", COL0);
+		}
+		case(24)
+		{
+			SetTalkEx(cutinDescri, "[r]対する自分はこれで良かったのか。[r]年月を経ても幼い姿のまま、神様となりつつある自分を見て、早苗は考える。", COL0);
+		}
+		case(25)
+		{
+			SetTalkEx(cutinDescri, "[r]そして考えるのをやめる。[r]自分が選択した道だ。一曜とは真逆の選択だが、どちらが正しくてどちらが間違いではなかったのだ。", COL0);
+		}
+		case(26)
+		{
+			SetTalkEx(cutinDescri, "早苗[r]「貴方の忍術はずっと忘れません…。[r]　さあ今年も異変です！霊夢さんに負けずに行きますよ！", COL1);
+		}
+		case(27)
+		{
+			SetTalkEx(cutinDescri, "[r]忍ぶという字とは程遠い存在感を放つ守矢の若い神様。[r]今年も派手な技で異変解決に挑む――。[r]早苗は一曜の生き様を十分に認め、また自分の生き様に誇りを持っていた。", COL0);
+		}
+		case(28)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r][r]　　　　Ending.03　ところでその時霊夢って何歳だろう", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,324 @@
+//　Stage6
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../lib/wor_function.dnh"
+
+let flagEnd = false;
+let flgScriptValue = 0;
+
+//　ステージの背景テクスチャ
+let world06_path;
+
+let STAGE_SCENE = 0;
+
+let BG02_WT = 20;
+let Z_SPEED = 20;
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_NextStageScene)
+	{
+		STAGE_SCENE++;
+		if (STAGE_SCENE == 1) { TChangePram1(); }
+		else if (STAGE_SCENE == 2) { TChangePram2(); }
+	}
+	case(ev_CloseScript)
+	{
+		let closeType	= GetEventArgument(0);
+		if (closeType >= 2) { CloseBG(); }
+	}
+}
+
+@Initialize
+{
+	init();	//初期設定
+	
+	// 画像パスをセット
+	world06_path = LoadingImageFile_StgWorld(6);
+
+	// 背景スクリプト起動
+	if (IsDrawBackground() >= 2) { SetWorld06a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+@MainLoop
+{
+	yield;
+}
+
+task CloseBG()
+{
+	wait(300);
+	//背景削除
+	flagEnd = true;
+	CloseMine(30);
+}
+
+
+task BackGroundLite
+{
+	let obj2 = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj2,world_layer);
+	ObjRender_SetColor(obj2,255,255,255);
+	ObjPrim_SetTexture(obj2,world06_path[1]);
+	ObjSprite2D_SetSourceRect(obj2,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj2,0,0,384,448);
+	ObjRender_SetAlpha(obj2,0);
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,world_layer);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,world06_path[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+
+	while(alpha<255)
+	{
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	ObjRender_SetAlpha(obj2, 255);
+	while(!flagEnd && STAGE_SCENE < 2)
+	{
+		yield;
+	}
+	while(!flagEnd && alpha > 0)
+	{
+		alpha -= 1;
+		if (GetAreaCommonData(CAREA_TITLE, "STG6_FASTBG", false)) { alpha = 0; }
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	Obj_Delete(obj);
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj2);
+}
+
+task SetWorld06a()
+{
+	TBG02;
+	TBG01;
+
+	SetCameraFocusX(0);
+	SetCameraFocusY(100);
+	SetCameraFocusZ(0);
+	SetCameraRadius(500);
+
+	SetCameraAzimuthAngle(-90+15);
+	SetCameraElevationAngle(5);
+
+	ascent(t in 0 .. 180)
+	{
+		let tmp = (t+1)/180;
+		SetFogParam(-384+1200*tmp, -128+1400*tmp, 0, 0, 0);
+		yield;
+	}
+}
+
+task TChangePram1()
+{
+	if (GetAreaCommonData(CAREA_TITLE, "STG6_FASTBG", false))
+	{
+		// practice tool: fast-forward transition
+		Z_SPEED = 5;
+		SetCameraAzimuthAngle(-90+15-25);
+		return;
+	}
+	ascent(t in 0 .. 300)
+	{
+		let tmp = (t+1)/300;
+		Z_SPEED = 20 - tmp*15;
+		SetCameraAzimuthAngle(-90+15-25*tmp);
+		yield;
+	}
+}
+
+task TChangePram2()
+{
+	if (GetAreaCommonData(CAREA_TITLE, "STG6_FASTBG", false))
+	{
+		// practice tool: fast-forward transition (skip magic circle and camera anim)
+		SetFogParam(-384, -128, 0, 0, 0);
+		SetCameraAzimuthAngle(-90);
+		SetCameraElevationAngle(-5);
+		BG02_WT = 12;
+		STAGE_SCENE++;
+		return;
+	}
+	TBG03();
+	
+	ascent(t in 0 .. 300)
+	{
+		let tmp = (t+1)/300;
+		SetFogParam(-384+1200*(1-tmp), -128+1400*(1-tmp), 0, 0, 0);
+		SetCameraAzimuthAngle(-90-10+10*tmp);
+		SetCameraElevationAngle(5-10*tmp);
+		BG02_WT = 20-tmp*8;
+		yield;
+	}
+	STAGE_SCENE++;
+}
+
+task TBG01
+{
+	SetInvalidRenderPriorityA1(world_layer, world_layer+1);
+	
+	// 元画像
+	let ID = [ObjMesh_Create(), ObjMesh_Create()];
+	let IDmask = [ObjMesh_Create(), ObjMesh_Create()];
+	ascent(i in 0 .. 2)
+	{
+		ObjMesh_Load(ID[i], world06_path[1]);
+		Obj_SetRenderPriorityI(ID[i], world_layer);
+		ObjRender_SetFogEnable(ID[i], false);
+
+		ObjMesh_Load(IDmask[i], world06_path[2]);
+		Obj_SetRenderPriorityI(IDmask[i], world_layer+1);
+	}
+
+	//レンダリングターゲットに使用するテクスチャ
+	let renderTexture = GetReservedRenderTargetName(0);
+	let renderMask = GetReservedRenderTargetName(1);
+
+	//現フレームを描画するオブジェクト
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objImg, world_layer+3);
+	ObjRender_SetPosition(objImg, -32, -16, 0);
+
+	// シェーダ作成、反映
+	let objShader = ObjShader_Create();
+	ObjShader_SetShaderF(objShader, hlslMask3);
+	ObjShader_SetTexture(objShader, "textureMask_", renderMask);
+	ObjShader_SetFloatArray(objShader, "posFrame_", [0, 0, 1024, 512]);
+	ObjShader_SetTechnique(objShader, "TecMask");
+
+	ObjShader_SetShaderO(objImg, objShader);
+
+	let bazeZ = 0;
+	let t = 0;
+	while(!flagEnd && STAGE_SCENE <= 2)
+	{
+		ascent(i in 0 .. 2)
+		{
+			let bz = (bazeZ%1000)+i*1000-750;
+			ObjRender_SetPosition(ID[i], 0, 0, bz);
+			ObjRender_SetPosition(IDmask[i], 0, 0, bz);
+		}
+		// オブジェクトをテクスチャに描画
+		RenderToTextureA1(renderTexture, world_layer, world_layer, true);
+		// マスクをテクスチャに描画
+		RenderToTextureA1(renderMask, world_layer+1, world_layer+1, true);
+
+		//現フレーム描画用オブジェクトを設定
+		ObjPrim_SetTexture(objImg, renderTexture);
+		ObjShader_SetTexture(objShader, "textureMask_", renderMask);
+		ObjSprite2D_SetSourceRect(objImg, 0, 0, 512, 512);
+		ObjSprite2D_SetDestRect(objImg, 0, 0, 512, 512);
+		bazeZ -= Z_SPEED;
+		t++;
+		yield;
+	}
+	
+	ClearInvalidRenderPriority();
+	ascent(i in 0 .. 2)
+	{
+		Obj_Delete(ID[i]);
+		Obj_Delete(IDmask[i]);
+	}
+	Obj_Delete(objImg);
+}
+
+task TBG02
+{
+	wait(180);
+	
+	let t = 0;
+	while(!flagEnd)
+	{
+		let alpha = min(1, (t+1)/8);
+		_TBG02(alpha);
+		t++;
+		wait(BG02_WT);
+	}
+	
+	task _TBG02(base_alpha)
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_3D);
+		ObjPrim_SetTexture(obj, world06_path[3]);
+		Obj_SetRenderPriorityI(obj,world_layer+2);
+		ObjSprite3D_SetSourceDestRect(obj, 0, 0, 512, 512);
+		ObjRender_SetPosition(obj, 100, 200, 1000);
+		ObjRender_SetFogEnable(obj, false);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetAngleZ(obj, randEffect(0,360));
+		ObjRender_SetColor(obj, randEffect(96,192)*base_alpha, randEffect(96,192)*base_alpha, randEffect(96,192)*base_alpha);
+
+		let alpha = 0;
+		let t = 0;
+		loop(30)
+		{
+			if (flagEnd) { break; }
+			let scale = 2/(1.2-t/90);
+			ObjRender_SetAlpha(obj, alpha);
+			ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+			alpha += 255/30;
+			t++;
+			yield;
+		}
+		loop(60)
+		{
+			if (flagEnd) { break; }
+			let scale = 2/(1.2-t/90);
+			ObjRender_SetAlpha(obj, alpha);
+			ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+			alpha -= 255/60;
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+task TBG03()
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_3D);
+	ObjPrim_SetTexture(obj, imgEffectFumaMC);
+	Obj_SetRenderPriorityI(obj,world_layer+2);
+	ObjSprite3D_SetSourceDestRect(obj, 0, 0, 512, 512);
+	ObjRender_SetPosition(obj, 100, 200, 1000);
+	ObjRender_SetFogEnable(obj, false);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+
+	let alpha = 0;
+	let t = 0;
+	loop(60)
+	{
+		if (flagEnd) { break; }
+		let scale = 2/(1.1-t/300);
+		let tmp = sin((t+1)/60*90);
+		ObjRender_SetAlpha(obj, alpha);
+		ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+		alpha += 255/60;
+		ObjRender_SetAngleZ(obj, (1-tmp)*360);
+		t++;
+		yield;
+	}
+	loop(240)
+	{
+		if (flagEnd) { break; }
+		let scale = 2/(1.1-t/300);
+		ObjRender_SetAlpha(obj, alpha);
+		ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+		alpha -= 255/240;
+		t++;
+		yield;
+	}
+	Obj_Delete(obj);
+}

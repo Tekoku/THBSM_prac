@@ -1,0 +1,183 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["魔理沙エンディング"]
+#Text["魔理沙エンディング"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Initialize {
+	init();
+	Task_Main();
+}
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(180);
+	TEndingImage(imgEDMarisa[2], 120);
+	//  BGM
+	PlayMusic( 17, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [108, 255, 255];
+	let COL2 = [108, 108, 255];
+	let COL3 = [255, 255, 108];
+	let COL4 = [255, 108, 255];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "[r]伝説の魔法書レメゲトンを辛くも持ち帰れなかった[r]魔理沙。", COL0);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]自宅で悔しがっていた所、玄関のドアをコンコンと[r]叩く者あり。", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "禰津[r]「コンコン、禰津じゃよ！[r]　いやあ先の勝負は見事であった！」", COL2);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「叩けよ、口で言うなよ、狐だからって」", COL1);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "禰津[r]「言ったであろう。[r]　禰津はお主を認めた、故に挨拶代わりの冗句よ。[r]　さて、お主の機転と実力、人間にしては中々の物である[r]　ぞ」", COL2);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "禰津[r]「そこで我ら、「幻想郷を混乱に陥れる会」の[r]　名誉会員4号として迎え入れる！」", COL2);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "正邪[r]「今度こそ一緒にひと暴れしようぜ！」", COL3);
+		}
+		case(7)
+		{
+			SetTalkEx(cutinDescri, "菫子[r]「来ちゃった（はぁと）」", COL4);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「お前ら暇だな、絶対暇だな？」", COL1);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r]無論、妖怪の賢者や博麗の巫女が守る幻想郷、そう簡単に揺るがす事は出来はしない。", COL0);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "[r]…のだが、実は元々悪の化け狐である禰津は、[r]こうして人々から恐怖を集めその身に纏わなければ、力を維持出来ず、何の変哲もないただの狐に戻ってしまうのだ。", COL0);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "[r]弱肉強食。常在戦場。[r]妖怪の世界は昔も今も、生き残りを賭けた熾烈な戦国時代である。", COL0);
+		}
+		case(12)
+		{
+			TEndingImage(imgEDMarisa[3], 30);
+			SetTalkEx(cutinDescri, "魔理沙[r]「皆から忘れられないように、私がお前達の英雄的活躍を[r]　本にして広めてやる。[r]　だからもう悪い事は改心しろ」", COL1);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "禰津[r]「おお！　心の友よ！」", COL2);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "[r]やがて執筆された「Book of Star Mythology」は、魔理沙によって勝手に書物屋・貸本屋・紅魔館地下書庫等に並べられた。", COL0);
+		}
+		case(15)
+		{
+			SetTalkEx(cutinDescri, "[r]もっとも内容は、英雄（Star）の神話（Mythology）でも何でもない。[r]彼女が大量の専門書を紐解いて得た天体の知識を、万人に分かり易く纏め直した文字通りの星（Star）の本だ。", COL0);
+		}
+		case(16)
+		{
+			SetTalkEx(cutinDescri, "[r]夏の大三角の中央にひっそり存在するこぎつね座。[r]そこには「禰津というケチな小悪党狐が人間に懲らしめられこんな小さな星座になった」と解説が加えられている。", COL0);
+		}
+		case(17)
+		{
+			SetTalkEx(cutinDescri, "[r]やがて悪い噂のせいで妖力が激減した禰津がこれを察し、魔理沙はしばらく追いかけ回される事になるのだが、ひとまずこの話はこれでお終いである。", COL0);
+		}
+		case(18)
+		{
+			SetTalkEx(cutinDescri, "[r]魔理沙生きろ。", COL0);
+		}
+		case(19)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r][r]　　　　　　　Ending.02　なぜ魔理沙は調子に乗るのか", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+
+
+
+
+
+
+
+

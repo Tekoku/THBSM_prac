@@ -1,0 +1,809 @@
+// -------------- 敵単体の処理 -------------- //
+
+// 開幕
+task SetEnemyF01(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	if (flgStopSetZako) { return; }
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_LL;
+	let eColor = EFF_YELLOW;
+	let emnImage = imgZakoFairyYellow;
+	let item_count = 50;
+	let item_star = 15;
+	
+	let objEnemy = MakeEnemy(iniX, iniY-256, 800, eSize);
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawFairy(objEnemy, emnImage, FAIRY_LARGE);
+	TCheckDispINOut(objEnemy, 64);
+	TAct();
+	WaitForKilledZako(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		MoveTo(objEnemy, iniX, iniY, 120);
+		wait(600);
+		
+		ObjMove_SetAngle(objEnemy, iniAngle);
+		ObjMove_SetSpeed(objEnemy, 0);
+		ObjMove_SetAcceleration(objEnemy, iniSpeed/600);
+		ObjMove_SetMaxSpeed(objEnemy, iniSpeed);
+	}
+	
+	// おほしさま
+	task TShot()
+	{
+		wait(120);
+		
+		let speed = 1.5;
+		let way = 3;
+		let count = [4, 5, 7, 8][Difficult];
+		let wt = [180, 180, 180, 180][Difficult];
+		let muki = 1;
+		
+		let t = 0;
+		let st = 0;
+		let add_angle = 10;
+		while(CanShotBullet(objEnemy) && t < 600)
+		{
+			let sa = GetAngleToPlayer(objEnemy);
+			SetFamilier01(speed, sa, way, count, muki, 15);
+			muki = -muki;
+			wait(wt);
+			t += wt;
+			st++;
+		}
+	}
+	
+	task SetFamilier01(speed, angle, way, count, muki, wt)
+	{
+		let sr = 32;
+		ascent(i in 0 .. count)
+		{
+			if (!CanShotBullet(objEnemy)) { break; }
+			let ba = angle - i*muki*20;
+			ascent(j in 0 .. way)
+			{
+				let sa = ba + j*360/way;
+				let sx = ObjMove_GetX(objEnemy) + sr*cos(sa);
+				let sy = ObjMove_GetY(objEnemy) + sr*sin(sa);
+				if (CheckDispINEx(sx, sy, 0))
+				{
+					SetEnemyF01_Star(objEnemy, sx, sy, speed, sa, muki, 1-i/count, 0);
+				}
+			}
+			wait(wt);
+		}
+	}
+}
+
+
+// 使い魔おほしさま
+task SetEnemyF01_Star(parent, iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue, iniWait)
+{
+	let e_type = 0;
+	let eSize = ENEMY_S;
+	let eColor = EFF_YELLOW;
+	let emnImage = imgZakoFairyRed;
+	let item_count = 0;
+	let item_star = 3;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 30, eSize);
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawStarEnemy(objEnemy, STAR_YELLOW, 1);
+	TCheckKillParent(objEnemy, parent);
+	TAct();
+	TCheckDispINOut(objEnemy, 32);
+	WaitForKilledZako(objEnemy);
+	if (CheckKillType(objEnemy) == 2 && !Obj_GetValueD(objEnemy, "KILLED_PARENT", 0))
+	{
+		// 撃ち返し
+		TShot2();
+	}
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		ZakoEnterEffect_StarB(objEnemy);
+		wait(15);
+		
+		let angle = iniAngle;
+		let add_angle = 3*iniMuki;
+		
+		ObjMove_AddPatternA2(objEnemy, 0, iniSpeed*2, NO_CHANGE, -iniSpeed/30, 0, iniSpeed/4);
+		ObjMove_AddPatternA2(objEnemy, 45, NO_CHANGE, NO_CHANGE, iniSpeed/60, 0, iniSpeed*2);
+		
+		descent(t in 0 .. 120)
+		{
+			if (Obj_IsDeleted(objEnemy)) { break; }
+			let tmp = (t+1)/120;
+			ObjMove_SetAngle(objEnemy, angle);
+			angle += add_angle*tmp;
+			yield;
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		wait(20);
+		
+		let speed = [2, 2.5, 3, 4.5][Difficult];
+		let count = 45;
+		let shot_span = 8;
+		let graphic = BGW_BALL_BS_YELLOW;
+		let graphic2 = BGW_BALL_SS_YELLOW;
+		
+		speed *= (0.5+iniValue/2);
+		
+		let t = 0;
+		let tmp_spd = speed;
+		while(CanShotBullet(objEnemy) && t < count)
+		{
+			if (t%shot_span < 4)
+			{
+				let ba = iniAngle - t*2*iniMuki - iniMuki*120;
+
+				let sa = ba;
+				let sg = [graphic2, graphic][t%shot_span==0];
+				CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, sa,
+					tmp_spd/120, tmp_spd, sg, 15);
+				CallSound(sndShot2);
+			}
+			t++;
+			wait(2);
+		}
+	}
+
+	// ショット
+	task TShot2()
+	{
+		if (!CheckUchikaeshi(objEnemy, 64)) { return; }
+		let ex = ObjMove_GetX(objEnemy);
+		let ey = ObjMove_GetY(objEnemy);
+		let ba = atan2(GetPlayerY-ey, GetPlayerX-ex);
+		
+		let way = [0, 1, 1, 3][Difficult];
+		let speed = [0, 2, 2, 3][Difficult];
+		let graphic = BGW_STAR_M_YELLOW;
+		if (way > 0)
+		{
+			CreateShotWayA2(ex, ey, 0, ba, speed/60, speed, graphic, 15, way, 5, 0);
+			CallSound(sndShot5);
+		}
+	}
+}
+
+// 星シュパーン
+task SetEnemyF02(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue, iniWait)
+{
+	if (flgStopSetZako) { return; }
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_L;
+	let eColor = EFF_BLUE;
+	let emnImage = imgZakoFairyBlue;
+	let item_count = 30;
+	let item_star = 10;
+	let flgShot = 20;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 200, eSize);
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawFairy(objEnemy, emnImage, FAIRY_MIDDLE);
+	TCheckDispINOut(objEnemy, 64);
+	TAct();
+	WaitForKilledZako(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+		SetEnemyF02_Star(objEnemy, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			iniSpeed, iniAngle, 2, 1, 15);
+		SetEnemyF02_Star(objEnemy, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			iniSpeed, iniAngle, 2, -1, 15);
+
+		ObjMove_AddPatternA2(objEnemy, 0, iniSpeed, iniAngle, -iniSpeed/75, 0, iniSpeed/8);
+		ObjMove_AddPatternA2(objEnemy, 90, NO_CHANGE, NO_CHANGE, iniSpeed/180, 0, iniSpeed*1.5);
+		wait(30);
+		
+		ascent(t in 0 .. 240)
+		{
+			if (!CanShotBullet(objEnemy)) { break; }
+			let tmp = sin((t+1)/240*90);
+			ObjMove_SetAngle(objEnemy, GetHormingAngle(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				ObjMove_GetAngle(objEnemy), 1*tmp));
+			yield;
+		}
+	}
+	
+	task TShot()
+	{
+		let speed = [2, 2, 2, 3][Difficult];
+		let way = [3, 5, 7, 11][Difficult];
+		let way_angle = [7.5, 7.5, 7.5, 7.5][Difficult];
+		let wt = [150, 120, 90, 90][Difficult];
+		let timer = [180, 240, 360, 360][Difficult];
+		let graphic = BGW_STAR_S_YELLOW;
+		let count = 6;
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy) && t < timer)
+		{
+			TShot_sub();
+			wait(wt);
+			t += wt;
+		}
+		
+		task TShot_sub()
+		{
+			loop(count)
+			{
+				if (!CanShotBullet(objEnemy)) { break; }
+				let ba = ObjMove_GetAngle(objEnemy);
+				ascent(i in 0 .. way)
+				{
+					let sa = ba*2 - (ba + (i-(way-1)/2)*way_angle*3);
+					let sa2 = ba + (i-(way-1)/2)*way_angle;
+					let obj = CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+						-2, sa, 2/60, speed, graphic, 10);
+					ObjMove_AddPatternA2(obj, 60, NO_CHANGE, sa2, speed/120, 0, speed);
+				}
+				CallSound(sndShot2);
+				wait(3);
+			}
+		}
+	}
+}
+
+
+// 使い魔おほしさま
+task SetEnemyF02_Star(parent, iniX, iniY, iniSpeed, iniAngle, iniValue, iniMuki, iniWait)
+{
+	let e_type = 0;
+	let eSize = ENEMY_S;
+	let eColor = EFF_YELLOW;
+	let emnImage = imgZakoFairyRed;
+	let item_count = 0;
+	let item_star = 4;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 15, eSize);
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawStarEnemy(objEnemy, STAR_YELLOW, 1);
+	TCheckKillParent(objEnemy, parent);
+	TAct();
+	TCheckDispINOut(objEnemy, 32);
+	WaitForKilledZako(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+//		TShot();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		let beforeX = [ObjMove_GetX(parent)];
+		let beforeY = [ObjMove_GetY(parent)];
+
+		let er = 16*(iniValue+1);
+		while(CanShotBullet(objEnemy))
+		{
+			if (CanShotBullet(parent))
+			{
+				let ea = ObjMove_GetAngle(parent);
+				let ex = ObjMove_GetX(parent) + cos(ea+90*iniMuki)*er;
+				let ey = ObjMove_GetY(parent) + sin(ea+90*iniMuki)*er;
+				beforeX = beforeX ~ [ex];
+				beforeY = beforeY ~ [ey];
+			}
+			if (length(beforeX) > iniWait || !CanShotBullet(parent))
+			{
+				if (!CanShotBullet(parent) && length(beforeX) <= 2)
+				{
+					let vs = ((beforeY[1]-beforeY[0])^2+(beforeX[1]-beforeX[0])^2)^0.5;
+					let va = atan2(beforeY[1]-beforeY[0], beforeX[1]-beforeX[0]);
+					ObjMove_SetSpeed(objEnemy, vs);
+					ObjMove_SetAngle(objEnemy, va);
+					ObjMove_SetAcceleration(objEnemy, (4-vs)/60);
+					ObjMove_SetMaxSpeed(objEnemy, 4);
+					Enemy_WaitForDispOUT(objEnemy, 16, 0);
+					break;
+				}
+				beforeX = erase(beforeX, 0);
+				beforeY = erase(beforeY, 0);
+			}
+			if (length(beforeX) <= 0)
+			{
+				EraseEnemy(objEnemy);
+				break;
+			}
+			ObjMove_SetPosition(objEnemy, beforeX[0], beforeY[0]);
+			yield;
+		}
+	}
+	
+	// ショット
+	task TShot()
+	{
+		let speed = 6;
+		let graphic = BGW_STAR_S_YELLOW;
+		let shot_span = [25, 20, 18, 15][Difficult];
+		let way = 3;
+		let way_angle = 10;
+		let wt = 90;
+		let count = 6;
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy))
+		{
+			TShot_sub();
+			wait(wt);
+		}
+		
+		task TShot_sub()
+		{
+			let ba = GetAngleToPlayer(objEnemy);
+			loop(count)
+			{
+				if (!CanShotBullet(objEnemy)) { break; }
+				ascent(i in 0 .. way)
+				{
+					let sa = ba*2 - (ba + (i-(way-1)/2)*way_angle*3);
+					let sa2 = ba + (i-(way-1)/2)*way_angle;
+					let obj = CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+						-speed/2, sa, speed/60, speed, graphic, 10);
+					ObjMove_AddPatternA2(obj, 30, NO_CHANGE, sa2, speed/120, 0, speed);
+				}
+				CallSound(sndShot2);
+				wait(3);
+			}
+		}
+	}
+}
+
+
+// 衛星妖精
+task SetEnemyF03(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	if (flgStopSetZako) { return; }
+
+	let e_type = iniValue%2;
+	let eSize = ENEMY_L;
+	let eColor = EFF_RED;
+	let emnImage = imgZakoFairyRed;
+	let item_count = 30;
+	let item_star = 10;
+	let flgRotate = false;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 300, eSize);
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawFairy(objEnemy, emnImage, FAIRY_MIDDLE);
+	TCheckDispINOut(objEnemy, 64);
+	TAct();
+	WaitForKilledZako(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+		TFamilier();
+	}
+	
+	task TMove()
+	{
+		ObjMove_SetAngle(objEnemy, iniAngle);
+		ObjMove_SetSpeed(objEnemy, iniSpeed);
+		
+		let add_angle = [1, -1][iniX > CenX];
+		let StopLineX = CenX + [64, -64][iniX > CenX];
+		let StopLineY = CenY + [96, -96][iniY > CenY];
+		if (iniX < 0 || iniX > MaxX) { StopLineY = -1; }
+		if (iniY < 0 || iniY > MaxY) { StopLineX = -1; }
+		
+		let beforeX = ObjMove_GetX(objEnemy);
+		let beforeY = ObjMove_GetY(objEnemy);
+		while(CanShotBullet(objEnemy))
+		{
+			if (((beforeX-StopLineX)*(ObjMove_GetX(objEnemy)-StopLineX) <= 0 && beforeX != ObjMove_GetX(objEnemy) && StopLineX > 0) ||
+				((beforeY-StopLineY)*(ObjMove_GetY(objEnemy)-StopLineY) <= 0 && beforeY != ObjMove_GetY(objEnemy) && StopLineY > 0))
+			{
+				ObjMove_AddPatternA2(objEnemy, 0, NO_CHANGE, NO_CHANGE, -iniSpeed/60, add_angle, iniSpeed/4);
+				ObjMove_AddPatternA2(objEnemy, 120, NO_CHANGE, NO_CHANGE, iniSpeed/180, 0, iniSpeed/2);
+				flgRotate = true;
+				break;
+			}
+			beforeX = ObjMove_GetX(objEnemy);
+			beforeY = ObjMove_GetY(objEnemy);
+			yield;
+		}
+	}
+
+	// 使い魔セット
+	task TFamilier()
+	{
+		let muki = [1, -1][iniX > CenX];
+		let fa = -35*muki;
+		Obj_SetValue(objEnemy, "ROTATE_STAR", fa);
+		ascent(i in 0 .. 2)
+		{
+			SetEnemyF03_Star(objEnemy, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				0, i*180, 3*muki, 0);
+		}
+		
+		let t = 0;
+		while(CanShotBullet(objEnemy))
+		{
+			if (flgRotate)
+			{
+				fa += muki/2;
+				Obj_SetValue(objEnemy, "ROTATE_STAR", fa);
+				if (t > 180) { break; }
+				t++;
+			}
+			yield;
+		}
+	}
+	
+	task TShot()
+	{
+		wait(30);
+		
+		let f_speed = 4;
+		let rand_angle = [60, 75, 90, 120][Difficult];
+		let timer = [180, 180, 450, 450][Difficult];
+		
+		let speed = [6, 7, 8, 10][Difficult];
+		let count = [15, 15, 15, 15][Difficult];
+		let wt = 120;
+		let graphic = BGW_STAR_M_YELLOW;
+		
+		let t = 0;
+		let muki = 1;
+		while(CanShotBullet(objEnemy) && t < timer)
+		{
+			if (CheckDispIN(objEnemy, 0))
+			{
+				SplashStarSet(f_speed, graphic, 90, speed, rand_angle, count, 3)
+			}
+			
+			wait(wt);
+			t += wt;
+			muki = -muki;
+		}
+	}
+
+	task SplashStarSet(speed, graphic, delay, to_speed, rand_angle, count, wt)
+	{
+		loop(count)
+		{
+			if (!CanShotBullet(objEnemy)) { break; }
+			let sa = GetAngleToPlayer(objEnemy)+180 + rand(-1,1)*rand_angle;
+			let ss = rand(0.1^2, 1^2)^0.5 * speed;
+			SplashStar(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), ss, sa, graphic, delay, to_speed);
+			wait(wt);
+		}
+	}
+}
+
+
+// 使い魔おほしさま
+task SetEnemyF03_Star(parent, iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = EFF_YELLOW;
+	let emnImage = imgZakoFairyRed;
+	let item_count = 0;
+	let item_star = 5;
+	
+	let objEnemy = MakeEnemy(iniX, iniY, 30, eSize);
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawStarEnemy(objEnemy, STAR_YELLOW, 1);
+	TCheckKillParent(objEnemy, parent);
+	TAct();
+	WaitForKilledZako(objEnemy);
+	if (CheckKillType(objEnemy) == 2 && !Obj_GetValueD(objEnemy, "KILLED_PARENT", 0))
+	{
+		// 撃ち返し
+		TShot();
+	}
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TMove();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		let r = 0;
+		let angle = iniAngle;
+		let add_angle = iniValue;
+		
+		while(CanShotBullet(objEnemy))
+		{
+			if (!Obj_IsDeleted(parent))
+			{
+				let vx = cos(angle)*r;
+				let vy = sin(angle)*r/3;
+				let va = Obj_GetValueD(parent, "ROTATE_STAR", 0);
+				let pos = Rotate2D_XY(vx, vy, va);
+				ObjMove_SetPosition(objEnemy, ObjMove_GetX(parent)+pos[0], ObjMove_GetY(parent)+pos[1]);
+			}
+			r = min(64, r+2);
+			angle += add_angle;
+			yield;
+		}
+	}
+	
+	task TShot()
+	{
+		let ex = ObjMove_GetX(objEnemy);
+		let ey = ObjMove_GetY(objEnemy);
+		let ba = atan2(GetPlayerY-ey, GetPlayerX-ex)+180;
+		
+		let f_speed = 4;
+		let speed = [6, 7, 8, 10][Difficult];
+		let count = [15, 15, 15, 15][Difficult];
+		let rand_angle = [60, 75, 105, 180][Difficult];
+		let graphic = BGW_STAR_M_RED;
+		if (count > 0)
+		{
+			SplashStarSet(ex, ey, f_speed, ba, graphic, 90, speed, rand_angle, count, 2);
+		}
+	}
+	
+	task SplashStarSet(x, y, speed, angle, graphic, delay, to_speed, rand_angle, count, wt)
+	{
+		loop(count)
+		{
+			let sa = angle + rand(-1,1)*rand_angle;
+			let ss = rand(0.1^2, 1^2)^0.5 * speed;
+			SplashStar(x, y, ss, sa, graphic, delay, to_speed);
+			wait(wt);
+		}
+	}
+}
+task SplashStar(x, y, speed, angle, graphic, delay, to_speed)
+{
+	let obj = CreateShotA2(x, y, speed, angle, -speed/delay, 0, graphic, 0);
+	ObjMove_AddPatternA4(obj, delay, 0, 0, to_speed/60, 0, to_speed, objPlayer, NO_CHANGE);
+	My_RaiseShotEffectA2(obj, delay);
+	wait(delay);
+	if (!Obj_IsDeleted(obj)) { CallSound(sndShot2); }
+}
+
+
+// 星の網
+/*
+task StarChain(timer)
+{
+	let count = [2, 3, 3, 3][Difficult];
+	let wt = [30, 30, 25, 20][Difficult];
+	let speed = 6;
+	
+	ascent(i in 0 .. count)
+	{
+		let min_x = GetStgFrameWidth * (i+0.5)/(count+1);
+		let max_x = GetStgFrameWidth * (i+1.5)/(count+1);
+		_StarChain(timer, min_x, max_x, wt, speed, i/count);
+		wait(wt/count*2);
+	}
+}
+task _StarChain(timer, min_x, max_x, wt, speed, seed_base)
+{
+	let shot_speed = 2;
+	let shot_graphic = BGW_STAR_S_YELLOW;
+	let shot_wt = 24;
+	
+	let t = 0;
+	let st = 0;
+	let seed = seed_base;
+	let bt = 135;
+	while(t < timer)
+	{
+		let ex = rand(min_x, max_x);
+		let ey = 0;
+		let tx = (0.5 + sin(seed*30)*0.4) * GetStgFrameWidth;
+		let ty = GetStgFrameHeight*0.75;
+		let sa = atan2(ty-ey, tx-ex);
+
+		let tmpObj = SetEnemyS01(ex, ey, speed, sa, 0, 30);
+		StarLaser(tmpObj, 0, sa-90, BGW_BEAM_YELLOW, 30, bt,
+			shot_speed, 90, shot_graphic, shot_wt);
+		StarLaser(tmpObj, 180, sa+90, BGW_BEAM_YELLOW, 30, bt,
+			shot_speed, -90, shot_graphic, shot_wt);
+		st++;
+		seed++;
+		wait(wt);
+		t += wt;
+	}
+}
+*/
+task SetStarEnemy(ex, tx, seed)
+{
+	let shot_speed = [2, 2, 3, 4][Difficult];
+	let shot_graphic = BGW_CROSS_YELLOW;
+	let shot_wt = [60, 32, 26, 15][Difficult];
+	let bt = 135;
+	
+	let speed = 6;
+	let ey = 0;
+	let ty = GetStgFrameHeight*0.5;
+	let sa = atan2(ty-ey, tx-ex);
+	let offset_angle = rand(-15,15);
+
+	let tmpObj = SetEnemyS01(ex, ey, speed, sa, 0, 30);
+	StarLaser(tmpObj, 0, sa-90+offset_angle, BGW_BEAM_YELLOW, 30, bt,
+		shot_speed, 90, shot_graphic, shot_wt, seed);
+	StarLaser(tmpObj, 180, sa+90+offset_angle, BGW_BEAM_YELLOW, 30, bt,
+		shot_speed, -90, shot_graphic, shot_wt, seed);
+}
+
+function SetEnemyS01(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	if (flgStopSetZako) { return(-1); }
+	
+	let eSize = ENEMY_S;
+	let objEnemy = MakeEnemy(iniX, iniY, 20, eSize);
+	_SetEnemyS01(objEnemy, iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait);
+	return(objEnemy);
+}
+function SetEnemyS01_Dummy(iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	let obj = CreateShotA1(iniX, iniY, 0, iniAngle, BGW_BALL_S_RED, 0);
+	ObjMove_AddPatternA2(obj, iniWait, NO_CHANGE, NO_CHANGE, iniSpeed/120, 0, iniSpeed);
+	SetShotDisabled(obj);
+	ObjShot_SetAutoDelete(obj, false);
+	ObjShot_SetSpellResist(obj, true);
+	return(obj);
+	
+	task _SetEnemyS01_Dummy()
+	{
+		while(!Obj_IsDeleted(obj) && ObjMove_GetY(obj) < GetStgFrameHeight)
+		{
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+task _SetEnemyS01(objEnemy, iniX, iniY, iniSpeed, iniAngle, iniValue, iniWait)
+{
+	let e_type = iniValue%2;
+	let eSize = ENEMY_S;
+	let eColor = EFF_YELLOW;
+	let emnImage = imgZakoFairyRed;
+	let item_count = 0;
+	let item_star = 5;
+	
+	SetDropItemCount(objEnemy, item_count, item_star);
+	DrawStarEnemy(objEnemy, 1, 1);
+	TCheckDispINOut(objEnemy, 16);
+	TAct();
+	WaitForKilledZako(objEnemy);
+	ZakoFinalize(objEnemy, eColor);
+	
+	task TAct()
+	{
+		TShot();
+		TMove();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		ZakoEnterEffect_Star(objEnemy);
+		wait(iniWait);
+		ObjMove_AddPatternA2(objEnemy, 0, 0, iniAngle, iniSpeed/120, 0, iniSpeed);
+	}
+	
+	// ショット
+	task TShot()
+	{
+		/*
+		let speed = [0.75, 0.75, 1, 1][Difficult];
+		let graphic = BGW_STAR_S_YELLOW;
+		let way = [5, 8, 12, 16][Difficult];
+		
+		wait(iniWait-60);
+		if (CanShotBullet(objEnemy))
+		{
+			local
+			{
+				let ba = rand(0, 360);
+				ascent(i in 0 .. 5)
+				{
+					let ia = ba + i/5*360;
+					let is = 1;
+					SetItemEx(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), is, ia, MY_ITEM_WISH);
+				}
+			}
+			let sa =atan2(CenY-ObjMove_GetY(objEnemy), CenX-ObjMove_GetX(objEnemy));
+			CreateShotCircleA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed+3, sa, -3/10, speed, graphic, 15, way, 16);
+			CallSound(sndShot5);
+		}
+		*/
+	}
+}
+
+// 星座用レーザー
+task StarLaser(objFrom, from_angle, to_angle, graphic, delay, timer, shot_speed, offset_angle, shot_graphic, shot_wt, shot_seed)
+{
+	let obj = My_CreateStraightLaserA1(ObjMove_GetX(objFrom), ObjMove_GetY(objFrom), 0, 0, 8, 9999, graphic, delay, true);
+	ObjShot_SetAutoDelete(obj, false);
+
+	let bx = ObjMove_GetX(objFrom);
+	let by = ObjMove_GetY(objFrom);
+
+	let t = 0;
+	let lr = 0;
+	let la = from_angle;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (t < 45)
+		{
+			let tmp = sin((t+1)/45*90);
+			lr = 600*tmp;
+			la = from_angle*(1-tmp)+to_angle*tmp;
+		}
+		if (t > timer || !CanShotBullet(objFrom))
+		{
+			let br = 12;
+			let bs = 0;
+			let t = 0;
+			while(br < 400)
+			{
+				if (Obj_IsDeleted(obj)) { break; }
+				let sx = bx+cos(la)*br;
+				let sy = by+sin(la)*br;
+				ObjMove_SetPosition(obj, sx, sy);
+				t++;
+				bs += 0.05*t^0.5;
+				br += bs;
+				
+				if ((t+shot_seed)%shot_wt == 0)
+				{
+					let sa = 90;
+				//	let sa = atan2(GetPlayerY-sy, GetPlayerX-sx);
+					My_CreateShotA2(sx, sy, 0, sa, shot_speed/120, shot_speed, shot_graphic, 15);
+				}
+				yield;
+			}
+			Obj_Delete(obj);
+			return;
+		}
+		bx = ObjMove_GetX(objFrom);
+		by = ObjMove_GetY(objFrom);
+		ObjMove_SetPosition(obj, bx+cos(la)*12, by+sin(la)*12);
+		ObjLaser_SetLength(obj, max(0, lr-24));
+		ObjStLaser_SetAngle(obj, la);
+		t++;
+		yield;
+	}
+	Obj_Delete(obj);
+}

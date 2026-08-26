@@ -1,0 +1,152 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["魔理沙バッドエンディング"]
+#Text["魔理沙バッドエンディング"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Initialize {
+	init();
+	Task_Main();
+	
+	// バッドエンド
+	SetAreaCommonData(CAREA_TITLE, "FlgBadEnding", true);
+}
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(180);
+	TEndingImage(imgEDMarisa[0], 120);
+	//  BGM
+	PlayMusic( 17, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [108, 255, 255];
+	let COL2 = [255, 255, 108];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「これはやばい、流石に伝説の魔本はやばいぜ」", COL1);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]フーマ・ミシャンドラとの力の差は、同じ西洋魔術の使い手であればこそ明白。", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "[r]魔理沙は自慢の逃げ足で魔宝城から離脱し、落ち着いて次に取るべき手を考えようとした。", COL0);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "[r]疲労で思考が濁り、思うようには行かない。[r]振り続ける催涙雨がとても冷たい。", COL0);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「このままじゃ天の川が開通したままだ。[r]　来年の七夕までこの雨で道を塞ぐ気か？[r]　涙が出るような推理だぜ。", COL1);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「…ん？　そうだ。あっちが駄目ならこっちだな。[r]　フーマって奴は狐をどうにかしたいだけなんだ。[r]　偉い奴に雨さえ止めて貰えれば解決するぞ。", COL1);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「あの星霊はもう話を割と把握してる。[r]　こうしちゃいられない、今すぐ天の川に戻る、あいつを[r]　通して説得するぜ」", COL1);
+		}
+		case(7)
+		{
+			TEndingImage(imgEDMarisa[1], 30);
+			SetTalkEx(cutinDescri, "？？？[r]「シェリア？　交代の周期になったので帰ったよ。[r]　私はこと座三番星のスラファ。[r]　彼女に話？　連絡するけど何年か時間かかるかもねー」", COL2);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "魔理沙[r]「駄目だ、こいつらの感覚じゃ現代の世は生き抜け[r]　ないぜ」", COL1);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "[r]諦めて用意して貰った牛車（光速より速い）で魔宝城へ舞い戻る魔理沙。", COL0);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "[r]次は頑張れ！[r]その牛車で体当たりすれば狐も悪魔も粉々だ！", COL0);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r][r]　　　　　　　　Ending.05　2000万キロで空を駆けろ", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+
+
+
+
+
+
+
+

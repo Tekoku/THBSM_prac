@@ -1,0 +1,181 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["早苗バッドエンディング"]
+#Text["早苗バッドエンディング"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk_ed.dnh"
+
+@Initialize {
+	init();
+	Task_Main();
+	
+	// バッドエンド
+	SetAreaCommonData(CAREA_TITLE, "FlgBadEnding", true);
+}
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	TBackground();
+	wait(180);
+	TEndingImage(imgEDSanae[0], 120);
+	//  BGM
+	PlayMusic( 17, 120, 60 );
+	
+	// 会話準備
+	StartTalk();
+	wait(120);
+
+	FuncTalk();
+	wait(15);
+
+	//次のシーンへ
+	FinishTalk(true);
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	
+	//  BGM
+	PlayMusic( -1, 0, 60 );
+	
+	wait(180);
+	CloseStgScene();
+}
+
+// 会話処理
+function FuncTalk()
+{
+	let COL0 = [160, 160, 160];
+	let COL1 = [108, 255, 108];
+	let COL2 = [140, 108, 255];
+	let COL3 = [255, 108, 140];
+	
+	// オブジェクト作成
+	let cutinDescri = CreateDescriptiveObject();
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			SetTalkEx(cutinDescri, "早苗[r]「私はこれ程努力したのに！　神奈子様、諏訪子様も[r]　照覧、私は精一杯に飛んで、動けなくなるまで戦っ[r]　たのに」", COL1);
+		}
+		case(1)
+		{
+			SetTalkEx(cutinDescri, "[r]満身創痍の早苗。思わず魔宝城から竹林まで撤退したが、天を仰いで悔し泣きに泣き出した。", COL0);
+		}
+		case(2)
+		{
+			SetTalkEx(cutinDescri, "早苗[r]「お許し下さい！　私は不信の徒ではない。", COL1);
+		}
+		case(3)
+		{
+			SetTalkEx(cutinDescri, "早苗[r]「真紅の心臓をお目に掛けたい。愛と信実の血液だけで[r]　動いているこの心臓を見せてやりたい！」", COL1);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinDescri, "[r]やんぬるかな。四肢を投げ出して、うとうととまどろんでしまった。[r]その時である。", COL0);
+		}
+		case(5)
+		{
+			SetTalkEx(cutinDescri, "イフォーニア[r]「あっ！　あそこに居ました！」", COL2);
+		}
+		case(6)
+		{
+			SetTalkEx(cutinDescri, "ファブリティス[r]「小学生先輩！」", COL3);
+		}
+		case(7)
+		{
+			TEndingImage(imgEDSanae[1], 30);
+			SetTalkEx(cutinDescri, "[r]なんということでしょう。[r]そこには真新しい制服とランドセルを身に付けた双子妖精の姿が！", COL0);
+		}
+		case(8)
+		{
+			SetTalkEx(cutinDescri, "ファブリティス[r]「私達ももっと朝顔を極める為に小学生になる！」", COL2);
+		}
+		case(9)
+		{
+			SetTalkEx(cutinDescri, "イフォーニア[r]「朝顔のこと、たくさん教えてもらいたいのです！」", COL3);
+		}
+		case(10)
+		{
+			SetTalkEx(cutinDescri, "[r]当然困惑した早苗だったが、すぐに偶然をチャンスに変えるアイデアが去来した。", COL0);
+		}
+		case(11)
+		{
+			SetTalkEx(cutinDescri, "[r]この七夕異変が続く限り、朝顔は人の願いを集めて力を生み出す筈。", COL0);
+		}
+		case(12)
+		{
+			SetTalkEx(cutinDescri, "[r]禰津によって細工された邪悪朝顔を新しい物に入れ替え魔宝城へ流れているその力を、自身の武装に変えてしまえば良い！", COL0);
+		}
+		case(13)
+		{
+			SetTalkEx(cutinDescri, "早苗[r]「素晴らしい！　これは素晴らしいですよ！[r]　さあ二人共、踏み込みましょう、品種改良を重ね[r]　優性遺伝結界（メンデルス・ゾーン）の深奥へ！」", COL1);
+		}
+		case(14)
+		{
+			SetTalkEx(cutinDescri, "[r]こうして欲霊の収集効率に優れた新種の開発に取り掛かるのであるが当然そんな事を悠長にやっている間に、異変は霊夢・魔理沙によって無事解決されていた。", COL0);
+		}
+		case(15)
+		{
+			SetTalkEx(cutinDescri, "[r]可愛い双子の弟子も、所詮は飽きっぽい妖精。[r]七夕ムードが終わると共に、程なく何処かへ消えてしまった。", COL0);
+		}
+		case(16)
+		{
+			SetTalkEx(cutinDescri, "[r]こんなのってないよ！[r]早苗の悲痛な叫びが、欲霊と化して時間を巻き戻す！", COL0);
+		}
+		case(17)
+		{
+			SetTalkEx(cutinDescri, "[r]がんばれ早苗！　負けるな早苗！[r]次はもっとうまくやれる！", COL0);
+		}
+		case(18)
+		{
+			SetTalkEx(cutinDescri, "[r][r][r][r]　　　　　　　　　Ending.06　無限ループって怖いよね", COL0);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+
+
+
+
+
+
+
+

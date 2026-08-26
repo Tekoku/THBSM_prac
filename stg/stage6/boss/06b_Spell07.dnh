@@ -1,0 +1,196 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ラスペ"]
+#Text["ラスペ"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mishandra.dnh"
+#include"./06b_Spell07_Func.dnh"
+#include"./06b_Spell07_Main.dnh"
+#include"./06b_Spell07_Demons.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(8000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 100;	//アイテム数
+	bossHitToShot = 64;
+	bossDropStarItem = 240;
+	bossBigExplode = true;
+	
+	bossNormalDropStar = 10;
+	bossDropStarItemR = 118;
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MISHANDRA);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(58), [18,18,18,18][Difficult], 
+			"",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	ObjEnemyBossScene_SetSpellTimer(objScene, -1);	// タイマー停止
+	SetEnemyVisible(objEnemy, false);
+	BossEffect_DisableMagicCircle(objEnemy);
+	Mishandra_HideBossEffect(false);	// 01オーラ
+
+	standBy(objEnemy, CenX, 150, 0);
+	SetEnemyVisible(objEnemy, false);
+	FumaCharismaOption_LS(objEnemy, true);
+	FumaCharismaOption_MC_LS(objEnemy, [GetStgFrameWidth/2, 400], false, true);
+	
+	// practice tool: LSC part jump (P1-P4)
+	let lwp = 1;
+	if (GetStartChapter(6) >= 18) { lwp = GetPracPhase(); }
+	if (lwp >= 2) { DEMON_KILLED = 21; SPELL_PHASE = 1; }
+	if (lwp >= 3) { DEMON_KILLED = 38; SPELL_PHASE = 2; }
+	if (lwp >= 4) { DEMON_KILLED = 72; SPELL_PHASE = 3; }
+
+	DemonNumber();	// kill count
+	wait(5);
+
+	// P1
+	if (lwp <= 1) { PHASE01(); PHASE_SHIFT(); }
+
+	// P2
+	if (lwp <= 2) { PHASE02(); PHASE_SHIFT(); }
+
+	// P3
+	if (lwp <= 3) { PHASE03(); PHASE_SHIFT(); }
+
+	wait(120);
+	ObjEnemyBossScene_SetSpellTimer(objScene, 99*60);	// タイマー開始
+	yield;
+	
+	CallSpellCard(true);	//スペカ起動
+
+	SetEnemyVisible(objEnemy, true);
+	BossEffect_EnableMagicCircle(objEnemy);
+
+	// ラスト
+	PHASE_LAST();
+}
+
+task S07DigitalEffect(x, y, num)
+{
+	let vx = rand(-0.6,0.6);
+	let vy = rand(-0.2,0.2);
+	x -= vx*45;
+	y -= vy*45;
+	
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, 70);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjPrim_SetTexture(obj, imgEffectDigital);
+	ObjSprite2D_SetSourceRect(obj, 0+num*16, 0, 16+num*16, 32);
+	ObjSprite2D_SetDestCenter(obj);
+	ObjRender_SetColor(obj, 0, 255, 0);
+	ObjRender_SetScaleXYZ(obj, 1.25, 1.25, 1);
+
+	let alpha = 0;
+	while(alpha < 255)
+	{
+		if (!eAlive) { break; }
+		alpha += 5;
+		ObjRender_SetAlpha(obj, alpha);
+		ObjRender_SetPosition(obj, x, y, 0);
+		x += vx; y += vy;
+		yield;
+	}
+	loop(60)
+	{
+		if (!eAlive) { break; }
+		ObjRender_SetPosition(obj, x, y, 0);
+		x += vx; y += vy;
+		yield;
+	}
+	while(alpha > 0)
+	{
+		alpha -= 5;
+		ObjRender_SetAlpha(obj, alpha);
+		ObjRender_SetPosition(obj, x, y, 0);
+		x += vx; y += vy;
+		yield;
+	}
+}
+
+
+task S07DigitalEffect2(x, y, num)
+{
+	let vx = rand(-2,2);
+	let vy = rand(-1,1);
+	let flash = rand_int(5, 15);
+	x -= vx*80;
+	y -= vy*80;
+	
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, 70);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjPrim_SetTexture(obj, imgEffectDigital);
+	ObjSprite2D_SetSourceRect(obj, 0+num*16, 0, 16+num*16, 32);
+	ObjSprite2D_SetDestCenter(obj);
+	ObjRender_SetColor(obj, 0, 255, 0);
+	ObjRender_SetScaleXYZ(obj, 1.75, 1.75, 1);
+
+	let t = 0;
+	let alpha = 0;
+	while(alpha < 255)
+	{
+		if (!eAlive) { break; }
+		alpha += 5;
+		ObjRender_SetAlpha(obj, alpha);
+		ObjRender_SetPosition(obj, x, y, 0);
+		Obj_SetVisible(obj, trunc(t/flash)%2==0);
+		x += vx; y += vy;
+		t++;
+		yield;
+	}
+	loop(30)
+	{
+		if (!eAlive) { break; }
+		ObjRender_SetPosition(obj, x, y, 0);
+		Obj_SetVisible(obj, trunc(t/flash)%2==0);
+		x += vx; y += vy;
+		t++;
+		yield;
+	}
+	descent(i in 0 .. 15)
+	{
+		alpha -= 5;
+		let tmp = (i+1)/15;
+		ObjRender_SetPosition(obj, x, y, 0);
+		x += vx*tmp; y += vy*tmp;
+		t++;
+		yield;
+	}
+	while(alpha > 0)
+	{
+		alpha -= 5;
+		ObjRender_SetAlpha(obj, alpha);
+		ObjRender_SetPosition(obj, x, y, 0);
+		t++;
+		yield;
+	}
+	Obj_Delete(obj);
+}
+

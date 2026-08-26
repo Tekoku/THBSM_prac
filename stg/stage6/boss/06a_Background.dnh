@@ -1,0 +1,189 @@
+
+
+//　ねづspell背景
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../../lib/spell_function.dnh"
+
+let imgBgTexture = [];
+let flagEnd = false;
+
+@Event
+{
+	alternative(GetEventType())
+	case(EV_END_BOSS_STEP)
+	{
+		//背景削除
+		flagEnd = true;
+		CloseMine(180);
+	}
+}
+
+@Initialize
+{
+	init();	//初期設定
+	imgBgTexture = LoadingImageFile_SpellBg(BOSS_ID_NEZU);
+	TMain;
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task TMain()
+{
+	if (IsDrawBackground() >= 2) { BackGround5a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+task BackGround5a
+{
+	BackGround1;
+	ascent(i in 0 .. 8)
+	{
+		BackGround2(-90+i*360/8);
+	}
+	BackGround3;
+
+	task BackGround1
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+//		ObjPrim_SetTexture(obj, imgBgTexture[0]);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 384, 448);
+		ObjSprite2D_SetDestRect(obj, 0, 0, 384, 448);
+		ObjRender_SetColor(obj, 0, 0, 0);
+
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha += 15;
+			ObjRender_SetAlpha(obj, alpha);
+			yield;
+		}
+		while(!flagEnd)
+		{
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	task BackGround2( baseAngle )
+	{
+		let CP = 3;
+		//エフェクトオブジェクトを作成
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetVertexCount(obj, (CP+1)*2);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLESTRIP);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+		ObjPrim_SetTexture(obj, imgBgTexture[2]);
+		ObjRender_SetPosition(obj, CenX+cos(baseAngle)*128, CenY+sin(baseAngle)*128, 0);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		
+		ascent(i in 0 .. CP+1)
+		{
+			let tmp = i/CP;
+			let tmp_a = (1-tmp)*180;
+			ObjPrim_SetVertexPosition(obj, i*2+0, cos(tmp_a)*160, -160, sin(tmp_a)*160);
+			ObjPrim_SetVertexPosition(obj, i*2+1, cos(tmp_a)*160, 160, sin(tmp_a)*160);
+			ObjPrim_SetVertexUVT(obj, i*2+0, tmp*512, 0);
+			ObjPrim_SetVertexUVT(obj, i*2+1, tmp*512, 256);
+		}
+		ObjPrim_SetVertexColor(obj, 0, 0, 0, 0);
+		ObjPrim_SetVertexColor(obj, 1, 0, 0, 0);
+		
+		ObjRender_SetAngleXYZ(obj, 0, 0, baseAngle);
+
+		let alpha = 0;
+		let t = 0;
+		while (alpha < 255)
+		{
+			alpha += 2.5;
+			ascent(i in 0 .. CP+1)
+			{
+				let tmp = i/CP-t/400;
+				ObjPrim_SetVertexUVT(obj, i*2+0, tmp*512, 0);
+				ObjPrim_SetVertexUVT(obj, i*2+1, tmp*512, 256);
+			}
+			ObjRender_SetAlpha(obj,alpha);
+			t++;
+			yield;
+		}
+		while(!flagEnd)
+		{
+			ascent(i in 0 .. CP+1)
+			{
+				let tmp = i/CP-t/400;
+				ObjPrim_SetVertexUVT(obj, i*2+0, tmp*512, 0);
+				ObjPrim_SetVertexUVT(obj, i*2+1, tmp*512, 256);
+			}
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	task BackGround3
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+		ObjPrim_SetTexture(obj, imgBgTexture[0]);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 512, 512);
+		ObjSprite2D_SetDestRect(obj, -320, -320, 320, 320);
+		ObjRender_SetPosition(obj, GetStgFrameWidth/2, GetStgFrameHeight/2, 0);
+		ObjRender_SetBlendType(obj, BLEND_MULTIPLY);
+
+		ObjShader_SetShaderF(obj, hlslMulti);
+		ObjShader_SetTechnique(obj, "TecMultiAlpha");
+
+		let t = 0;
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha += 5;
+			ObjShader_SetFloat(obj, "alpha_", alpha/255*1);
+			ObjRender_SetAngleZ(obj, t);
+			t+=0.2;
+			yield;
+		}
+		while(!flagEnd)
+		{
+			ObjRender_SetAngleZ(obj, t);
+			t+=0.2;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+
+}
+
+
+task BackGroundLite
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,prioritySpellBG);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,imgBgTexture[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	while(alpha<255) {
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+

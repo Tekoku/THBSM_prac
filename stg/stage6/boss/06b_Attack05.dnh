@@ -1,0 +1,229 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ミシャンドラ通常"]
+#Text["ミシャンドラ通常5"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mishandra.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(4000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MISHANDRA);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	FumaCharismaOption(objEnemy, false);
+	wait(30);
+	
+	CallSound(sndBoon);
+	BossCharge(objEnemy);
+
+	let objFamilier = [
+		SetFamilier01(CenX+118, 128, 90+15, 1, 0),
+		SetFamilier01(CenX-118, 128, 90-15, -1, 1)
+	];
+	
+	wait(90);
+	
+	let wt = [180, 180, 150, 120][Difficult];
+	let wt_min = [120, 120, 100, 90][Difficult];
+	
+	let t = 0;
+	while(eAlive)
+	{
+		Obj_SetValue(objFamilier[t%2], "SHOT_FLG", 1);
+		wait(wt);
+		wt = (wt-wt_min)*0.75 + wt_min;
+		t++;
+	}
+}
+
+// フーマスゴイハンド
+function SetFamilier01(iniX, iniY, iniAngle, iniMuki, iniValue)
+{
+	let eSize = ENEMY_M;
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 99999, eSize);
+	_SetFamilier01(objFamilier, iniX, iniY, iniAngle, iniMuki, iniValue);
+	return(objFamilier);
+}
+task _SetFamilier01(objFamilier, iniX, iniY, iniAngle, iniMuki, iniValue)
+{
+	let eColor = EFF_RED;
+	let item_count = 0;
+	let item_star = 0;
+	let baseAngle = iniAngle;
+	
+//	let objFamilier = MakeEnemyFamilier(iniX, iniY, 99999, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	MishandraOption_SetDamageRate(objFamilier);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawMishandraHand(objFamilier, iniAngle, iniMuki);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 38, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+	
+	task TMove()
+	{
+	}
+	
+	task TShot()
+	{
+		while(CanShotBullet(objFamilier))
+		{
+			while(!Obj_GetValueD(objFamilier, "SHOT_FLG", 0)) { yield; }
+
+			if (!CanShotBullet(objFamilier)) { return; }
+			Obj_SetValue(objFamilier, "SHOT_FLG", 0);
+			RotateHandAngle(60);
+			wait(60);
+			TShot_sub();
+		}
+	}
+	
+	task TShot_sub()
+	{
+		let speed = [2.5, 3, 3.5, 3.5][Difficult];
+		let wt = [8, 8, 7, 5][Difficult];
+		let timer = 180;
+		let graphic = BGW_SCALE_WHITE;
+		let way = trunc(timer/wt);
+		
+		let base_angle = GetAngleToPlayer(objFamilier);
+		ascent(t in 0 .. timer)
+		{
+			if (!CanShotBullet(objFamilier)) { return; }
+			if (t%wt == 0)
+			{
+				let tmp = t/wt/(way-1);
+				HoneShotCount(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed, base_angle+tmp*360, graphic, 15, 1, 10);
+				HoneShotCount(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed, base_angle-tmp*360, graphic, 15, -1, 10);
+				CallSound(sndShot2);
+			}
+			yield;
+		}
+		if (!CanShotBullet(objFamilier)) { return; }
+		RotateHandAngle2(60, GetAngleToPlayer(objFamilier));
+		DarkLaser(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+			16, GetAngleToPlayer(objFamilier), 64, 105);
+		CallSound(sndPower1);
+	}
+	
+	// 手の角度セット
+	task RotateHandAngle(timer)
+	{
+		let tmp_a = GetMishandraHandAngle(objFamilier);
+		ascent(i in 0 .. timer)
+		{
+			if (Obj_IsDeleted(objFamilier)) { return; }
+			let tmp = (i+1)/75;
+			let to_a = GetAngleToPlayer(objFamilier);
+			baseAngle = tmp_a*(1-tmp) + to_a*tmp;
+			SetMishandraHandAngle(objFamilier, baseAngle);
+			yield;
+		}
+	}
+	task RotateHandAngle2(timer, angle)
+	{
+		let tmp_a = GetMishandraHandAngle(objFamilier);
+		ascent(i in 0 .. timer)
+		{
+			if (Obj_IsDeleted(objFamilier)) { return; }
+			let tmp = (i+1)/75;
+			let to_a = angle;
+			baseAngle = tmp_a*(1-tmp) + to_a*tmp;
+			SetMishandraHandAngle(objFamilier, baseAngle);
+			yield;
+		}
+	}
+}
+
+task HoneShotCount(x, y, speed, angle, graphic, delay, muki, count)
+{
+	loop(count)
+	{
+		if (!eAlive) { return; }
+		HoneShot(x, y, speed, angle, graphic, delay, muki);
+		wait(4);
+	}
+}
+
+task HoneShot(x, y, speed, angle, graphic, delay, muki)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, 0);
+	ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, 0, 4*muki, 0);
+	ObjMove_AddPatternA2(obj, 30, NO_CHANGE, NO_CHANGE, 0, -3*muki, 0);
+	ObjMove_AddPatternA2(obj, 60, NO_CHANGE, NO_CHANGE, 0, 1*muki, 0);
+	ObjMove_AddPatternA2(obj, 75, NO_CHANGE, NO_CHANGE, 0, 0, 0);
+	My_RaiseShotEffectA(obj, delay);
+}
+
+
+// ぶっといレーザー（闇）
+task DarkLaser(x, y, speed, angle, l_wid, delay)
+{
+	let graphics = [BGW_FIRE_WHITE, BGW_FIRE_WHITE];
+	
+	LaserDelayEffect02(objEnemy, x, y, angle, BGW_BEAM_WHITE, delay);
+	wait(delay+30);
+	if (!eAlive) { return; }
+	CallSound(sndLaser1);
+	ascent(i in 0 .. 3)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i+1)/10;
+		let ss = speed*(1-tmp*0.75);
+		let ll = 600;
+		let lw = l_wid;
+		
+		let muki = 1;
+		loop(2)
+		{
+			let sa = angle + (i+0.5)*muki*2;
+			DarkLaser_single(x, y, sa, ll, lw, graphics, 60);
+			muki = -muki;
+		}
+		wait(6);
+	}
+}
+task DarkLaser_single(x, y, angle, l_len, l_wid, graphic, timer)
+{
+	// 予告線
+	let obj = [CreateStraightLaserA1(x, y, angle, l_len, l_wid, timer, graphic[0], 0), CreateStraightLaserA1(x, y, angle, l_len, l_wid*2, timer, graphic[1], 0)];
+	ObjLaser_SetInvalidLength(obj[0], l_len/4, l_len/4);
+	ObjLaser_SetIntersectionWidth(obj[0], l_wid/4);
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI);
+	ObjRender_SetBlendType(obj[0], BLEND_SUBTRACT);
+	ObjShot_SetIntersectionEnable(obj[1], false);
+	ObjStLaser_SetSource(obj[0], false);
+	ObjStLaser_SetSource(obj[1], false);
+}

@@ -1,0 +1,464 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["神々の巨大三角"]
+#Text["神々の巨大三角"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mishandra.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(10000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(120);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 80;	//アイテム数
+	bossHitToShot = 64;
+	bossDropStarItem = 240;
+	bossBigExplode = true;
+	
+	bossNormalDropStar = 10;
+	bossDropStarItemR = 118;
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MISHANDRA);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(57), [15,15,16,17][Difficult], 
+			GetCurrentScriptDirectory()~"06b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// 発狂チェック
+function CheckHakkyou()
+{
+	if (ObjEnemyBossScene_GetInfo(objScene, INFO_TIMER) < 30) { return(1); }
+	return(0);
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 150, [150, 60][GetStartChapter(6) == 17]);	// practice tool: fast entrance on direct jump
+	FumaCharismaOption(objEnemy, false);
+	wait(150);
+
+	CallSpellCard(true);	//スペカ起動
+	
+	if (eAlive)
+	{
+		let liferate = 0.75;
+
+		let add_angle = 0.5;
+		let shot_speed = [1.5, 2, 2, 2.25][Difficult];
+		let shot_way = [30, 30, 40, 30][Difficult];
+		let shot_span = [10, 10, 8, 6][Difficult];;
+		let shot_count = [5, 5, 4, 4][Difficult];
+		let graphic = [ADD_BGW_LIGHT_S_GREEN, ADD_BGW_LIGHT_S_GREEN, ADD_BGW_LIGHT_S_PURPLE, ADD_BGW_LIGHT_S_RED][Difficult];
+		let graphic2 = [BGW_BALL_BS_GREEN, BGW_BALL_BS_GREEN, BGW_STAR_S_PURPLE, BGW_FIRE_RED][Difficult];
+		let shot_wt = [150, 120, 120, 120][Difficult];
+		let max_r = 96;
+		let eff_color = [EFF_GREEN, EFF_GREEN, EFF_PURPLE, EFF_RED][Difficult];
+		TShot02(add_angle, shot_speed, shot_way, shot_span, shot_count, graphic, graphic2, shot_wt, max_r, liferate, eff_color);
+		
+		while(liferate <= GetBossLifeRate(objEnemy)) { yield; }
+	}
+	if (eAlive)
+	{
+		let liferate = 0.5;
+
+		let add_angle = -0.6;
+		let shot_speed = [1.5, 2, 2, 2.25][Difficult];
+		let shot_way = [30, 30, 40, 24][Difficult];
+		let shot_span = [10, 10, 8, 8][Difficult];;
+		let shot_count = [5, 5, 4, 6][Difficult];
+		let graphic = [ADD_BGW_LIGHT_S_SKY, ADD_BGW_LIGHT_S_SKY, ADD_BGW_LIGHT_S_RED, ADD_BGW_LIGHT_S_YELLOW][Difficult];
+		let graphic2 = [BGW_BALL_BS_SKY, BGW_BALL_BS_SKY, BGW_STAR_S_RED, BGW_ARROW_BLUE][Difficult];
+		let shot_wt = [135, 110, 110, 105][Difficult];
+		let max_r = 102;
+		let eff_color = [EFF_SKY, EFF_SKY, EFF_RED, EFF_BLUE][Difficult];
+		TShot02(add_angle, shot_speed, shot_way, shot_span, shot_count, graphic, graphic2, shot_wt, max_r, liferate, eff_color);
+		
+		while(liferate <= GetBossLifeRate(objEnemy)) { yield; }
+	}
+	if (eAlive)
+	{
+		let liferate = 0.25;
+
+		let add_angle = -0.75;
+		let shot_speed = [1.5, 2, 2, 2.25][Difficult];
+		let shot_way = [30, 30, 40, 22][Difficult];
+		let shot_span = [10, 10, 8, 11][Difficult];;
+		let shot_count = [5, 5, 4, 9][Difficult];
+		let graphic = [ADD_BGW_LIGHT_S_ORANGE, ADD_BGW_LIGHT_S_ORANGE, ADD_BGW_LIGHT_S_SKY, ADD_BGW_LIGHT_S_GREEN][Difficult];
+		let graphic2 = [BGW_BALL_BS_ORANGE, BGW_BALL_BS_ORANGE, BGW_STAR_S_SKY, BGW_KNIFE_GREEN][Difficult];
+		let shot_wt = [120, 100, 95, 90][Difficult];
+		let max_r = 108;
+		let eff_color = [EFF_ORANGE, EFF_ORANGE, EFF_SKY, EFF_GREEN][Difficult];
+		TShot02(add_angle, shot_speed, shot_way, shot_span, shot_count, graphic, graphic2, shot_wt, max_r, liferate, eff_color);
+		
+		while(liferate <= GetBossLifeRate(objEnemy)) { yield; }
+	}
+	if (eAlive)
+	{
+		let liferate = 0;
+
+		let add_angle = 0.85;
+		let shot_speed = [1.5, 2, 2, 2.25][Difficult];
+		let shot_way = [30, 30, 40, 16][Difficult];
+		let shot_span = [10, 10, 8, 16][Difficult];;
+		let shot_count = [5, 5, 4, 16][Difficult];
+		let graphic = [ADD_BGW_LIGHT_S_BLUE, ADD_BGW_LIGHT_S_BLUE, ADD_BGW_LIGHT_S_BLUE, ADD_BGW_LIGHT_S_BLUE][Difficult];
+		let graphic2 = [BGW_BALL_BS_YELLOW, BGW_BALL_BS_YELLOW, BGW_STAR_S_YELLOW, BGW_STAR_M_YELLOW][Difficult];
+		let shot_wt = [110, 90, 80, 75][Difficult];
+		let max_r = 114;
+		let eff_color = [EFF_YELLOW, EFF_YELLOW, EFF_YELLOW, EFF_YELLOW][Difficult];
+		TShot02(add_angle, shot_speed, shot_way, shot_span, shot_count, graphic, graphic2, shot_wt, max_r, liferate, eff_color);
+		
+		while(liferate <= GetBossLifeRate(objEnemy)) { yield; }
+	}
+}
+
+task TShot02(add_angle, shot_speed, shot_way, shot_span, shot_count, graphic, graphic2, shot_wt, max_r, liferate, eff_color)
+{
+	if (liferate > GetBossLifeRate(objEnemy)) { return; }
+
+	let CHARGE_COLOR = eff_color;
+
+	let objALLFAMILIER = [];
+	let BASE_R = max_r;
+	let BASE_ANGLE = -90;
+	let endFlag = false;
+	
+//	let shot_speed = 2;
+//	let shot_way = 32;
+//	let graphic = ADD_BGW_LIGHT_S_YELLOW;
+//	let graphic2 = BGW_BALL_BS_YELLOW;
+//	let add_angle = 0.5;
+	
+	ascent(i in 0 .. 3)
+	{
+		SetFamilier01(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			i*120, 1, i);
+	}
+	
+	let muki = 1;
+	loop(60)
+	{
+		if (!eAlive || liferate > GetBossLifeRate(objEnemy)) { break; }
+		yield;
+	}
+
+	let st = 0;
+	let t = 0;
+	while(eAlive)
+	{
+		if (liferate > GetBossLifeRate(objEnemy)) { break; }
+		if (st >= 0)
+		{
+			let ss = shot_speed;
+			if (CheckHakkyou()) { ss *= 1.5; }
+			TriangleShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				shot_speed, graphic, graphic2, 15, BASE_R, shot_way, shot_span, shot_count, muki);
+			muki = -muki;
+			st -= shot_wt;
+		}
+		let tmp_add = add_angle * (2+sin(t*0.618))/2;
+		if (t < 240)
+		{
+			let tmp = sin(max(0, t+1-60)/180*90);
+			tmp_add *= tmp;
+		}
+		BASE_ANGLE += tmp_add;
+		t++; st++;
+		if (CheckHakkyou()) { st++; }	// 時間発狂時倍速！
+		yield;
+	}
+	endFlag = true;
+
+	// フーマスゴイハンド
+	task SetFamilier01(iniX, iniY, iniAngle, iniMuki, iniValue)
+	{
+		let eSize = ENEMY_M;
+		let eColor = EFF_RED;
+		let item_count = 0;
+		let item_star = 0;
+		let baseAngle = atan2(GetPlayerY-iniY, GetPlayerX-iniX);
+		
+		let objFamilier = MakeEnemyFamilier(iniX, iniY, 99999, eSize);
+		// 配列に追加
+		objALLFAMILIER = objALLFAMILIER ~ [objFamilier];
+
+		CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+		MishandraOption_SetDamageRate(objFamilier);
+		SetDropItemCount(objFamilier, item_count, item_star);
+		DrawMishandraHand(objFamilier, baseAngle, iniMuki);
+		TAct();
+		WaitForKilledFamilier(objFamilier, 24, 4);
+		ZakoFinalize(objFamilier, eColor);
+		// 配列から削除
+		ascent(i in 0 .. length(objALLFAMILIER))
+		{
+			if (objALLFAMILIER[i] == objFamilier) { objALLFAMILIER = erase(objALLFAMILIER,i); break; }
+		}
+		
+		task TAct()
+		{
+			TMove();
+
+			wait(60);
+			CallSound(sndPower1);
+			
+			
+			while(!Obj_IsDeleted(objFamilier))
+			{
+				if (endFlag)
+				{
+					EraseEnemy(objFamilier);
+					break;
+				}
+				yield;
+			}
+		}
+		
+		task TMove()
+		{
+			while(CanShotBullet(objFamilier))
+			{
+				let ma = BASE_ANGLE + iniAngle;
+				ObjMove_SetPosition(objFamilier, iniX+BASE_R*cos(ma), iniY+BASE_R*sin(ma));
+				SetMishandraHandAngle(objFamilier, ma+180);
+				yield;
+			}
+		}
+	}
+	
+	task TriangleShot(x, y, speed, graphic, graphic2, delay, size, way, shot_span, shot_count, muki)
+	{
+		ascent(i in 0 .. length(objALLFAMILIER))
+		{
+			EffectConcentrationLine(objALLFAMILIER[i], CHARGE_COLOR, 75, 10);
+		}
+		wait(60);
+		if (!eAlive) { return; }
+		let angle = BASE_ANGLE;
+		ascent(i in 0 .. 3)
+		{
+			let sx = x + size*cos(angle+i*120);
+			let sy = y + size*sin(angle+i*120);
+			TriangleShot_sub(sx, sy, speed, angle, graphic, delay, size, way);
+		}
+		CallSound(sndShot2);
+		wait(90);
+		if (!eAlive) { return; }
+		Triangle_shot_lasereffect(x, y, angle, size*2, 30, muki);
+		wait(15);
+		if (!eAlive) { return; }
+		TriangleShot_sub2(x, y, speed, angle, graphic2, delay, size, way, shot_span, shot_count, muki);
+		wait(15);
+		if (!eAlive) { return; }
+		CallSound(sndShot5);
+	}
+	
+	task TriangleShot_sub(x, y, speed, angle, graphic, delay, size, way)
+	{
+		let bposx = [1, -0.5, -0.5];
+		let bposy = [0, 0.866, -0.866];
+		
+		ascent(i in 0 .. 3)
+		{
+			let pos1 = Rotate2D_XY(bposx[i], bposy[i], angle);
+			let pos2 = Rotate2D_XY(bposx[(i+1)%3], bposy[(i+1)%3], angle);
+			
+			ascent(j in 0 .. way)
+			{
+				let tmp = j/way;
+				let vx = pos1[0]*(1-tmp) + pos2[0]*tmp;
+				let vy = pos1[1]*(1-tmp) + pos2[1]*tmp;
+				let vs = size * 0.0223 * ((vx^2+vy^2)^0.5);
+				let va = atan2(vy, vx);
+				Triangle_shot_single(x, y, vs, va, graphic, 120);
+			}
+		}
+	}
+	task Triangle_shot_single(x, y, vs, va, graphic, timer)
+	{
+		let obj = CreateShotA2(x, y, vs, va, -vs/90, 0, graphic, 0);
+		Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+		ObjShot_SetSpellResist(obj, true);
+		wait(timer);
+		ObjShot_FadeDelete(obj);
+	}
+	task Triangle_shot_lasereffect(x, y, angle, size, timer, muki)
+	{
+		let way = timer;
+		let tmp_x = [1, -0.5, -0.5];
+		let tmp_y = [0, 0.866, -0.866];
+		
+		// 座標せっつ
+		let bpos = [];
+		ascent(i in 0 .. 3)
+		{
+			let tmp_i = i;
+			if (muki < 0) { tmp_i = 2-i; }
+			bpos = bpos ~ [Rotate2D_XY(tmp_x[tmp_i]*size, tmp_y[tmp_i]*size, angle)];
+		}
+		let bpos2 = [];
+		descent(i in 0 .. 3)
+		{
+			let tmp_i = i;
+			if (muki < 0) { tmp_i = 2-i; }
+			bpos2 = bpos2 ~ [Rotate2D_XY(tmp_x[tmp_i]*size/2, tmp_y[tmp_i]*size/2, angle+180)];
+		}
+
+		ascent(j in 0 .. way)
+		{
+			if (!eAlive) { return; }
+			let tmp = j/(way-1);
+			
+			ascent(i in 0 .. 3)
+			{
+				let vx = bpos[i][0]*(1-tmp) + bpos[(i+1)%3][0]*tmp;
+				let vy = bpos[i][1]*(1-tmp) + bpos[(i+1)%3][1]*tmp;
+				let sx = x + vx;
+				let sy = y + vy;
+				let vr = (vx^2+vy^2)^0.5;
+				let va = atan2(vy, vx);
+				OpenLaserEffect(x, y, va, vr, 30);
+			}
+			ascent(i in 0 .. 3)
+			{
+				let vx = bpos2[i][0]*(1-tmp) + bpos2[(i+1)%3][0]*tmp;
+				let vy = bpos2[i][1]*(1-tmp) + bpos2[(i+1)%3][1]*tmp;
+				let sx = x + vx;
+				let sy = y + vy;
+				let vr = (vx^2+vy^2)^0.5;
+				let va = atan2(vy, vx);
+				OpenLaserEffect(x, y, va, vr, 30);
+			}
+			CallSound(sndBulletBreak);
+			yield;
+		}
+	}
+	
+	task TriangleShot_sub2(x, y, speed, angle, graphic, delay, size, way, shot_span, shot_count, muki)
+	{
+		let bposx = [1, -0.5, -0.5];
+		let bposy = [0, 0.866, -0.866];
+		
+		let bx = [x];
+		let by = [y];
+		let ba = [angle+180];
+		let oa = [150*muki];
+		ascent(k in 0 .. 3)
+		{
+			let pos = Rotate2D_XY(bposx[k]*size, bposy[k]*size, angle);
+			bx = bx ~ [x+pos[0]];
+			by = by ~ [y+pos[1]];
+			ba = ba ~ [angle];
+			oa = oa ~ [150*muki];
+		}
+		
+		ascent(k in 0 .. 4)
+		{
+			ascent(i in 0 .. 3)
+			{
+				let pos1 = Rotate2D_XY(bposx[i], bposy[i], ba[k]);
+				let pos2 = Rotate2D_XY(bposx[(i+1)%3], bposy[(i+1)%3], ba[k]);
+				
+				ascent(j in 0 .. way)
+				{
+					if (j%shot_span < shot_count)
+					{
+						let tmp = j/way;
+						let vx = pos1[0]*(1-tmp) + pos2[0]*tmp;
+						let vy = pos1[1]*(1-tmp) + pos2[1]*tmp;
+						let sx = bx[k] + vx*size;
+						let sy = by[k] + vy*size;
+						let vs = speed * ((vx^2+vy^2)^0.5);
+						let va = atan2(vy, vx) + oa[k];
+						let os = CreateShotA1(sx, sy, 0, va, graphic, 0);
+						ObjMove_AddPatternA2(os, 30, NO_CHANGE, NO_CHANGE, vs/90, 0, vs);
+					}
+				}
+			}
+		}
+	}
+}
+
+
+/*
+		task TMove()
+		{
+			// この円内で反射する
+			let BASE_X = iniX;
+			let BASE_Y = iniY;
+			let BASE_R = GetStgFrameWidth/2+64;
+			let ref_a = [75, 115, 125][iniValue%3];
+			
+			let ma = iniAngle;
+			let ms = iniSpeed*2.5;
+			
+			let first_ref = true;
+			let ref_flg = false;
+			while(CanShotBullet(objFamilier))
+			{
+				let tmp_a = atan2(ObjMove_GetY(objFamilier)-BASE_Y, ObjMove_GetX(objFamilier)-BASE_X);
+
+				let tmp_r = ((ObjMove_GetY(objFamilier)-BASE_Y)^2+(ObjMove_GetX(objFamilier)-BASE_X)^2)^0.5;
+				let tmp_a = atan2(ObjMove_GetY(objFamilier)-BASE_Y, ObjMove_GetX(objFamilier)-BASE_X);
+				if (tmp_r > BASE_R && !ref_flg)
+				{
+					ref_flg = true;
+					
+					// 反射
+					if (first_ref)
+					{
+						ma = (tmp_a+ref_a)*2-ma;
+						first_ref = false;
+					}
+					else
+					{
+						ma = (tmp_a+90)*2-ma;
+					}
+				}
+				else
+				{
+					ref_flg = false;
+				}
+
+				if (ObjMove_GetX(objFamilier) < 0 || ObjMove_GetX(objFamilier) > GetStgFrameWidth)
+				{
+					if (!ref_flg) { ma = 180-ma; }
+					ref_flg = true;
+				}
+				else if (ObjMove_GetY(objFamilier) < 0 || ObjMove_GetY(objFamilier) > GetStgFrameHeight)
+				{
+					if (!ref_flg) { ma = 360-ma; }
+					ref_flg = true;
+				}
+				else
+				{
+					ref_flg = false;
+				}
+				ObjMove_SetPosition(objFamilier, ObjMove_GetX(objFamilier)+cos(ma)*ms, ObjMove_GetY(objFamilier)+sin(ma)*ms);
+				SetMishandraHandAngle(objFamilier, tmp_a+180);
+				ms = max(iniSpeed, ms-iniSpeed/60);
+				yield;
+			}
+		}
+*/
