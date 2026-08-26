@@ -1,0 +1,28 @@
+// 願いシステム（仮）
+
+
+
+// 本体
+task FortuneSystem()
+{
+	if (IsFirstStage())
+	{
+		// 初期値
+		SetAreaCommonData(CAREA_STAGE, "WishItemMax", 333);
+		SetMagnitude(6);
+		AddMagnitude(0);
+	}
+}
+
+// 被弾時イベント
+task Fortune_ShootDown()
+{
+	// 最大得点カット
+	let tmp = GetMaxScore();
+	tmp = trunc(tmp/10/10)*10;
+	AddMaxScore(-tmp);
+	
+	// 被弾数カウント→他でやっているので削除
+//	SetAreaCommonData(CAREA_STAGE, "ChapterDeathCount",
+//		GetAreaCommonData(CAREA_STAGE, "ChapterDeathCount", 0)+1);
+}

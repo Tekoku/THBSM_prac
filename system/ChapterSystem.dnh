@@ -1,0 +1,462 @@
+// ---------------------------
+//  チャプター関連
+// ---------------------------
+#include "./lib/lib_Common.dnh"
+#include "../lib/lib_Common.dnh"
+#include "../lib/lib_Item.dnh"
+
+let CHAPTER_ROAD = 0;
+let CHAPTER_BOSS = 1;
+let CHAOTER_SPELL = 2;
+
+
+@Initialize
+{
+	ResetChapterValue();
+}
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_ShootdownPlayer)
+	{
+		if (!ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID(), INFO_IS_LAST_SPELL))
+		{
+			// 被弾
+			SetAreaCommonData(CAREA_SYSTEM, "AllDeathCount",
+				GetAreaCommonData(CAREA_SYSTEM, "AllDeathCount", 0)+1);
+			// チャプター用
+			SetAreaCommonData(CAREA_STAGE, "ChapterDeathCount",
+				GetAreaCommonData(CAREA_STAGE, "ChapterDeathCount", 0)+1);
+			// ランクダウン
+			AddMagnitude(1);
+		}
+	}
+	case(ev_ChapterStart)
+	{
+		// チャプター開始
+		ResetChapterValue();
+	}
+	case(ev_ChapterFinish)
+	{
+		let delay = GetEventArgument(0);
+		// チャプター終了
+		SystemChapterFinish(delay);
+	}
+}
+
+@MainLoop
+{
+	yield;
+}
+
+// ---------------------------
+//  チャプター終了
+// ---------------------------
+task SystemChapterFinish(delay)
+{
+	let typeChapter = GetAreaCommonData(CAREA_STAGE, "ChapterType", CHAPTER_ROAD);
+	wait(delay);
+	
+	// リセット
+	ResetChapterValue();
+
+	ChapterFinishBonus(typeChapter);
+}
+
+
+// Chapter Finish Bonus!
+task ChapterFinishBonus(typeChapter)
+{
+	let flgChapter = true;
+	let anime_timer = 15;
+	let base_delay = 30;
+	let bonusTimer = 120;
+	
+	let offsetY = [50, 0][typeChapter == CHAPTER_ROAD];
+	let setX = GetStgFrameWidth/2;
+	let setY = GetStgFrameHeight/2-64 + offsetY;
+
+	// 文字
+	let objString = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objString, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objString, imgSystemChapter);
+	Obj_SetRenderPriorityI(objString, 79);
+	ObjRender_SetPosition(objString, setX, setY, 0);
+	ObjPrim_SetVertexCount(objString, 6*3);
+	local
+	{
+		let pos_offset = -64;
+		// 文字貼り付け
+		AddImg_Triangle01(objString, 6*0,
+				0, 0, 128, 16,		//切り取り範囲
+				0+pos_offset, 0-24, 128+pos_offset, 16-24);	//貼り付け範囲
+	}
+	
+	// ボーナスチェック
+	ChapterBonusChecker(0);
+	ChapterBonusItem(base_delay);
+	// Wish Item
+	let objBaseScore = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objBaseScore, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objBaseScore, imgSystemChapter);
+	Obj_SetRenderPriorityI(objBaseScore, 79);
+	ObjRender_SetPosition(objBaseScore, setX, setY, 0);
+	ObjPrim_SetVertexCount(objBaseScore, 6*(6+1));
+	ChapterValueChecker(objBaseScore, 6, 0, "tmpChapterWishItem", anime_timer, 16*4);
+	// Shooting Down
+	let objShoot = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objShoot, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objShoot, imgSystemChapter);
+	Obj_SetRenderPriorityI(objShoot, 79);
+	ObjRender_SetPosition(objShoot, setX, setY+16, 0);
+	ObjPrim_SetVertexCount(objShoot, 6*(4+2+1));
+	ChapterValueChecker(objShoot, 4, 1, "tmpChapterShootDown", anime_timer, 16*5);
+	// Death Count
+	let objDeath = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objDeath, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objDeath, imgSystemChapter);
+	Obj_SetRenderPriorityI(objDeath, 79);
+	ObjRender_SetPosition(objDeath, setX, setY+16*2, 0);
+	ObjPrim_SetVertexCount(objDeath, 6*(12+1));
+	ChapterValueChecker(objDeath, 12, 0, "tmpChapterDeathCount", anime_timer, 16*10);
+	// Total Bonus
+	let objTotal = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetPrimitiveType(objTotal, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetTexture(objTotal, imgSystemChapter);
+	Obj_SetRenderPriorityI(objTotal, 79);
+	ObjRender_SetPosition(objTotal, setX, setY+16*3.5, 0);
+	ObjPrim_SetVertexCount(objTotal, 6*(12+1));
+	ChapterValueChecker(objTotal, 12, 0, "tmpChapterTotalBonus", anime_timer, 16*6);
+	
+	ChapterNumberMotion(objString, 15);
+	while(flgChapter)
+	{
+		yield;
+	}
+	ChapterNumberFade(objString, 255, 0, 60);
+	wait(60);
+	Obj_Delete(objString);
+	
+	// ボーナスチェック
+	task ChapterBonusChecker(delay)
+	{
+		let tmpItem = GetAreaCommonData(CAREA_STAGE, "tmpChapterWishItem", 0);
+		let tmpDeath = GetAreaCommonData(CAREA_STAGE, "tmpChapterDeathCount", 0);
+		let tmpShootCount = GetAreaCommonData(CAREA_STAGE, "tmpChapterShootDownCount", 0);
+		let tmpShootMax = GetAreaCommonData(CAREA_STAGE, "tmpChapterShootDownMax", 0);
+		let tmpShoot = 0;
+		if (tmpShootMax <= 0) { tmpShoot = 1; }
+		else { tmpShoot = tmpShootCount / tmpShootMax; }
+		
+		// スコア計算
+		let CHAPTER_SCORE = GetMaxScoreEx() * tmpItem * tmpShoot / (tmpDeath+1);
+		CHAPTER_SCORE = trunc(CHAPTER_SCORE/10)*10;
+
+		// 未代入の値を記録
+		SetAreaCommonData(CAREA_STAGE, "tmpChapterShootDown", tmpShoot);
+		SetAreaCommonData(CAREA_STAGE, "tmpChapterTotalBonus", CHAPTER_SCORE);
+		
+		let t = -delay;
+		while(t < bonusTimer)
+		{
+			// 値を更新
+			tmpItem += GetAreaCommonData(CAREA_STAGE, "ChapterWishItem", 0);
+			SetAreaCommonData(CAREA_STAGE, "tmpChapterWishItem", tmpItem);
+			SetAreaCommonData(CAREA_STAGE, "ChapterWishItem", 0);
+			// スコア計算
+			CHAPTER_SCORE = GetMaxScoreEx() * tmpItem * tmpShoot / (tmpDeath+1);
+			CHAPTER_SCORE = trunc(CHAPTER_SCORE/10)*10;
+			SetAreaCommonData(CAREA_STAGE, "tmpChapterTotalBonus", CHAPTER_SCORE);
+			t++;
+			yield;
+		}
+		
+		// （ボス通常攻撃なら）確定した値を保存
+		if (typeChapter == CHAPTER_BOSS) { SetAreaCommonData(CAREA_STAGE, "beforeChapterWishItem", tmpItem); }
+		else { SetAreaCommonData(CAREA_STAGE, "beforeChapterWishItem", 0); }
+		
+		// 得点加算
+		let addBonus = 0;
+		ascent(i in 0 .. 45)
+		{
+			let tmp = (i+1)/45;
+			let tmpBonus = ceil(CHAPTER_SCORE*tmp/10)*10;
+			let tmp_add = tmpBonus-addBonus;
+			AddScore(tmp_add);
+			addBonus = tmpBonus;
+			SetAreaCommonData(CAREA_STAGE, "tmpChapterTotalBonus", CHAPTER_SCORE-tmpBonus);
+			if (i%3 == 0 && tmp_add > 0) { CallSound(sndChapterScore); }
+			yield;
+		}
+		SetAreaCommonData(CAREA_STAGE, "tmpChapterTotalBonus", CHAPTER_SCORE);
+		
+		
+		wait(30);
+		flgChapter = false;
+	}
+	// ボーナスチェックその２
+	task ChapterBonusItem(delay)
+	{
+		wait(delay);
+		
+		let tmpDeath = GetAreaCommonData(CAREA_STAGE, "tmpChapterDeathCount", 0);
+		if (tmpDeath < 1)
+		{
+			// ボム加算
+			ChapterSetCharacter(setX-64, setY+72, 16*7);
+			SetItem(GetStgFrameWidth/2, GetStgFrameHeight/2-64, MY_ITEM_SPELL_S);
+		}
+	}
+	// ボーナス値表示
+	task ChapterValueChecker(obj, count, value_type, common_area, delay, string_iy)
+	{
+		let pos_offset = -trunc(16*7/2);
+		ChapterNumberMotion(obj, 15);
+		
+		let t = -delay;
+		if (value_type == 0)	// 普通の数字
+		{
+			// 文字貼り付け
+			AddImg_Triangle01(obj, 6*count,
+					0, string_iy, 128, string_iy+16,		//切り取り範囲
+					0-16+pos_offset, 0, 128-16+pos_offset, 16);	//貼り付け範囲
+			ascent(i in 0 .. count)
+			{
+				SetChapterNumber_Base(obj, i, (16-count+i)*7+pos_offset, 0);
+			}
+			while(flgChapter)
+			{
+				let num = GetAreaCommonData(CAREA_STAGE, common_area, 0);
+				if (t < anime_timer) { num *= max(0,t)/anime_timer; }
+				
+				let listNum = DigitToArray(trunc(num), count);
+				ascent(i in 0 .. count)
+				{
+					SetChapterNumber(obj, i, listNum[i]);
+				}
+				t++;
+				yield;
+			}
+		}
+		else if (value_type == 1)	// xxx.x%
+		{
+			// 文字貼り付け
+			AddImg_Triangle01(obj, 6*(count+2),
+					0, string_iy, 128, string_iy+16,		//切り取り範囲
+					0-16+pos_offset, 0, 128-16+pos_offset, 16);	//貼り付け範囲
+			ascent(i in 0 .. count)
+			{
+				let ix = (16-(count+1)+i)*7+pos_offset;
+				if (i == count-1) { ix += 7; }
+				SetChapterNumber_Base(obj, i, ix, 0);
+			}
+			SetChapterNumber_Base(obj, count, (16-(count+1)+count-1)*7+pos_offset, 0);
+			SetChapterNumber_Base(obj, count+1, (16-(count+1)+count+1)*7+2+pos_offset, 0);
+			SetChapterNumber(obj, count, 14);
+			SetChapterNumber(obj, count+1, 10);
+			while(flgChapter)
+			{
+				let num = GetAreaCommonData(CAREA_STAGE, common_area, 0)*1000;
+				if (t < anime_timer) { num *= max(0,t)/anime_timer; }
+				
+				let listNum = DigitToArray(trunc(num), count);
+				if (listNum[count-2] < 0) { listNum[count-2] = 0; }
+				ascent(i in 0 .. count)
+				{
+					SetChapterNumber(obj, i, listNum[i]);
+				}
+				t++;
+				yield;
+			}
+		}
+		else if (value_type == 2)	// 倍率
+		{
+			// 文字貼り付け
+			AddImg_Triangle01(obj, 6*(count+2),
+					0, string_iy, 128, string_iy+16,		//切り取り範囲
+					0-16+pos_offset, 0, 128-16+pos_offset, 16);	//貼り付け範囲
+			ascent(i in 0 .. count)
+			{
+				let ix = (16-(count+1)+i)*7+pos_offset;
+				if (i > 1) { ix += 7; }
+				SetChapterNumber_Base(obj, i, ix, 0);
+			}
+			SetChapterNumber_Base(obj, count, (16-(count+1)+count-2)*7+pos_offset, 0);
+			SetChapterNumber_Base(obj, count+1, (16-(count+1)+count-5)*7+pos_offset, 0);
+			SetChapterNumber(obj, count, 14);
+			SetChapterNumber(obj, count+1, 11);
+			while(flgChapter)
+			{
+				let num = GetAreaCommonData(CAREA_STAGE, common_area, 0)*100;
+				if (t < anime_timer) { num = 100+(num-100)*max(0,t)/anime_timer; }
+				
+				let listNum = DigitToArray2(trunc(num), count);
+				ascent(i in 0 .. count)
+				{
+					if (num < 1000 && i == 0) { SetChapterNumber(obj, i, -1); }
+					else if (num < 100 && i == 1) { SetChapterNumber(obj, i, 0); }
+					else { SetChapterNumber(obj, i, listNum[i]); }
+				}
+				t++;
+				yield;
+			}
+		}
+		ChapterNumberFade(obj, 255, 0, 60);
+		wait(60);
+		Obj_Delete(obj);
+	}
+	// ボーナス値表示
+	task ChapterSetCharacter(x, y, iy)
+	{
+		let objString = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(objString, imgSystemChapter);
+		Obj_SetRenderPriorityI(objString, 79);
+		ObjSprite2D_SetDestRect(objString, 0, 0, 128, 16);
+		ObjSprite2D_SetSourceRect(objString, 0, iy, 128, iy+16);
+		ObjRender_SetPosition(objString, x, y, 0);
+		
+		let t = 0;
+		while(flgChapter)
+		{
+			if (t <= 30)
+			{
+				let tmp_c = (t%5)*50;
+				ObjRender_SetColor(objString, tmp_c, tmp_c, tmp_c);
+				if (t == 30) { ObjRender_SetColor(objString, 255, 255, 255); }
+			}
+			t++;
+			yield;
+		}
+		ChapterNumberFade(objString, 255, 0, 60);
+		wait(60);
+		Obj_Delete(objString);
+	}
+	
+	// フェード
+	task ChapterNumberFade(obj, from_alpha, to_alpha, frame)
+	{
+		ascent(i in 0 .. frame)
+		{
+			ObjRender_SetAlpha(obj, from_alpha+(i+1)/(frame-1)*(to_alpha-from_alpha));
+			yield;
+		}
+	}
+	// 拡大
+	task ChapterNumberMotion(obj, frame)
+	{
+		ascent(i in 0 .. frame)
+		{
+			let tmp = (i+1)/frame;
+			ObjRender_SetScaleX(obj, tmp);
+			yield;
+		}
+	}
+
+	// 数字配置
+	function SetChapterNumber(obj, keta, num)
+	{
+		if (num < 0)
+		{
+			ascent(i in 0 .. 6)
+			{
+				ObjPrim_SetVertexUVT(obj, keta*6+i, 0, 0);
+			}
+		}
+		else
+		{
+			let ix = (num%8)*16;
+			let iy = trunc(num/8)*16 + 224;
+			ObjPrim_SetVertexUVT(obj, keta*6  , ix, iy);
+			ObjPrim_SetVertexUVT(obj, keta*6+1, ix+16, iy);
+			ObjPrim_SetVertexUVT(obj, keta*6+2, ix, iy+16);
+			ObjPrim_SetVertexUVT(obj, keta*6+3, ix+16, iy);
+			ObjPrim_SetVertexUVT(obj, keta*6+4, ix, iy+16);
+			ObjPrim_SetVertexUVT(obj, keta*6+5, ix+16, iy+16);
+		}
+	}
+	function SetChapterNumber_Base(obj, keta, x, y)
+	{
+		ObjPrim_SetVertexPosition(obj, keta*6  , x, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+1, x+16, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+2, x, y+16, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+3, x+16, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+4, x, y+16, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+5, x+16, y+16, 0);
+	}
+}
+
+// 値をリセット
+function ResetChapterValue()
+{
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterWishItem", GetAreaCommonData(CAREA_STAGE, "ChapterWishItem", 0));
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterShootDown", 0);
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterShootDownCount", GetAreaCommonData(CAREA_STAGE, "ChapterShootDownCount", 0));
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterShootDownMax", GetAreaCommonData(CAREA_STAGE, "ChapterShootDownMax", 0));
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterDeathCount", GetAreaCommonData(CAREA_STAGE, "ChapterDeathCount", 0));
+	SetAreaCommonData(CAREA_STAGE, "tmpChapterTotalBonus", GetAreaCommonData(CAREA_STAGE, "ChapterTotalBonus", 0));
+	// 初期値にリセット
+	SetAreaCommonData(CAREA_STAGE, "ChapterWishItem", 0);
+	SetAreaCommonData(CAREA_STAGE, "ChapterShootDownCount", 0);
+	SetAreaCommonData(CAREA_STAGE, "ChapterShootDownMax", 0);
+	SetAreaCommonData(CAREA_STAGE, "ChapterDeathCount", 0);
+}
+
+
+/*
+task ChapterBonusChecker(delay)
+{
+	let BASE_SCORE = GetMaxScore();
+	
+	let shootdown_rate = 49;
+	let t = -delay;
+	while(t < bonusTimer)
+	{
+		// 値の監視
+		SetAreaCommonData(CAREA_STAGE, "tmpChapterWishItem", GetMaxScore());
+		SetAreaCommonData(CAREA_STAGE, "tmpChapterWishBonus", GetWishBonus());
+		SetAreaCommonData(CAREA_STAGE, "tmpChapterShootDown", 
+			GetAreaCommonData(CAREA_STAGE, "tmpChapterShootDownCount", 0) / max(1, GetAreaCommonData(CAREA_STAGE, "tmpChapterShootDownMax", 0)));
+		// 計算するよ
+		let tmpTotal = 0;
+		let tmpBase = GetAreaCommonData(CAREA_STAGE, "tmpChapterWishItem", 0);
+		let tmpShoot = GetAreaCommonData(CAREA_STAGE, "tmpChapterShootDown", 0);
+		let tmpWish = GetAreaCommonData(CAREA_STAGE, "tmpChapterWishBonus", 0);
+		let tmpDeath = GetAreaCommonData(CAREA_STAGE, "tmpChapterDeathCount", 0);
+		if (t < 0) { tmpTotal = 0; }
+		else if (t < anime_timer*1) { tmpTotal = tmpBase * tmpWish * (1+tmpShoot*shootdown_rate*(t+1)/anime_timer); }
+		else if (t < anime_timer*2) { tmpTotal = tmpBase * tmpWish * (1+tmpShoot*shootdown_rate); }
+		else if (t < anime_timer*3) { tmpTotal = tmpBase * tmpWish * (1+tmpShoot*shootdown_rate) / (trunc(tmpDeath*(t+1-anime_timer*2)/anime_timer)+1); }
+		else { tmpTotal = tmpBase * tmpWish  * (1+tmpShoot*shootdown_rate)/ (trunc(tmpDeath)+1); }
+		
+		SetAreaCommonData(CAREA_STAGE, "tmpChapterTotalBonus", trunc(tmpTotal/10)*10);
+		t++;
+		yield;
+	}
+	let bonusTotal = 0;
+	let addBonus = 0;
+	
+	// 最終的な値を計算
+	let tmpBase = GetAreaCommonData(CAREA_STAGE, "tmpChapterWishItem", 0);
+	let tmpShoot = GetAreaCommonData(CAREA_STAGE, "tmpChapterShootDown", 0);
+	let tmpWish = GetAreaCommonData(CAREA_STAGE, "tmpChapterWishBonus", 0);
+	let tmpDeath = GetAreaCommonData(CAREA_STAGE, "tmpChapterDeathCount", 0);
+	bonusTotal = tmpBase * tmpWish * (1+tmpShoot*shootdown_rate) / (tmpDeath+1);
+	bonusTotal = trunc(bonusTotal/10)*10;
+
+	// 得点加算
+	ascent(i in 0 .. 30)
+	{
+		let tmp = (i+1)/30;
+		let tmpBonus = ceil(bonusTotal*tmp/10)*10;
+		AddScore(tmpBonus-addBonus);
+		addBonus = tmpBonus;
+		SetAreaCommonData(CAREA_STAGE, "tmpChapterTotalBonus", bonusTotal-tmpBonus);
+		yield;
+	}
+	
+	
+	wait(30);
+	flgChapter = false;
+}
+*/

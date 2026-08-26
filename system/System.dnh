@@ -1,0 +1,196 @@
+#include "./lib/lib_Common.dnh"
+#include "./lib/lib_Display.dnh"
+#include "./lib/lib_Util.dnh"
+#include "./lib/lib_Boss.dnh"
+#include "./lib/lib_FortuneSystem.dnh"
+#include "./lib/lib_Check.dnh"
+#include "./../lib/lib_Common.dnh"
+#include "./../lib/lib_Item.dnh"
+
+
+@Initialize
+{
+	InitCommonData();
+//	MakeSystemCommonDataArea();
+	SetAreaCommonData(CAREA_SYSTEM, "ScriptBoss", GetOwnScriptID());	//ID記録
+	SetSystemInit();
+	InitFrame();
+	//描画優先度
+	SetItemRenderPriorityI(50);
+	SetShotRenderPriorityI(60);
+	//システムスクリプト
+	SetPauseScriptPath(GetCurrentScriptDirectory() ~ "ScenePause.dnh");
+	SetReplaySaveSceneScriptPath(GetCurrentScriptDirectory() ~ "SceneReplay.dnh");
+	SetEndSceneScriptPath(GetCurrentScriptDirectory() ~ "SceneEnd.dnh");
+	TMain();
+}
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_ShootdownPlayer)
+	{
+		if (!ObjEnemyBossScene_GetInfo(GetEnemyBossSceneObjectID(), INFO_IS_LAST_SPELL))
+		{
+			Fortune_ShootDown();
+		}
+	}
+	case(EV_PLAYER_SHOOTDOWN)
+	{
+		CheckContinue();
+	}
+	//　敵撃破イベント
+	case( ev_EnemyKilled )
+	{
+		let tmp	= GetEventArgument(0);	//　敵撃破カウント数（でかい敵は複数カウント）
+		EnemyKillCount += tmp;
+	}
+}
+
+@MainLoop
+{
+	yield;
+}
+
+task TMain
+{
+	//願いシステム
+	FortuneSystem();
+	//かけらを監視
+	TCheckFragment();
+
+	//　各種情報描画
+	if (GetPlayMode() == GAME_MAIN && IsFirstStage())
+	{
+		let base_y = 40;
+		if (DrawHiTokuten || true)
+		{
+			THiScore      (420,  base_y, 0+105);
+		}
+		base_y += 28; TScore      (420,  base_y, 10+105);
+		base_y += 42; TPlayerLife (428,  base_y, 20+105);
+		base_y += 28; TPlayerSpell(428, base_y, 30+105);
+
+		TStarSystem(540, base_y+72, 60+105);
+
+		base_y += 106; TMaxScore   (452, base_y, 40+105);
+		base_y += 24; TGraze      (452, base_y, 45+105);
+	//	base_y += 24; TWishBonus  (452, base_y, 50+105);
+
+		TGameMode(452+120, 22, 300);
+		DisplayDifficulty([640-112,24], 85, 120);
+	
+	} else {
+		let base_y = 40;
+		if (DrawHiTokuten || true)
+		{
+			THiScore      (420,  base_y, -1);
+		}
+		base_y += 28; TScore      (420,  base_y, -1);
+		base_y += 42; TPlayerLife (428,  base_y, -1);
+		base_y += 28; TPlayerSpell(428, base_y, -1);
+		
+		TStarSystem(540, base_y+72, -1);
+
+		base_y += 106; TMaxScore   (452, base_y, -1);
+		base_y += 24; TGraze      (452, base_y, -1);
+	//	base_y += 24; TWishBonus  (452, base_y, -1);
+
+		TGameMode(452+120, 22, -1);
+		DisplayDifficulty([640-112,24], 85, 0);
+	}
+	
+	//FPS表示
+	TFPS();
+	if (IsReplay()) { TFPS_Replay(); }
+	
+	let scriptDIR = GetCurrentScriptDirectory();
+	//効果音再生スクリプト
+	local
+	{
+		let scriptSE	= scriptDIR ~ "ControlSound.dnh";
+		let SoundSystem = LoadScript(scriptSE);
+		StartScript(SoundSystem);
+	}
+	//アイテムスクリプト起動
+	local
+	{
+		let scriptItem	= scriptDIR ~ "ControlItem.dnh";
+		StartItemScript(scriptItem);
+	}
+	//チャプターシステム起動
+	local
+	{
+		let scriptChapter = scriptDIR ~ "ChapterSystem.dnh";
+		let idChapter = LoadScript(scriptChapter);
+		StartScript(idChapter);
+	}
+	
+	WaitForPlayerObject();	//プレイヤー読み込みまで待機
+	
+	//グレイズ時に最大得点加算
+	TAddMaxScore();
+	//アイテム回収ラインのチェック
+	TCheckBorderLine();
+	//ボスシーンチェック
+	CheckScene();
+
+	// practice tool: V = instant defeat in practice (for quick replay save)
+	TPracQuickKey();
+}
+
+//コンティニューチェック
+function CheckContinue()
+{
+	if (GetPlayerLife() < 0)
+	{
+		if (!IsReplay()) { SaveCommonDataAreaToReplayFile(CAREA_REPLAY); }	// practice tool: keep jump data in death-path replays
+		CloseStgScene();
+	}
+}
+
+//コモンデータの初期化
+sub InitCommonData()
+{
+	if (!IsCommonDataAreaExists(CAREA_STAGE)) { CreateCommonDataArea(CAREA_STAGE); }
+	if (!IsCommonDataAreaExists(CAREA_SYSTEM)) { CreateCommonDataArea(CAREA_SYSTEM); }
+	if (!IsCommonDataAreaExists(CAREA_REPLAY)) { CreateCommonDataArea(CAREA_REPLAY); }
+	LoadSystemCommonData();
+	// 初期値を設定
+	SetAreaCommonData(CAREA_SYSTEM, "AsciiTexts", []);
+}
+
+//コモンデータ更新
+sub LoadSystemCommonData()
+{
+	if (IsReplay()) {
+		LoadCommonDataAreaFromReplayFile(CAREA_STAGE);
+		LoadCommonDataAreaFromReplayFile(CAREA_SYSTEM);
+	} else {
+		SaveCommonDataAreaToReplayFile(CAREA_STAGE);
+		SaveCommonDataAreaToReplayFile(CAREA_SYSTEM);
+	}
+}
+
+// practice tool: instant defeat watcher (V key)
+task TPracQuickKey()
+{
+	if (GetPlayMode() == GAME_PRACTICE)
+	{
+		AddReplayTargetVirtualKey(VK_USER2);
+	}
+	loop
+	{
+		if (GetPlayMode() == GAME_PRACTICE)
+		{
+			if (GetVirtualKeyState(VK_USER2) == KEY_PUSH)
+			{
+				SetAreaCommonData(CAREA_STAGE, "InfinityMode", 0);	// practice tool: undo brave/infinity mode so the hit is fatal
+				SetPlayerLife(-1);
+				SetPlayerSpell(0);
+				CreateShotA1(GetPlayerX(), GetPlayerY(), 0, 0, 1, 0);
+			}
+		}
+		wait(1);
+	}
+}

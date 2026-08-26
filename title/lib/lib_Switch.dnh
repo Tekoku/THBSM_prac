@@ -1,0 +1,66 @@
+
+// 遷移エフェクト
+task CallSwitch(delay, lay)
+{
+	// 背景用
+	let textureName = GetTransitionRenderTargetName();
+	let objImage = ObjPrim_Create(OBJ_SPRITE_2D); //2Dスプライトオブジェクト生成
+	Obj_SetRenderPriorityI(objImage, lay); //描画優先度を設定
+	ObjPrim_SetTexture(objImage, textureName); //テクスチャを設定
+	ObjSprite2D_SetSourceRect(objImage, 0, 0, 640, 480);
+	ObjSprite2D_SetDestRect(objImage, 0, 0, 640, 480);
+
+	let muki = 1;
+	let sc = 1.5;
+	ascent(j in 0 .. 3)
+	{
+		ascent(i in 0 .. 5)
+		{
+			let to_sx = GetScreenWidth * (((i+j)*3)%5+0.5)/5;
+			let to_sy = GetScreenHeight * ((2-j)+0.5)/3;
+			let sx = to_sx - randEffect(256, 512);
+			let sy = to_sy - GetScreenHeight;
+			CallSwitch_single([sx, sy], [to_sx, to_sy], 30, delay, sc, randEffect(0,360), lay);
+			muki = -muki;
+			wait(3);
+		}
+	}
+	
+	wait(delay-3*5*3);
+	Obj_Delete(objImage);
+}
+
+task CallSwitch_single(from_pos, to_pos, timer, delay, scale, angle, lay)
+{
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objImg, imgTtSwitchStar );
+	Obj_SetRenderPriorityI(objImg, lay );
+	ObjRender_SetBlendType(objImg, BLEND_INV_DESTRGB );
+	ObjRender_SetScaleXYZ(objImg, scale, scale, 0 );
+	ObjSprite2D_SetSourceRect(objImg, 0, 0, 256, 256 );
+	ObjSprite2D_SetDestCenter(objImg);
+	
+	ascent(t in 0 .. timer)
+	{
+		let tmp = sin((t+1)/timer*90);
+		let tmp_c = 255-127*max(0, tmp*2-1);
+		ObjRender_SetPosition(objImg, from_pos[0]*(1-tmp)+to_pos[0]*tmp, from_pos[1]*(1-tmp)+to_pos[1]*tmp, 0);
+		ObjRender_SetAngleZ(objImg, angle);
+		ObjRender_SetColor(objImg, tmp_c, tmp_c, 128);
+		angle += 8*(1.5-tmp);
+		yield;
+	}
+	ObjRender_SetColor(objImg, 128, 128, 128);
+	wait(delay);
+	descent(t in 0 .. timer)
+	{
+		let tmp = sin((t+1)/timer*90);
+		let tmp_c = 255-127*max(0, tmp*2-1);
+		ObjRender_SetPosition(objImg, from_pos[0]*(1-(2-tmp))+to_pos[0]*(2-tmp), from_pos[1]*(1-(2-tmp))+to_pos[1]*(2-tmp), 0);
+		ObjRender_SetAngleZ(objImg, angle);
+		ObjRender_SetColor(objImg, tmp_c, tmp_c, 128);
+		angle += 8*(1.5-tmp);
+		yield;
+	}
+	Obj_Delete(objImg);
+}

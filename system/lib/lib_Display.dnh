@@ -1,0 +1,1451 @@
+#include "../../lib/lib_HighScore.dnh"
+
+let layFront = 1;
+
+//----------------------------------------------------
+//枠外の背景表示
+//----------------------------------------------------
+task InitFrame()
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, 6*4);
+	ObjPrim_SetTexture(obj, imgSystemStgFrame);
+	Obj_SetRenderPriorityI(obj, 0);
+	
+	// 座標指定
+	AddImg_Triangle01(obj, 0,
+		0, 0, 32, 480,	// 切り取り範囲
+		0, 0, 32, 480	// 貼り付け範囲
+	);
+	AddImg_Triangle01(obj, 6,
+		32, 0, 256, 480,	// 切り取り範囲
+		32+384, 0, 256+384, 480	// 貼り付け範囲
+	);
+	AddImg_Triangle01(obj, 12,
+		0, 480, 384, 496,	// 切り取り範囲
+		0+32, 480-480, 384+32, 496-480	// 貼り付け範囲
+	);
+	AddImg_Triangle01(obj, 18,
+		0, 496, 384, 512,	// 切り取り範囲
+		0+32, 496-32, 384+32, 512-32	// 貼り付け範囲
+	);
+	
+	while( !IsStgWorldBreak() ){
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+//----------------------------------------------------
+//ラインを描画
+//----------------------------------------------------
+task FrontLine(x,y,delay,rgb_h,mxs)
+{
+	let fronl	= ObjPrim_Create(OBJ_SPRITE_2D);
+	let move1	= 0;
+	let moveA	= 0;
+	let alpha	= 0;
+	
+	ObjRender_SetPosition(fronl, x, y, 0 );
+	ObjPrim_SetTexture(fronl, imgSystemBase01 );
+	Obj_SetRenderPriorityI(fronl, 0 );
+	ObjRender_SetBlendType(fronl, BLEND_ADD_ARGB );
+	ObjRender_SetAngleXYZ(fronl, 0, 0, move1 );
+	ObjRender_SetScaleXYZ(fronl, move1, 1.2, 0 );
+	ObjPrim_SetVertexCount(fronl, 6 );
+	ObjPrim_SetVertexPosition(fronl, 0, -18, -1, 0 );
+	ObjPrim_SetVertexPosition(fronl, 1, -18, 1, 0 );
+	ObjPrim_SetVertexPosition(fronl, 2, 0, -1, 0 );
+	ObjPrim_SetVertexPosition(fronl, 3, 0, 1, 0 );
+	ObjPrim_SetVertexPosition(fronl, 4, 18, -1, 0 );
+	ObjPrim_SetVertexPosition(fronl, 5, 18, 1, 0 );
+	ObjPrim_SetVertexUVT(fronl, 0, 128, 64 );
+	ObjPrim_SetVertexUVT(fronl, 1, 128, 65 );
+	ObjPrim_SetVertexUVT(fronl, 2, 190, 64 );
+	ObjPrim_SetVertexUVT(fronl, 3, 190, 65 );
+	ObjPrim_SetVertexUVT(fronl, 4, 256, 64 );
+	ObjPrim_SetVertexUVT(fronl, 5, 256, 65 );
+	ObjPrim_SetVertexColor(fronl, 0, 255, 255, 255 );
+	ObjPrim_SetVertexColor(fronl, 1, 255, 255, 255 );
+	ObjPrim_SetVertexColor(fronl, 2, rgb_h[0],rgb_h[1],rgb_h[2]);
+	ObjPrim_SetVertexColor(fronl, 3, rgb_h[0],rgb_h[1],rgb_h[2]);
+	ObjPrim_SetVertexColor(fronl, 4, 255, 255, 255 );
+	ObjPrim_SetVertexColor(fronl, 5, 255, 255, 255 );
+	
+	if (delay >= 0)
+	{
+		loop(delay){ yield; }
+		
+		while( move1 < 1 ){
+			if( move1 < 1 ){ moveA += 2; }
+			move1 = 1 * sin( moveA );
+			ObjRender_SetScaleXYZ(fronl, move1*mxs, 1, 0 );
+			yield;
+		}
+	}
+	else
+	{
+		move1 = 1;
+		ObjRender_SetScaleXYZ(fronl, move1*mxs, 1, 0 );
+	}
+	while( true ){
+		yield;
+	}
+	Obj_Delete(fronl);
+}
+
+//----------------------------------------------------
+//スコア表示
+//----------------------------------------------------
+task TScore(effX, effY, delay)
+{
+	FrontLine( MaxX+110+36, effY+25, delay, [128,255,128], 5 );
+
+	//Score文字列
+	let objString = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objString, imgSystemBase01);
+	Obj_SetRenderPriorityI(objString, layFront);
+	ObjSprite2D_SetSourceRect(objString, 0, 32, 128, 64);
+	ObjSprite2D_SetDestRect(objString, 0, 0, 128*0.9, 32*0.9);
+	ObjRender_SetPosition(objString, effX, effY, 0);
+
+	//得点
+	let count = 12;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemNumber);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, (count+3)*6);
+	Obj_SetRenderPriorityI(obj, layFront);
+	ObjRender_SetPosition(obj, effX+42, effY-2, 0);
+	local
+	{
+		let keta_count = 0;
+		let offset_x = 0;
+		ascent(iObj in 0 .. count)
+		{
+			SetNumber_Base(obj, keta_count, offset_x, 0, 16, 32);
+			offset_x += 12; keta_count++;
+			if (iObj%3 == 2)
+			{
+				SetNumber_Base(obj, keta_count, offset_x, 0, 16, 32);
+				offset_x += 6; keta_count++;
+			}
+		}
+	}
+	
+	//フェードイン
+	FadeinDisplay([objString, obj], delay);
+
+	let before_score = -1;
+	while(true)
+	{
+		let score = GetScore();
+		score = min(score, 999999999999);
+		if (before_score != score)
+		{
+			before_score = score;
+			let listNum = DigitToArray(score, count);
+			let keta_count = 0;
+			ascent(iObj in 0 .. count)
+			{
+				let num = listNum[iObj];
+				SetNumber(obj, keta_count, num);
+				keta_count++;
+				if (iObj%3 == 2)
+				{
+					if (num >= 0) { SetNumber(obj, keta_count, 11); }
+					else { SetNumber(obj, keta_count, -1); }
+					keta_count++;
+				}
+			}
+			if (score > 100000000000) {
+				ObjRender_SetScaleX(obj, 0.85);
+				ObjRender_SetX(obj, effX+42+24);
+			} else if (score > 10000000000) {
+				ObjRender_SetScaleX(obj, 0.915);
+				ObjRender_SetX(obj, effX+42+14);
+			} else {
+				ObjRender_SetScaleX(obj, 1);
+				ObjRender_SetX(obj, effX+42);
+			}
+		}
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//ハイスコア表示
+//----------------------------------------------------
+task THiScore(effX, effY, delay)
+{
+	FrontLine( MaxX+110+36, effY+25, delay, [255,128,128], 5 );
+	// ハイスコアロード用待機
+	yield;
+
+	//Score文字列
+	let objString = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objString, imgSystemBase01);
+	Obj_SetRenderPriorityI(objString, layFront);
+	ObjSprite2D_SetSourceRect(objString, 0, 0, 128, 32);
+	ObjSprite2D_SetDestRect(objString, 0, 0, 128*0.9, 32*0.9);
+	ObjRender_SetPosition(objString, effX, effY, 0);
+
+	//得点
+	let count = 12;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemNumber);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, (count+3)*6);
+	Obj_SetRenderPriorityI(obj, layFront);
+	ObjRender_SetPosition(obj, effX+42, effY-2, 0);
+	ObjRender_SetColor(obj, 160, 160, 160);
+	local
+	{
+		let keta_count = 0;
+		let offset_x = 0;
+		ascent(iObj in 0 .. count)
+		{
+			SetNumber_Base(obj, keta_count, offset_x, 0, 16, 32);
+			offset_x += 12; keta_count++;
+			if (iObj%3 == 2)
+			{
+				SetNumber_Base(obj, keta_count, offset_x, 0, 16, 32);
+				offset_x += 6; keta_count++;
+			}
+		}
+	}
+	
+	//フェードイン
+	FadeinDisplay([objString, obj], delay);
+
+	let hi_score = LoadHighScore(Difficult(), GetPlayerTypeEx(), IsInfinityMode(), GetAreaCommonData(CAREA_STAGE, "StageIndex", 0), GetPlayMode());
+	
+	let before_score = -1;
+	while(true)
+	{
+		let score = max(hi_score, GetScore());
+		if (before_score != score)
+		{
+			before_score = score;
+			let listNum = DigitToArray(min(score, 999999999999), count);
+			let keta_count = 0;
+			ascent(iObj in 0 .. count)
+			{
+				let num = listNum[iObj];
+				SetNumber(obj, keta_count, num);
+				keta_count++;
+				if (iObj%3 == 2)
+				{
+					if (num >= 0) { SetNumber(obj, keta_count, 11); }
+					else { SetNumber(obj, keta_count, -1); }
+					keta_count++;
+				}
+			}
+			if (score > 100000000000) {
+				ObjRender_SetScaleX(obj, 0.85);
+				ObjRender_SetX(obj, effX+42+24);
+			} else if (score > 10000000000) {
+				ObjRender_SetScaleX(obj, 0.915);
+				ObjRender_SetX(obj, effX+42+14);
+			} else {
+				ObjRender_SetScaleX(obj, 1);
+				ObjRender_SetX(obj, effX+42);
+			}
+		}
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//残機表示
+//----------------------------------------------------
+task TPlayerLife(effX, effY, delay)
+{
+	FrontLine( MaxX+110+36, effY+25, delay, [255,96,255], 5 );
+
+	// 被弾数
+	TDeathCount(effX, effY, delay);
+
+	let flgInfi = IsInfinityMode();
+	let StarX = 256; let StarY = 0;
+	let count = 8;
+
+	//文字列
+	let objString = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objString, imgSystemBase01);
+	Obj_SetRenderPriorityI(objString, layFront);
+	ObjSprite2D_SetSourceRect(objString, 0, 64, 128, 96);
+	ObjSprite2D_SetDestRect(objString, 0, 0, 128*0.8, 32*0.8);
+	ObjRender_SetPosition(objString, effX, effY+4, 0);
+
+	//残機
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemBase01);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, count*6);
+	Obj_SetRenderPriorityI(obj, layFront);
+	ObjRender_SetPosition(obj, effX+78, effY+8, 0);
+	ascent(iObj in 0 .. count)
+	{
+		SetStar_Base(obj, iObj, iObj*14, 0, 16, 16);
+	}
+
+	//無限だよ！
+	let objInfi = -1;
+	if (flgInfi)
+	{
+		objInfi = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(objInfi, imgSystemBase01);
+		Obj_SetRenderPriorityI(objInfi, layFront+1);
+		ObjSprite2D_SetSourceRect(objInfi, 0, 416, 128, 480);
+		ObjSprite2D_SetDestRect(objInfi, -64*0.8, -32*0.8, 64*0.8, 32*0.8);
+		ObjRender_SetPosition(objInfi, effX+132, effY+16, 0);
+		
+		//フェードイン
+		FadeinDisplay([objString, obj, objInfi], delay);
+		
+		ascent(iObj in 0 .. count)
+		{
+			SetStar(obj, iObj, 0, StarX, StarY);
+		}
+	}
+	else
+	{
+		//フェードイン
+		FadeinDisplay([objString, obj], delay);
+		let before_score = -1;
+		
+		while(true)
+		{
+			let score = min(GetPlayerLife()+
+				GetAreaCommonData(CAREA_SYSTEM,"FragmentPlayer",0)/GetAreaCommonData(CAREA_SYSTEM,"FragmentPlayer_Next",1)
+				, 8);
+			if (before_score != score)
+			{
+				before_score = score;
+				//星の数
+				ascent(iObj in 0 .. count)
+				{
+					if (trunc(score) > iObj) { SetStar(obj, iObj, 5, StarX, StarY); }
+					else if (ceil(score) <= iObj) { SetStar(obj, iObj, 0, StarX, StarY); }
+					// かけら
+					else { SetStar(obj, iObj, trunc((score-trunc(score))*4+1), StarX, StarY); }
+				}
+			}
+			yield;
+		}
+	}
+}
+
+//----------------------------------------------------
+//残スペル表示
+//----------------------------------------------------
+task TPlayerSpell(effX, effY, delay)
+{
+	FrontLine( MaxX+110+36, effY+25, delay, [96,255,96], 5 );
+	// かけら
+	TPlayerSpell_Fragment(effX, effY, delay);
+	
+	let StarX = 256; let StarY = 16;
+	let count = 8;
+
+	//文字列
+	let objString = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objString, imgSystemBase01);
+	Obj_SetRenderPriorityI(objString, layFront);
+	ObjSprite2D_SetSourceRect(objString, 0, 96, 128, 128);
+	ObjSprite2D_SetDestRect(objString, 0, 0, 128*0.8, 32*0.8);
+	ObjRender_SetPosition(objString, effX, effY+4, 0);
+
+	//残機
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemBase01);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, count*6);
+	Obj_SetRenderPriorityI(obj, layFront);
+	ObjRender_SetPosition(obj, effX+78, effY+8, 0);
+	ascent(iObj in 0 .. count)
+	{
+		SetStar_Base(obj, iObj, iObj*14, 0, 16, 16);
+	}
+	
+	//フェードイン
+	FadeinDisplay([objString, obj], delay);
+
+	let before_score = -1;
+	while(true)
+	{
+		let score = min(GetPlayerSpell()+
+			GetAreaCommonData(CAREA_SYSTEM,"FragmentSpell",0)/GetAreaCommonData(CAREA_SYSTEM,"FragmentSpell_Next",1)
+			, 8);
+		if (before_score != score)
+		{
+			before_score = score;
+			//星の数
+			ascent(iObj in 0 .. count)
+			{
+				if (trunc(score) > iObj) { SetStar(obj, iObj, 5, StarX, StarY); }
+				else if (ceil(score) <= iObj) { SetStar(obj, iObj, 0, StarX, StarY); }
+				// かけら
+				else { SetStar(obj, iObj, trunc((score-trunc(score))*4+1), StarX, StarY); }
+			}
+		}
+		yield;
+	}
+}
+// かけら
+task TPlayerSpell_Fragment(effX, effY, delay)
+{
+	//文字列
+	let objString = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objString, imgSystemBase01);
+	Obj_SetRenderPriorityI(objString, layFront);
+	ObjSprite2D_SetSourceRect(objString, 0, 224, 128, 256);
+	ObjSprite2D_SetDestRect(objString, 0, 0, 128, 32);
+	ObjRender_SetPosition(objString, effX+88, effY+15, 0);
+
+	//数字
+	let count = 2;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemNumber);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, (count*2+1)*6);
+	Obj_SetRenderPriorityI(obj, layFront);
+	ObjRender_SetColor(obj, 220, 220, 220);
+	ObjRender_SetPosition(obj, effX+148, effY+6+15, 0);
+	local
+	{
+		let keta_count = 0;
+		let offset_x = 0;
+		ascent(iObj in 0 .. count*2+1)
+		{
+			SetNumber_Base(obj, keta_count, offset_x, 0, 14, 20);
+			offset_x += 8; keta_count++;
+		}
+	}
+	SetNumber(obj, count, 15);
+	
+	//フェードイン
+	FadeinDisplay([objString, obj], delay);
+
+	let before_score = -1;
+	while(true)
+	{
+		let score = min(GetAreaCommonData(CAREA_SYSTEM,"FragmentSpell",0), 99);
+		if (before_score != score)
+		{
+			before_score = score;
+			let listNum = DigitToArray(score, count);
+			ascent(iObj in 0 .. count)
+			{
+				let num = listNum[iObj];
+				SetNumber(obj, iObj, num);
+			}
+			// next
+			let score2 = min(GetAreaCommonData(CAREA_SYSTEM,"FragmentSpell_Next",0), 99);
+			let listNum2 = DigitToArray(score2, count);
+			ascent(iObj in 0 .. count)
+			{
+				let num = listNum2[iObj];
+				SetNumber(obj, iObj+count+1, num);
+			}
+		}
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//Graze表示
+//----------------------------------------------------
+task TGraze(effX, effY, delay)
+{
+	FrontLine( MaxX+110+40+12, effY+25, delay, [96,96,96], 4.5 );
+
+	//文字列
+	let objString = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objString, imgSystemBase01);
+	Obj_SetRenderPriorityI(objString, layFront);
+	ObjSprite2D_SetSourceRect(objString, 0, 128, 128, 160);
+	ObjSprite2D_SetDestRect(objString, 0, 0, 128*0.8, 32*0.8);
+	ObjRender_SetPosition(objString, effX+15, effY+4, 0);
+
+	//Graze
+	let count = 5;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemNumber);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, (count+1)*6);
+	Obj_SetRenderPriorityI(obj, layFront);
+	ObjRender_SetColor(obj, 180, 180, 180);
+	ObjRender_SetPosition(obj, effX+108, effY-2, 0);
+	local
+	{
+		let keta_count = 0;
+		let offset_x = 0;
+		ascent(iObj in 0 .. count)
+		{
+			SetNumber_Base(obj, keta_count, offset_x, 0, 16, 32);
+			offset_x += 12; keta_count++;
+			if (iObj == 1)
+			{
+				SetNumber_Base(obj, keta_count, offset_x, 0, 16, 32);
+				offset_x += 6; keta_count++;
+			}
+		}
+	}
+	
+	//フェードイン
+	FadeinDisplay([objString, obj], delay);
+
+	let before_score = -1;
+	while(true)
+	{
+		let score = GetGraze();
+		score = min(score, 99999);
+		if (before_score != score)
+		{
+			before_score = score;
+			let listNum = DigitToArray(score, count);
+			let keta_count = 0;
+			ascent(iObj in 0 .. count)
+			{
+				let num = listNum[iObj];
+				SetNumber(obj, keta_count, num);
+				keta_count++;
+				if (iObj == 1)
+				{
+					if (num >= 0) { SetNumber(obj, keta_count, 11); }
+					else { SetNumber(obj, keta_count, -1); }
+					keta_count++;
+				}
+			}
+		}
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//最大得点表示
+//----------------------------------------------------
+task TMaxScore(effX, effY, delay)
+{
+	FrontLine( MaxX+110+40+12, effY+25, delay, [96,96,255], 4.5 );
+
+	//文字列
+	let objString = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objString, imgSystemBase01);
+	Obj_SetRenderPriorityI(objString, layFront);
+	ObjSprite2D_SetSourceRect(objString, 0, 160, 128, 192);
+	ObjSprite2D_SetDestRect(objString, 0, 0, 128*0.8, 32*0.8);
+	ObjRender_SetPosition(objString, effX, effY+4, 0);
+
+	//最大得点
+	let count = 6;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemNumber);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, (count+1)*6);
+	Obj_SetRenderPriorityI(obj, layFront);
+	ObjRender_SetColor(obj, 200, 230, 255);
+	ObjRender_SetPosition(obj, effX+96, effY-2, 0);
+	local
+	{
+		let keta_count = 0;
+		let offset_x = 0;
+		ascent(iObj in 0 .. count)
+		{
+			SetNumber_Base(obj, keta_count, offset_x, 0, 16, 32);
+			offset_x += 12; keta_count++;
+			if (iObj == 2)
+			{
+				SetNumber_Base(obj, keta_count, offset_x, 0, 16, 32);
+				offset_x += 6; keta_count++;
+			}
+		}
+	}
+	
+	//フェードイン
+	FadeinDisplay([objString, obj], delay);
+
+
+	let before_score = -1;
+	while(true)
+	{
+		let score = GetMaxScore();
+		score = min(score, 999990);
+		if (before_score != score)
+		{
+			before_score = score;
+			let listNum = DigitToArray(score, count);
+			let keta_count = 0;
+			ascent(iObj in 0 .. count)
+			{
+				let num = listNum[iObj];
+				SetNumber(obj, keta_count, num);
+				keta_count++;
+				if (iObj == 2)
+				{
+					if (num >= 0) { SetNumber(obj, keta_count, 11); }
+					else { SetNumber(obj, keta_count, -1); }
+					keta_count++;
+				}
+			}
+		}
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//願いアイテム数表示
+//----------------------------------------------------
+task TWishBonus(effX, effY, delay)
+{
+	FrontLine( MaxX+110+40+12, effY+25, delay, [255,255,96], 4.5 );
+
+	// ラスワボーダー
+//	TLastwordStandby(effX, effY, delay);
+
+	//文字列
+	let objString = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objString, imgSystemBase01);
+	Obj_SetRenderPriorityI(objString, layFront);
+	ObjSprite2D_SetDestRect(objString, 0, 0, 22, 22);
+	ObjRender_SetPosition(objString, effX+46, effY+4, 0);
+
+	//最大得点
+	let count = 3;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemNumber);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, (count*2+1)*6);
+	Obj_SetRenderPriorityI(obj, layFront);
+	ObjRender_SetColor(obj, 255, 255, 220);
+	ObjRender_SetPosition(obj, effX+98, effY-2, 0);
+	local
+	{
+		let keta_count = 0;
+		let offset_x = 0;
+		ascent(iObj in 0 .. count+1)
+		{
+			SetNumber_Base(obj, keta_count, offset_x, 0, 16, 32);
+			offset_x += 12; keta_count++;
+		}
+		ascent(iObj in 0 .. count)
+		{
+			SetNumber_Base(obj, keta_count, offset_x, 6, 12, 24);
+			offset_x += 10; keta_count++;
+		}
+	}
+	SetNumber(obj, count, 15);
+	
+	//フェードイン
+	FadeinDisplay([objString, obj], delay);
+
+	let t = 0;
+	let before_score = -1;
+	let before_max = -1;
+	while(true)
+	{
+		let score = GetWishItemCount();
+		score = min(score, 999);
+		let mscore = GetWishItemMax();
+		mscore = min(mscore, 999);
+		if (before_score != score)
+		{
+			before_score = score;
+			let listNum = DigitToArray(score, count);
+			let keta_count = 0;
+			ascent(iObj in 0 .. count)
+			{
+				let num = listNum[iObj];
+				SetNumber(obj, keta_count, num);
+				keta_count++;
+			}
+		}
+		if (before_max != mscore)
+		{
+			before_max = mscore;
+			let listNum = DigitToArray(mscore, count);
+			let keta_count = 0;
+			ascent(iObj in 0 .. count)
+			{
+				let num = listNum[iObj];
+				SetNumber(obj, keta_count+count+1, num);
+				keta_count++;
+			}
+		}
+		if (t%5 == 0)
+		{
+			let st = trunc(t/5);
+			let ix = 0 + (st%8)*32;
+			let iy = 352 + trunc((st/8)%2)*32;
+			ObjSprite2D_SetSourceRect(objString, ix, iy, ix+32, iy+32);
+		}
+		t++;
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//　難易度表記
+//----------------------------------------------------
+task DisplayDifficulty(pos,layer,delay)
+{
+	let ID		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let count	= 0;
+	let move1	= 0;
+	let moveA	= 0;
+	let scaleX	= 0;
+	let scaleY	= 0;
+	
+	//　難易度
+	let tmpDiff = Difficult();
+	
+	ObjPrim_SetTexture(ID, imgSystemDifficulty );
+	Obj_SetRenderPriorityI(ID, layer );
+	ObjRender_SetBlendType(ID, BLEND_ALPHA );
+	ObjRender_SetScaleXYZ(ID, 0, 0, 1 );
+	
+	alternative( tmpDiff )
+	case( D_EASY ){
+		ObjSprite2D_SetSourceRect(ID, 0, 0, 128, 32 );
+	}
+	case( D_NORM ){
+		ObjSprite2D_SetSourceRect(ID, 0, 32, 128, 64 );
+	}
+	case( D_HARD ){
+		ObjSprite2D_SetSourceRect(ID, 0, 64, 128, 96 );
+	}
+	case( D_LUNA ){
+		ObjSprite2D_SetSourceRect(ID, 0, 96, 128, 128 );
+	}
+	case( D_EXTRA ){
+		ObjSprite2D_SetSourceRect(ID, 0, 128, 128, 160 );
+	}
+	/*  Ph  */
+	case( D_DRIVE ){
+		ObjSprite2D_SetSourceRect(ID, 0, 192, 128, 224 );
+	}
+	case( D_LAST ){
+		ObjSprite2D_SetSourceRect(ID, 0, 224, 128, 256 );
+	}
+	ObjSprite2D_SetDestCenter(ID);
+	
+	if (delay > 0 && IsFirstStage())
+	{
+		loop( delay ){ yield; }
+		
+		while( !IsStgWorldBreak() && count < 135 ){
+			if (count < 75)
+			{
+				let tmp = (count+1)/75;
+				move1 = sin(min(90, tmp*180));
+				scaleX = move1;
+				scaleY = move1;
+				if (tmp > 0.33)
+				{
+					let offsetS = (0.33^2 - (0.66-tmp)^2)*sin(tmp*1080) * 3;
+					scaleX += offsetS;
+					scaleY -= offsetS;
+				}
+			}
+			
+			ObjRender_SetPosition(ID, 32 + CenX, MinY+64, 0 );
+			ObjRender_SetScaleXYZ(ID, scaleX, scaleY, 1 );
+			
+			if( count > 75 && count < 106 ){
+				if( count%4 == 0 ){
+					ObjRender_SetColor(ID, 0, 0, 0 );
+				}
+				else{
+					ObjRender_SetColor(ID, 255, 255, 255 );
+				}
+			}
+			
+			count++;
+			
+			yield;
+		}
+		ObjRender_SetScaleXYZ(ID, 1, 1, 1);
+		move1 = 0;
+		moveA = 0;
+		ObjRender_SetColor(ID, 255, 255, 255 );
+		while( !IsStgWorldBreak() && move1 < 1 ){
+			move1 = 1 * sin( moveA );
+			
+			ObjRender_SetScaleY(ID, 1 - move1);
+			
+			moveA += 5;
+			
+			yield;
+		}
+		move1 = 0;
+		moveA = 0;
+		ObjRender_SetColor(ID, 255, 255, 255 );
+		ObjRender_SetPosition(ID, pos[0], pos[1], 0 );
+		while( !IsStgWorldBreak() && move1 < 1 ){
+			move1 = 1 * sin( moveA );
+			
+			ObjRender_SetScaleY(ID, move1 );
+			
+			if( move1 < 1 ){ moveA += 5; }
+			
+			yield;
+		}
+	}
+	ObjRender_SetPosition(ID, pos[0], pos[1], 0 );
+	ObjRender_SetScaleXYZ(ID, 1, 1, 1 );
+	while( !IsStgWorldBreak() ){
+		yield;
+	}
+	Obj_Delete(ID);
+}
+
+//----------------------------------------------------
+//FPS表示
+//----------------------------------------------------
+task TFPS()
+{
+	//得点
+	let count = 4;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemFPS);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, (count+2)*6);
+	Obj_SetRenderPriorityI(obj, layFront+10);
+	ObjRender_SetPosition(obj, GetScreenWidth-80, GetScreenHeight-24, 0);
+	local
+	{
+		let offset_x = 0;
+		ascent(iObj in 0 .. count)
+		{
+			SetNumber_BaseFPS(obj, iObj, offset_x, 0, 10, 16);
+			offset_x += 10;
+			if (iObj == count-2)
+			{
+				SetNumber_BaseFPS(obj, count, offset_x, 0, 10, 16);
+				offset_x += 4;
+			}
+		}
+		SetNumber_BaseFPS(obj, count+1, offset_x, 1, 20, 16);
+		SetNumberFPS(obj, count, 10);
+		local	/*fps*/
+		{
+			let keta = count+1;
+			let num = 11;
+			ObjPrim_SetVertexUVT(obj, keta*6  , num*10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+1, (num+1)*10+10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+2, num*10, 16);
+			ObjPrim_SetVertexUVT(obj, keta*6+3, (num+1)*10+10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+4, num*10, 16);
+			ObjPrim_SetVertexUVT(obj, keta*6+5, (num+1)*10+10, 16);
+		}
+	}
+
+	let before_score = -1;
+	while(true)
+	{
+		let score = trunc(GetCurrentFps()*10);
+		score = min(score, 9999);
+		if (before_score != score)
+		{
+			before_score = score;
+			let listNum = DigitToArray(score, count);
+			ascent(iObj in 0 .. count)
+			{
+				SetNumberFPS(obj, iObj, listNum[iObj]);
+			}
+		}
+		yield;
+	}
+
+	//数字用
+	function SetNumberFPS(obj, keta, num)
+	{
+		if (num < 0)
+		{
+			ascent(i in 0 .. 6)
+			{
+				ObjPrim_SetVertexUVT(obj, keta*6+i, 0, 0);
+			}
+		}
+		else
+		{
+			ObjPrim_SetVertexUVT(obj, keta*6  , num*10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+1, (num+1)*10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+2, num*10, 16);
+			ObjPrim_SetVertexUVT(obj, keta*6+3, (num+1)*10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+4, num*10, 16);
+			ObjPrim_SetVertexUVT(obj, keta*6+5, (num+1)*10, 16);
+		}
+	}
+	function SetNumber_BaseFPS(obj, keta, x, y, w, h)
+	{
+		ObjPrim_SetVertexPosition(obj, keta*6  , x, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+1, x+w, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+2, x, y+h, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+3, x+w, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+4, x, y+h, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+5, x+w, y+h, 0);
+	}
+}
+task TFPS_Replay()
+{
+	let configWindowPos = GetAreaCommonData(CAREA_CONFIG, "WINDOW_POS", 0);
+	//得点
+	let count = 3;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemFPS);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, (count+1)*6);
+	Obj_SetRenderPriorityI(obj, 80);
+	if (configWindowPos == 0) { ObjRender_SetPosition(obj, GetStgFrameWidth-54, GetStgFrameHeight-18, 0); }
+	else { ObjRender_SetPosition(obj, 0, GetStgFrameHeight-18, 0); }
+	ObjRender_SetColor(obj, 200, 200, 200);
+	local
+	{
+		let offset_x = 0;
+		ascent(iObj in 0 .. count)
+		{
+			SetNumber_BaseFPS(obj, iObj, offset_x, 0, 10, 16);
+			offset_x += 10;
+		}
+		SetNumber_BaseFPS(obj, count, offset_x, 1, 20, 16);
+		local	/*fps*/
+		{
+			let keta = count;
+			let num = 11;
+			ObjPrim_SetVertexUVT(obj, keta*6  , num*10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+1, (num+1)*10+10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+2, num*10, 16);
+			ObjPrim_SetVertexUVT(obj, keta*6+3, (num+1)*10+10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+4, num*10, 16);
+			ObjPrim_SetVertexUVT(obj, keta*6+5, (num+1)*10+10, 16);
+		}
+	}
+
+	let before_score = -1;
+	while(true)
+	{
+		let score = trunc(GetReplayFps());
+		score = min(score, 9999);
+		if (before_score != score)
+		{
+			before_score = score;
+			let listNum = DigitToArray(score, count);
+			ascent(iObj in 0 .. count)
+			{
+				SetNumberFPS(obj, iObj, listNum[iObj]);
+			}
+		}
+		yield;
+	}
+
+	//数字用
+	function SetNumberFPS(obj, keta, num)
+	{
+		if (num < 0)
+		{
+			ascent(i in 0 .. 6)
+			{
+				ObjPrim_SetVertexUVT(obj, keta*6+i, 0, 0);
+			}
+		}
+		else
+		{
+			ObjPrim_SetVertexUVT(obj, keta*6  , num*10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+1, (num+1)*10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+2, num*10, 16);
+			ObjPrim_SetVertexUVT(obj, keta*6+3, (num+1)*10, 0);
+			ObjPrim_SetVertexUVT(obj, keta*6+4, num*10, 16);
+			ObjPrim_SetVertexUVT(obj, keta*6+5, (num+1)*10, 16);
+		}
+	}
+	function SetNumber_BaseFPS(obj, keta, x, y, w, h)
+	{
+		ObjPrim_SetVertexPosition(obj, keta*6  , x, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+1, x+w, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+2, x, y+h, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+3, x+w, y, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+4, x, y+h, 0);
+		ObjPrim_SetVertexPosition(obj, keta*6+5, x+w, y+h, 0);
+	}
+}
+
+//----------------------------------------------------
+//被弾数表示
+//----------------------------------------------------
+task TDeathCount(effX, effY, delay)
+{
+	//得点
+	let count = 4;
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetTexture(obj, imgSystemNumber);
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+	ObjPrim_SetVertexCount(obj, count*6);
+	Obj_SetRenderPriorityI(obj, layFront);
+	ObjRender_SetPosition(obj, effX+150, effY+22, 0);
+	ObjRender_SetColor(obj, 255, 128, 128);
+	local
+	{
+		let keta_count = 0;
+		let offset_x = 0;
+		ascent(iObj in 0 .. count)
+		{
+			SetNumber_Base(obj, keta_count, offset_x, 0, 14, 20);
+			offset_x += 10; keta_count++;
+		}
+	}
+	
+	//フェードイン
+	FadeinDisplay([obj], delay);
+
+	let before_score = -1;
+	while(true)
+	{
+		let score = min(9999, GetAllDeathCount());
+		if (before_score != score)
+		{
+			before_score = score;
+			let listNum = DigitToArray(score, count);
+			let keta_count = 0;
+			ascent(iObj in 0 .. count)
+			{
+				let num = listNum[iObj];
+				SetNumber(obj, keta_count, num);
+				keta_count++;
+			}
+		}
+		yield;
+	}
+}
+
+//----------------------------------------------------
+// 独自システム表示
+//----------------------------------------------------
+task TStarSystem(effX, effY, delay)
+{
+	let STAR_SCALE = 0;
+	if (delay < 0) { STAR_SCALE = 0.25 + 2/(GetMagnitude()+1); }
+
+	TStarSystem_sub(effX, effY, 1, [128,128,64]);
+	TStarSystem_sub(effX, effY, 0.5, [64,128,128]);
+	TStarSystem_sub(effX, effY, -0.5, [128,64,128]);
+
+	TStarSystem_gage(effX, effY);
+	TStarSystem_text(effX, effY);
+	TStarSystem_mag(effX, effY, delay);
+	TStarSystem_lw(effX, effY);
+	
+	wait(delay+45);
+	while(true)
+	{
+		let tmp_scale = 0.25 + 2/(GetMagnitude()+1);
+		STAR_SCALE = STAR_SCALE*0.995 + tmp_scale*0.005;
+		yield;
+	}
+
+	// ランクの数字表示
+	task TStarSystem_mag(effX, effY, delay)
+	{
+		let before_score = GetMagnitude();
+
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetTexture(obj, imgSystemStar);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetVertexCount(obj, 6);
+		Obj_SetRenderPriorityI(obj, layFront+1);
+		ObjRender_SetColor(obj, 255, 255, 255);
+		ObjRender_SetPosition(obj, effX, effY+0, 0);
+		
+		ObjPrim_SetVertexPosition(obj, 0, -16, -32, 0);
+		ObjPrim_SetVertexPosition(obj, 1,  16, -32, 0);
+		ObjPrim_SetVertexPosition(obj, 2, -16,  32, 0);
+		ObjPrim_SetVertexPosition(obj, 3,  16, -32, 0);
+		ObjPrim_SetVertexPosition(obj, 4, -16,  32, 0);
+		ObjPrim_SetVertexPosition(obj, 5,  16,  32, 0);
+		SetNumberStarSystem(obj, 0, before_score-1);
+
+		//フェードイン
+		if (delay > -999) { FadeinDisplay([obj], delay); }
+		else
+		{
+			// 出現モーション
+			descent(t in 0 .. 24)
+			{
+				let tmp = sin(t/24*90);
+				let tmp_s = 1 + tmp*1.5;
+				ObjRender_SetAngleY(obj, tmp*90);
+				ObjRender_SetScaleXYZ(obj, tmp_s, tmp_s, tmp_s);
+				yield;
+			}
+		}
+		
+		while(true)
+		{
+			let score = GetMagnitude();
+			if (before_score != score)
+			{
+				TStarSystem_mag(effX, effY, -99999);
+				break;
+			}
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+	// スコア倍率表示
+	task TStarSystem_text(effX, effY)
+	{
+		let scale2 = 0.66;
+		let objText2 = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(objText2, imgSystemStar);
+		Obj_SetRenderPriorityI(objText2, layFront+1);
+		ObjRender_SetColor(objText2, 255, 255, 255);
+		ObjRender_SetPosition(objText2, effX-64*scale2, effY-28, 0);
+		ObjSprite2D_SetSourceRect(objText2, 0, 128, 192, 160);
+		ObjSprite2D_SetDestRect(objText2, 0, 0, 192*scale2, 32*scale2);
+
+		let scale = 0.66;
+		let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(objText, imgSystemStar);
+		Obj_SetRenderPriorityI(objText, layFront+1);
+		ObjRender_SetColor(objText, 255, 255, 255);
+		ObjRender_SetPosition(objText, effX-16, effY+16, 0);
+		ObjSprite2D_SetSourceRect(objText, 0, 224, 96, 256);
+		ObjSprite2D_SetDestRect(objText, 0, 0, 96*scale, 32*scale);
+
+		//最大得点
+		let count = 4;
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetTexture(obj, imgSystemNumber);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetVertexCount(obj, (count+1)*6);
+		Obj_SetRenderPriorityI(obj, layFront+1);
+		ObjRender_SetColor(obj, 224, 224, 224);
+		ObjRender_SetPosition(obj, effX+42, effY+11, 0);
+		local
+		{
+			SetNumber_Base(obj, 0, 0, 0, 14, 28);
+			SetNumber_Base(obj, 1, 10, 0, 14, 28);
+			SetNumber_Base(obj, 2, 26, 7, 9, 20);
+			SetNumber_Base(obj, 3, 34, 7, 9, 20);
+			SetNumber_Base(obj, 4, 20, 1, 14, 28);
+			SetNumber(obj, count, 10);
+		}
+
+		//フェードイン
+		FadeinDisplay([obj, objText, objText2], delay);
+		
+		let before_score = -1;
+		while(true)
+		{
+			let score = GetMagnitudeScoreRate();
+			if (before_score != score)
+			{
+				before_score = score;
+				score = min(trunc(score*100), 9999);
+				let listNum = DigitToArray(score, count);
+				ascent(iObj in 0 .. count)
+				{
+					let num = listNum[iObj];
+					SetNumber(obj, iObj, num);
+				}
+			}
+			yield;
+		}
+	}
+	//数字用
+	function SetNumberStarSystem(obj, keta, num)
+	{
+		if (num < 0)
+		{
+			ascent(i in 0 .. 6)
+			{
+				ObjPrim_SetVertexUVT(obj, keta*6+i, 0, 0);
+			}
+		}
+		else
+		{
+			ObjPrim_SetVertexUVT(obj, keta*6  , num*32, 160);
+			ObjPrim_SetVertexUVT(obj, keta*6+1, (num+1)*32, 160);
+			ObjPrim_SetVertexUVT(obj, keta*6+2, num*32, 224);
+			ObjPrim_SetVertexUVT(obj, keta*6+3, (num+1)*32, 160);
+			ObjPrim_SetVertexUVT(obj, keta*6+4, num*32, 224);
+			ObjPrim_SetVertexUVT(obj, keta*6+5, (num+1)*32, 224);
+		}
+	}
+
+	// 星座ゲージ
+	task TStarSystem_gage(effX, effY)
+	{
+		let imgSystemStar3 = "";
+		alternative(GetPlayerType())
+		case(PLAYER_REIMU_A) { imgSystemStar3 = imgSystemStar3a; }
+		case(PLAYER_MARISA_A) { imgSystemStar3 = imgSystemStar3b; }
+		case(PLAYER_SANAE_A) { imgSystemStar3 = imgSystemStar3c; }
+		
+		let obj = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+		ObjPrim_SetTexture(obj[0], imgSystemStar3);
+		Obj_SetRenderPriorityI(obj[0], layFront-1);
+		ObjRender_SetPosition(obj[0], effX-96, effY-64, 0);
+		ObjRender_SetBlendType(obj[0], BLEND_ALPHA);
+		ObjSprite2D_SetSourceRect(obj[0], 0, 0, 192, 128);
+		ObjSprite2D_SetDestRect(obj[0], 0, 0, 192, 128);
+		
+		ObjPrim_SetTexture(obj[1], imgSystemStar3);
+		Obj_SetRenderPriorityI(obj[1], layFront);
+		ObjRender_SetPosition(obj[1], effX-96, effY-64, 0);
+		ObjRender_SetBlendType(obj[1], BLEND_ALPHA);
+		ObjSprite2D_SetSourceRect(obj[1], 0, 128, 192, 256);
+		ObjSprite2D_SetDestRect(obj[1], 0, 0, 192, 128);
+
+		ObjShader_SetShaderF(obj[1], hlslMask);
+		ObjShader_SetTechnique(obj[1], "TecMask");
+		ObjShader_SetTexture(obj[1], "textureMask_", imgSystemStar2);
+
+		//フェードイン
+		FadeinDisplay(obj, delay);
+		
+		let before_score = -1;
+		let t = 0;
+		while(true)
+		{
+			let score = GetWishItemCount();
+			if (before_score != score)
+			{
+				let num = score/GetWishItemMax() * 192;
+				ObjSprite2D_SetSourceRect(obj[1], 0, 128, num, 256);
+				ObjSprite2D_SetDestRect(obj[1], 0, 0, num, 128);
+				before_score = score;
+			}
+			ObjShader_SetFloatArray(obj[1], "posFrame_", [t, 0, 256, 256]);	// ズレる。コレガワカラナイ（放置）
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	// ラスワ表示
+	task TStarSystem_lw(effX, effY)
+	{
+		let imgSystemStar3 = "";
+		alternative(GetPlayerType())
+		case(PLAYER_REIMU_A) { imgSystemStar3 = imgSystemStar3a; }
+		case(PLAYER_MARISA_A) { imgSystemStar3 = imgSystemStar3b; }
+		case(PLAYER_SANAE_A) { imgSystemStar3 = imgSystemStar3c; }
+		
+		let obj = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+		// 背景
+		ObjPrim_SetTexture(obj[0], imgSystemStar3);
+		Obj_SetRenderPriorityI(obj[0], layFront-1);
+		ObjRender_SetPosition(obj[0], effX-96, effY-64, 0);
+		ObjRender_SetBlendType(obj[0], BLEND_ADD_ARGB);
+		ObjSprite2D_SetSourceRect(obj[0], 0, 256, 192, 384);
+		ObjSprite2D_SetDestRect(obj[0], 0, 0, 192, 128);
+		// Standby
+		ObjPrim_SetTexture(obj[1], imgSystemStar);
+		Obj_SetRenderPriorityI(obj[1], layFront+2);
+		ObjRender_SetPosition(obj[1], effX, effY+14, 0);
+		ObjSprite2D_SetSourceRect(obj[1], 96, 224, 256, 256);
+		ObjSprite2D_SetDestRect(obj[1], -80, -16, 80, 16);
+		ObjRender_SetScaleXYZ(obj[1], 0, 0, 0);
+		//残数
+		let count = 4;
+		ObjPrim_SetTexture(obj[2], imgSystemNumber);
+		ObjPrim_SetPrimitiveType(obj[2], PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetVertexCount(obj[2], (count+1)*6);
+		Obj_SetRenderPriorityI(obj[2], layFront+1);
+		ObjRender_SetColor(obj[2], 192, 230, 255);
+		ObjRender_SetPosition(obj[2], effX-84, effY+20, 0);
+		ascent(i in 0 .. count)
+		{
+			SetNumber_Base(obj[2], i, i*8, 0, 9, 16);
+		}
+		
+		//フェードイン
+		FadeinDisplay([obj[0], obj[2]], delay);
+		
+		let flgLast = false;
+		let before_score = -1;
+		let t = 0;
+		// 表示確定前は毎frame更新
+		while(GetLastWordBorder() <= 0)
+		{
+			let score = GetLastWordBorder();
+			
+			local
+			{
+				let num = score * 192;
+				ObjSprite2D_SetSourceRect(obj[0], 0, 256, num, 384);
+				ObjSprite2D_SetDestRect(obj[0], 0, 0, num, 128);
+				before_score = score;
+				// 残数用
+				let res = -1;
+				let border = GetAreaCommonData(CAREA_STAGE, "LWWishItem", -1);
+				if (border > 0) { res = border - GetAreaCommonData(CAREA_STAGE, "StageWishItem", 0); }
+				if (res > 0) {
+					let listNum = DigitToArray(res, count);
+					ascent(iObj in 0 .. count) { SetNumber(obj[2], iObj, listNum[iObj]); }
+					Obj_SetVisible(obj[2], true);
+				} else {
+					Obj_SetVisible(obj[2], false);
+				}
+				
+				if (!flgLast && score >= 1)
+				{
+					flgLast = true;
+					StandByLastword();
+					CallSound(sndExtMag);
+				}
+			}
+			let tmp = sin(t*2)/2 + 0.5;
+			ObjRender_SetColor(obj[0], tmp*255, tmp*128, 128+tmp*128);
+			ObjRender_SetColor(obj[1], 255, 192+tmp*128, 128+tmp*128);
+			t++;
+			yield;
+		}
+		while(true)
+		{
+			let score = GetLastWordBorder();
+			
+			if (before_score != score)
+			{
+				let num = score * 192;
+				ObjSprite2D_SetSourceRect(obj[0], 0, 256, num, 384);
+				ObjSprite2D_SetDestRect(obj[0], 0, 0, num, 128);
+				before_score = score;
+				// 残数用
+				let res = -1;
+				let border = GetAreaCommonData(CAREA_STAGE, "LWWishItem", -1);
+				if (border > 0) { res = border - GetAreaCommonData(CAREA_STAGE, "StageWishItem", 0); }
+				if (res > 0) {
+					let listNum = DigitToArray(res, count);
+					ascent(iObj in 0 .. count) { SetNumber(obj[2], iObj, listNum[iObj]); }
+					Obj_SetVisible(obj[2], true);
+				} else {
+					Obj_SetVisible(obj[2], false);
+				}
+				
+				if (!flgLast && score >= 1)
+				{
+					flgLast = true;
+					StandByLastword();
+					CallSound(sndExtMag);
+				}
+			}
+			let tmp = sin(t*2)/2 + 0.5;
+			ObjRender_SetColor(obj[0], tmp*255, tmp*128, 128+tmp*128);
+			ObjRender_SetColor(obj[1], 255, 192+tmp*128, 128+tmp*128);
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+		
+		task StandByLastword()
+		{
+			Obj_SetVisible(obj[2], false);
+			ascent(i in 0 .. 45)
+			{
+				let tmp = sin((i+1)/45*90);
+				ObjRender_SetScaleXYZ(obj[1], tmp*0.66, (4-tmp*3)*0.66, 1);
+				yield;
+			}
+		}
+	}
+
+	// 輝き
+	task TStarSystem_sub(effX, effY, add_angle, color)
+	{
+		if (delay >= 0) { wait(delay+45); }
+
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, imgSystemStar);
+		Obj_SetRenderPriorityI(obj, layFront-1);
+		ObjRender_SetPosition(obj, effX, effY, 0);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 128, 128);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetColor(obj, color[0], color[1], color[2]);
+		
+		let t = 0;
+		let angle = 0;
+		while(true)
+		{
+			ObjRender_SetAngleZ(obj, angle);
+			ObjRender_SetScaleXYZ(obj, STAR_SCALE, STAR_SCALE, 1);
+			angle += add_angle;
+			t++;
+			yield;
+		}
+	}
+}
+
+//----------------------------------------------------
+//ゲームモードのアイコン表示
+//----------------------------------------------------
+task TGameMode(effX, effY, delay)
+{
+	// 位置調整
+	if (Difficult() == D_EASY || Difficult() == D_HARD)
+	{
+		effX -= 12;
+	}
+	
+	//文字列
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, imgSystemBase01);
+	Obj_SetRenderPriorityI(obj, layFront);
+	ObjRender_SetPosition(obj, effX, effY, 0);
+	ObjRender_SetAlpha(obj, 0);
+	if (IsInfinityMode())
+	{
+		ObjSprite2D_SetSourceRect(obj, 128, 416, 192, 480 );
+	} else {
+		ObjSprite2D_SetSourceRect(obj, 192, 416, 256, 480 );
+	}
+	ObjSprite2D_SetDestCenter(obj);
+	
+	let scale = 0.75;
+	if (delay > 0)
+	{
+		wait(delay);
+		ascent(t in 0 .. 60)
+		{
+			let tmp = sin((t+1)/60*90);
+			let tmp_s = scale * (2-tmp);
+			ObjRender_SetScaleXYZ(obj, tmp_s, tmp_s, 1);
+			ObjRender_SetAngleZ(obj, 15+(1-tmp)*180);
+			ObjRender_SetAlpha(obj, 255*tmp);
+			yield;
+		}
+	}
+	ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+	ObjRender_SetAlpha(obj, 255);
+	ObjRender_SetAngleZ(obj, 15);
+	while(true)
+	{
+		yield;
+	}
+}
+
+// フェードイン
+task FadeinDisplay(objs, delay)
+{
+	if (delay < 0) { return; }
+	
+	ascent(i in 0 .. length(objs))
+	{
+		ObjRender_SetAlpha(objs[i], 0);
+	}
+	wait(delay);
+	ascent(i in 0 .. 90)
+	{
+		let alpha = (i+1)/90*255;
+		ascent(i in 0 .. length(objs))
+		{
+			ObjRender_SetAlpha(objs[i], alpha);
+		}
+		yield;
+	}
+}

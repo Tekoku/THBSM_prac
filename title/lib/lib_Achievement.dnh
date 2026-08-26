@@ -1,0 +1,60 @@
+let ACHIEVEMENT_MAX = 1;
+
+
+// メダルのランクを返す
+function GetAchievementRank(id)
+{
+	return(GetAreaCommonData(CAREA_SAVE, "Achievement"~IntToString(id), 0));
+}
+// ランクを更新
+function SetAchievementRank(id, rank)
+{
+	if (GetAchievementRank(id) < rank)
+	{
+		SetAreaCommonData(CAREA_SAVE, "Achievement"~IntToString(id), rank);
+		// 保存
+		SaveCommonDataAreaA2(CAREA_SAVE, saveCommonSAVE);
+		
+		return(true);
+	}
+	return(false);
+}
+
+// 称号データを返す
+// 返り値(text)：[名前, 解説文, ランク最大値]
+function GetAchievementData(id, rank)
+{
+	let name = "Error";
+	let comment = "Error";
+	let rank_max = ARANK_NONE;
+	
+	alternative(id)
+	case(1)
+	{
+		// てすと
+		rank_max = ARANK_RAINBOW;
+		if (rank >= ARANK_BRONZE)
+		{
+			name = "てすと称号・銅";
+			comment = "えらい！[r]改行";
+		}
+		else if (rank >= ARANK_SILVER)
+		{
+			name = "てすと称号・銀";
+			comment = "すごい！[r]改行";
+		}
+		else if (rank >= ARANK_GOLD)
+		{
+			name = "てすと称号・金";
+			comment = "ちょうすごい！[r]改行[r]改行";
+		}
+		else if (rank >= ARANK_RAINBOW)
+		{
+			name = "てすと称号・虹";
+			comment = "しゅごぉい・・・[r]改行[r]改行";
+		}
+	}
+	
+	let tmp_rmax = IntToString(rank_max);
+	return([name, comment, tmp_rmax]);
+}

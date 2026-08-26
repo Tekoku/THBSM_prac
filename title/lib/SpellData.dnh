@@ -1,0 +1,348 @@
+// スペカのデータ
+
+let STAGE_NAME = ["Stage1", "Stage2", "Stage3", "Stage4", "Stage5", "Stage6"];
+//let STAGE_NAME = ["Stage1", "Stage2", "Stage3", "Stage4", "Stage5", "Stage6", "Extra"];
+let STAGE_MAX = 6;
+let FLAG_EXTRA = 6;
+
+
+// スペカのリストを返す
+function GetSpellCardList(idStage, idDifficult)
+{
+	alternative(idStage)
+	case(0)
+	{
+		// ステージ1
+		if (idDifficult <= D_NORM) { return([ 1, 2, 101 ]); }
+		else { return([ 1, 2, 3, 101 ]); }
+	}
+	case(1)
+	{
+		// ステージ2
+		return([ 11, 12, 13, 14, 102 ]);
+	}
+	case(2)
+	{
+		// ステージ3
+		if (idDifficult <= D_EASY) { return([ 21, 22, 23, 24, 103 ]); }
+		else { return([ 21, 22, 23, 24, 25, 103 ]); }
+	}
+	case(3)
+	{
+		// ステージ4
+//		return([ 31, 32, 33, 34, 35, 105 ]);
+		return([ 31, 104, 32, 33, 34, 35, 105 ]);
+	}
+	case(4)
+	{
+		// ステージ5
+		return([ 41, 42, 43, 44, 45, 46, 47, 106 ]);
+	}
+	case(5)
+	{
+		// ステージ6
+		return([ 51, 52, 53, 54, 55, 56, 57, 58 ]);
+	}
+	case(6)
+	{
+		// Ex
+		return([ 61, 62, 63, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80 ]);
+	}
+	return([]);
+}
+
+// プレイできるスペカがあるかのチェック
+function CheckPlayableSpell(spellList, idDifficult)
+{
+	let flg = 0;
+	ascent(i in 0 .. length(spellList))
+	{
+		let sID = GetSpellCardIDEx( spellList[i], idDifficult );
+		flg = LoadResult( GetSpellCardIndex(sID) ) [4];
+		if (flg) { break; }
+	}
+	return(flg);
+}
+
+// スペカの名前を返す
+function GetSpellCardName(idSpell, idDifficult)
+{
+	alternative(idSpell)
+	/* 1面 */
+	case(1)
+	{
+		if (idDifficult <= D_NORM) { return("符葉「ソーサームクゲ」"); }
+		else if (idDifficult <= D_HARD) { return("符葉「ローズオブシャロン」"); }
+		else { return("虹花「フラワーナイズドガール」"); }
+	}
+	case(2)
+	{
+		if (idDifficult <= D_NORM) { return("瓢弾「ミサイルゴード」"); }
+		else if (idDifficult <= D_HARD) { return("瓢弾「ボルテックゴード」"); }
+		else { return("金瓢「ゴールデンゴード」"); }
+	}
+	case(3)
+	{
+		return("「モーフィンググローリー」");
+	}
+	/* 2面 */
+	case(11)
+	{
+		if (idDifficult <= D_NORM) { return("剣術「景綱の長刀」"); }
+		else if (idDifficult <= D_HARD) { return("幻術「槍野衾」"); }
+		else { return("一閃「怪盗乱麻を断つ」"); }
+	}
+	case(12)
+	{
+		if (idDifficult <= D_NORM) { return("草符「ソーンバラッジ」"); }
+		else if (idDifficult <= D_HARD) { return("花符「落花流星」"); }
+		else { return("奇術「種も仕掛けも無い手品」"); }
+	}
+	case(13)
+	{
+		if (idDifficult <= D_NORM) { return("曲写「天狗のインスタント写真機」"); }
+		else if (idDifficult <= D_HARD) { return("号外「天狗速報感想求む」"); }
+		else { return("無限遠「ホークアイシューティング」"); }
+	}
+	case(14)
+	{
+		if (idDifficult <= D_NORM) { return("「ブラックマジックカイト」"); }
+		else if (idDifficult <= D_HARD) { return("「神風怪盗トビコ」"); }
+		else { return("「ハイスピード半天狗アクション」"); }
+	}
+	/* 3面 */
+	case(21)
+	{
+		if (idDifficult <= D_NORM) { return("琴符「メロディアスハープ」"); }
+		else if (idDifficult <= D_HARD) { return("琴符「オルフェウスハープ」"); }
+		else { return("「幻奏一夜物語（シェリアハザード）」"); }
+	}
+	case(22)
+	{
+		if (idDifficult <= D_NORM) { return("神器「天星弓フェイルノート」"); }
+		else if (idDifficult <= D_HARD) { return("七夕「ササノハランサー」"); }
+		else { return("光条「アルテミスメガレイ」"); }
+	}
+	case(23)
+	{
+		if (idDifficult <= D_NORM) { return("星弾「ティンクルスタースピリッツ」"); }
+		else if (idDifficult <= D_HARD) { return("星魂「バーニングソウルスピリッツ」"); }
+		else { return("星霊「ビッグマジックスピリッツ」"); }
+	}
+	case(24)
+	{
+		if (idDifficult <= D_NORM) { return("涙琴「雨の空の七線譜」"); }
+		else if (idDifficult <= D_HARD) { return("星詩「アステリズムライナー」"); }
+		else { return("境界「天と海を分かつ雨の音」"); }
+	}
+	case(25)
+	{
+		if (idDifficult <= D_HARD) { return("「オーガストリリッズ」"); }
+		else { return("「年中無休のエイプリルリリッズ」"); }
+	}
+	/* 4面 */
+	case(31)
+	{
+		if (idDifficult <= D_NORM) { return("荼毘「転生の炎」"); }
+		else if (idDifficult <= D_HARD) { return("葬火「ただ我も汝れも紅となれ」"); }
+		else { return("霊鳥「蒼鸞の歓待」"); }
+	}
+	case(32)
+	{
+		if (idDifficult <= D_NORM) { return("影符「分身の術」"); }
+		else if (idDifficult <= D_HARD) { return("闇遁「カトゥーンの術」"); }
+		else { return("火遁「九重の陽炎」"); }
+	}
+	case(33)
+	{
+		if (idDifficult <= D_NORM) { return("土遁「地に潜る不気味な巫女」"); }
+		else if (idDifficult <= D_HARD) { return("葉隠「忍道と言ふは消ゆ事と見付たり」"); }
+		else { return("暗躍「-NINJA- 歴史の闇の支配者」"); }
+	}
+	case(34)
+	{
+		if (idDifficult <= D_NORM) { return("防弾「畳返の術」"); }
+		else if (idDifficult <= D_HARD) { return("儚月「望月の身代九曜」"); }
+		else { return("火遁「ファイヤーウォール（物理）」"); }
+	}
+	case(35)
+	{
+		if (idDifficult <= D_HARD) { return("大鎌「アンチェインドクサリガマ」"); }
+		else if (idDifficult <= D_HARD) { return("水遁「甲賀大水手裏剣陣」"); }
+		else { return("大蝦蟇「究極召喚ジライヤ」"); }
+	}
+	/* 5面 */
+	case(41)
+	{
+		if (idDifficult <= D_NORM) { return("火符「清め火の巫女」"); }
+		else { return("神霊「幻光追駆」"); }
+	}
+	case(42)
+	{
+		if (idDifficult <= D_NORM) { return("氷魔「アイススケイル」"); }
+		else { return("悲恋「オーレリーズフリーザー」"); }
+	}
+	case(43)
+	{
+		if (idDifficult <= D_NORM) { return("科戸「風神の風袋」"); }
+		else { return("逆鱗「風神の堪忍袋大決壊」"); }
+	}
+	case(44)
+	{
+		if (idDifficult <= D_NORM) { return("狐火「電弧石火」"); }
+		else if (idDifficult <= D_HARD) { return("狐火「嫁入り行列オールナイト」"); }
+		else { return("霊火「赤い狐火と紺の狐火」"); }
+	}
+	case(45)
+	{
+		if (idDifficult <= D_NORM) { return("変化「人の威を借る狐」"); }
+		else { return("変化「ミラーマッチ売りの妖狐」"); }
+	}
+	case(46)
+	{
+		if (idDifficult <= D_NORM) { return("宙狐「関八州の王女稲荷」"); }
+		else if (idDifficult <= D_HARD) { return("操神「ダーキニーコントロール」"); }
+		else { return("操神「ダーキニーネクロマンティカ」"); }
+	}
+	case(47)
+	{
+		if (idDifficult <= D_NORM) { return("「殺生石の生贄」"); }
+		else if (idDifficult <= D_HARD) { return("「イルネスイリュージョナー」"); }
+		else { return("「純粋なる悪意の結晶」"); }
+	}
+	/* 6面 */
+	case(51)
+	{
+		return("九火「ナインテイルスパーク」");
+	}
+	case(52)
+	{
+		if (idDifficult <= D_NORM) { return("儀式「レーザーキーオブソロモン」"); }
+		else if (idDifficult <= D_HARD) { return("魔錠「ゲートオブソロモン」"); }
+		else { return("宝具「リングオブソロモン」"); }
+	}
+	case(53)
+	{
+		if (idDifficult <= D_NORM) { return("魔本「グリモワールバタフライ」"); }
+		else if (idDifficult <= D_HARD) { return("魔本「スーパーグリモワールド」"); }
+		else { return("神秘「天使が与え賜うた禁書」"); }
+	}
+	case(54)
+	{
+		if (idDifficult <= D_NORM) { return("風花「フーマシュリケーン」"); }
+		else if (idDifficult <= D_HARD) { return("宝剣「スターエメラルドシュリケーン」"); }
+		else { return("心花「篝火の冠」"); }
+	}
+	case(55)
+	{
+		if (idDifficult <= D_NORM) { return("大魔神「バアルのような者」"); }
+		else if (idDifficult <= D_HARD) { return("異神「パズズ＆ドラゴンズ」"); }
+		else { return("大悪魔「顕現する七つの大罪」"); }
+	}
+	case(56)
+	{
+		if (idDifficult <= D_EASY) { return("呪文「ギガノ・ミシャルド」"); }
+		else if (idDifficult <= D_HARD) { return("禁呪「ディオガ・ミシャルドン」"); }
+		else { return("「シン・ミシャル・セウノウス」"); }
+	}
+	case(57)
+	{
+		if (idDifficult <= D_NORM) { return("「神々の巨大三角」"); }
+		else if (idDifficult <= D_HARD) { return("「スターライトプリンセス」"); }
+		else { return("「レジェンドオブデルタ」"); }
+	}
+	case(58)
+	{
+		return("「フーマ・ミシャンドラ」");
+	}
+	/* Ex */
+	case(61)
+	{
+		return("魔奏「ナルコラップトラップ」");
+	}
+	case(62)
+	{
+		return("非人道兵器「ホーミングマキビット」");
+	}
+	case(63)
+	{
+		return("魔神「魔法陣フルフル」");
+	}
+	case(71)
+	{
+		return("一騎「千子村正の一番槍」");
+	}
+	case(72)
+	{
+		return("召喚「十勇士出陣の儀」");
+	}
+	case(73)
+	{
+		return("影武者「黄泉比良坂夏の陣」");
+	}
+	case(74)
+	{
+		return("由利「アンルリーノーブルテザー」");
+	}
+	case(75)
+	{
+		return("三好「挟撃！コピペ破戒入道！」");
+	}
+	case(76)
+	{
+		return("水計「ヒガンガワデリュージュ」");
+	}
+	case(77)
+	{
+		return("根津「三途戦艦『真田丸』」");
+	}
+	case(78)
+	{
+		return("才蔵「キリガクレ・シンカー」");
+	}
+	case(79)
+	{
+		return("佐助「戦国忍者No.1決定戦」");
+	}
+	case(80)
+	{
+		return("「真田幸村の幻想入り伝説」");
+	}
+	/* LW */
+	case(101)
+	{
+		if (idDifficult <= D_NORM) { return("「フェアリーズトランペット」"); }
+		else { return("「メンデルスサンクチュアリ」"); }
+	}
+	case(102)
+	{
+		if (idDifficult <= D_NORM) { return("「鷹藤鳶子の完全犯罪事件簿」"); }
+		else { return("「逢魔時の大凶鳥」"); }
+	}
+	case(103)
+	{
+		if (idDifficult <= D_NORM) { return("「蒼炎星光波シェリアバーン」"); }
+		else { return("「神獣雷光波シェリアーク」"); }
+	}
+	case(104)
+	{
+		if (idDifficult <= D_NORM) { return("＊こんな世は燃え尽きてしまえ！＊"); }
+		else if (idDifficult <= D_HARD) { return("＊こんな世は燃え尽きてしまえ！＊　参の型"); }
+		else { return("＊こんな世は燃え尽きてしまえ！＊　拾の型"); }
+	}
+	case(105)
+	{
+		if (idDifficult <= D_NORM) { return("「十四日月のセレナーデ」"); }
+		else { return("「望月忍法帖奥義・鏡花水月」"); }
+	}
+	case(106)
+	{
+		if (idDifficult <= D_NORM) { return("「ナインテイルインフェルノ」"); }
+		else { return("「ダークテイルインフェルノ」"); }
+	}
+	case(107)
+	{
+		if (idDifficult <= D_NORM) { return("「ゴエティックオールスター」"); }
+		else { return("「ゴエティックスターミソロジー」"); }
+	}
+}

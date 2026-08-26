@@ -1,0 +1,71 @@
+#UserItemData
+
+item_image = "./../../img/system/item.png"
+
+//　点符
+ItemData{	id = 1		rect = (0,0,16,16)	out = (0,16,16,28)	alpha = 160	render = ALPHA	}
+
+//　願いポインツ
+ItemData{
+	id = 2
+	AnimationData{
+		animation_data=(4,  0, 128, 32, 160)
+		animation_data=(4, 32, 128, 64, 160)
+		animation_data=(4, 64, 128, 96, 160)
+		animation_data=(4, 96, 128,128, 160)
+		animation_data=(4,128, 128,160, 160)
+		animation_data=(4,160, 128,192, 160)
+		animation_data=(4,192, 128,224, 160)
+		animation_data=(4,224, 128,256, 160)
+		animation_data=(4,  0, 160, 32, 192)
+		animation_data=(4, 32, 160, 64, 192)
+		animation_data=(4, 64, 160, 96, 192)
+		animation_data=(4, 96, 160,128, 192)
+		animation_data=(4,128, 160,160, 192)
+		animation_data=(4,160, 160,192, 192)
+		animation_data=(4,192, 160,224, 192)
+		animation_data=(4,224, 160,256, 192)
+	}
+	alpha = 255
+	render = ALPHA
+}
+
+//　弾消し点
+ItemData{	id = 3		rect = (80,0,96,16)	alpha = 68	render = ADD_ARGB	}
+
+//　残機かけら
+ItemData{	id = 4		rect = (0,32,32,64)	out = (0,64,32,96)	render = ALPHA	}
+
+//　ボムかけら
+ItemData{	id = 5		rect = (32,32,64,64)	out = (32,64,64,96)	render = ALPHA	}
+
+//　残機
+ItemData{	id = 6		rect = (64,32,96,64)	out = (0,64,32,96)	render = ALPHA	}
+
+//　ボム
+ItemData{	id = 7		rect = (96,32,128,64)	out = (32,64,64,96)	render = ALPHA	}
+
+//　願いポインツ
+ItemData{
+	id = 12
+	AnimationData{
+		animation_data=(4,  0, 128, 32, 160)
+		animation_data=(4, 32, 128, 64, 160)
+		animation_data=(4, 64, 128, 96, 160)
+		animation_data=(4, 96, 128,128, 160)
+		animation_data=(4,128, 128,160, 160)
+		animation_data=(4,160, 128,192, 160)
+		animation_data=(4,192, 128,224, 160)
+		animation_data=(4,224, 128,256, 160)
+		animation_data=(4,  0, 160, 32, 192)
+		animation_data=(4, 32, 160, 64, 192)
+		animation_data=(4, 64, 160, 96, 192)
+		animation_data=(4, 96, 160,128, 192)
+		animation_data=(4,128, 160,160, 192)
+		animation_data=(4,160, 160,192, 192)
+		animation_data=(4,192, 160,224, 192)
+		animation_data=(4,224, 160,256, 192)
+	}
+	alpha = 255
+	render = ALPHA
+}

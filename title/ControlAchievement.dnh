@@ -1,0 +1,101 @@
+// 実績関連
+
+#include "./lib/lib_Common.dnh"
+#include "./lib/lib_Util.dnh"
+#include "./lib/lib_Achievement.dnh"
+
+@Initialize
+{
+	SetAutoDeleteObject(true);	//オブジェクトの自動削除ON
+	SetAreaCommonData(CAREA_TITLE, "SCRIPT_ACHIEVEMENT", GetOwnScriptID());	//ID記録
+}
+
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_Title_GetAchievement)
+	{
+		let tmp = GetEventArgument(0);
+		let result = SetAchievementRank(tmp[0], tmp[1]);
+		if (result)
+		{
+			AchievementEffect(tmp[0], tmp[1]);
+		}
+	}
+}
+
+@MainLoop
+{
+	yield;
+}
+
+@Finalize
+{
+}
+
+task AchievementEffect(id, rank)
+{
+	let pos = [GetScreenWidth-160, GetScreenHeight-96];
+	let tmp = GetAchievementData(id, rank);
+
+	let name = tmp[0];
+	let comment = tmp[1];
+	let rank_max = atoi(tmp[2]);
+	
+	//初期設定 [台座,勲章,名前,解説]
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D),
+		SetSystemText(pos[0], pos[1], name), SetSystemText(pos[0], pos[1], comment)];
+	let pos_offset = [[0,0], [28,36], [36,10], [36,38]];
+	
+	ascent(i in 0 .. 2)
+	{
+		Obj_SetRenderPriorityI(obj[i], 99);
+		ObjPrim_SetTexture(obj[i], imgTtAchievement);
+	}
+	ObjSprite2D_SetSourceRect(obj[0], 0, 0, 160, 96);
+	ObjSprite2D_SetDestRect(obj[0], 0, 0, 160, 96);
+
+	ObjSprite2D_SetSourceRect(obj[1], 0+(rank-1)*64, 128, 64+(rank-1)*64, 192);
+	ObjSprite2D_SetDestRect(obj[1], -32, -32, 32, 32);
+
+	// txt
+	Obj_SetRenderPriorityI(obj[2], 99);
+	ObjText_SetFontSize(obj[2], 24);
+	Obj_SetRenderPriorityI(obj[3], 99);
+	ObjText_SetFontSize(obj[3], 20);
+	
+	let angle = 25;
+	ascent(t in 0 .. 60)
+	{
+		let tmp = sin((t+1)/60*90);
+		ascent(i in 0 .. 4)
+		{
+			ObjRender_SetPosition(obj[i], pos[0]+pos_offset[i][0]+192*(1-tmp), pos[1]+pos_offset[i][1], 0);
+		}
+		ObjRender_SetAngleZ(obj[1], angle);
+		angle += (1-tmp)*3+0.1;
+		yield;
+	}
+	loop(150)
+	{
+		ObjRender_SetAngleZ(obj[1], angle);
+		angle += 0.1;
+		yield;
+	}
+	descent(t in 0 .. 30)
+	{
+		let tmp = sin((t+1)/30*90);
+		ascent(i in 0 .. 4)
+		{
+			ObjRender_SetAlpha(obj[i], tmp*255);
+		}
+		ObjRender_SetAngleZ(obj[1], angle);
+		angle += 0.1;
+		yield;
+	}
+	ascent(i in 0 .. 4)
+	{
+		Obj_Delete(obj[i]);
+	}
+}

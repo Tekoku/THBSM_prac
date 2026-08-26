@@ -1,0 +1,21 @@
+#include "./lib_System.dnh"
+#include "./../../lib/lib_String.dnh"
+
+//設定とか
+let DrawHiTokuten = true;	//スコア記録を表示するならtrue
+
+sub SetSystemInit
+{
+	SetAutoDeleteObject(true);	//オブジェクトの自動削除ON
+	objPlayer = GetPlayerObjectID();
+
+	if (!(GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_PRACTICE))
+	{
+		DrawHiTokuten = false;
+	}
+}
+
+//プレイヤー情報ロード（専用自機のみ対応）
+sub LoadPlayerData()
+{
+}

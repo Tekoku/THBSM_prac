@@ -1,0 +1,158 @@
+// 監視系
+
+// 敵撃破カウント（毎フレームリセット）
+let EnemyKillCount	= 0;
+
+
+//----------------------------------------------------
+//最大得点加算
+//----------------------------------------------------
+task TAddMaxScore()
+{
+	let before_graze = trunc(GetGraze()/5);
+	loop
+	{
+		let tmp_graze = trunc(GetGraze()/5);
+		if (tmp_graze != before_graze)
+		{
+			AddMaxScore((tmp_graze-before_graze)*10);
+			before_graze = tmp_graze;
+		}
+		yield;
+	}
+}
+
+
+//----------------------------------------------------
+// かけらの数を監視
+//----------------------------------------------------
+task TCheckFragment()
+{
+	yield;
+	// 初期値
+	SetAreaCommonData(CAREA_SYSTEM, "FragmentSpell_Next", 3 );
+	SetAreaCommonData(CAREA_SYSTEM, "FragmentPlayer_Next", 3 );
+
+	let frg_pl = -1;
+	let frg_sp = -1;
+	
+	let beforeLife = GetPlayerLife();
+	let beforeSpell = GetPlayerSpell();
+	while(!IsStgWorldBreak())
+	{
+		let tmp_pl = GetAreaCommonData(CAREA_SYSTEM, "FragmentPlayer", 0 );
+		let tmp_sp = GetAreaCommonData(CAREA_SYSTEM, "FragmentSpell", 0 );
+		// 残機
+		/*
+		if (beforeLife != GetPlayerLife())
+		{
+			if (beforeLife < GetPlayerLife())
+			{
+				// Extend!!
+				SetSystemAscii02(0.75, [255,96,255], 120, "LIFE   EXTEND"");
+//				SetSystemAscii(GetScreenWidth-92, 128, 0.6, [255,96,255], 120, "LIFE   EXTEND");
+				CallSound(snd1UP);
+			}
+			beforeLife = GetPlayerLife();
+		}
+		*/
+		if (tmp_pl != frg_pl)
+		{
+			let nel	= GetAreaCommonData(CAREA_SYSTEM, "FragmentPlayer_Next", 99 );
+			if (nel <= tmp_pl)
+			{
+				tmp_pl -= nel;
+				SetAreaCommonData(CAREA_SYSTEM, "FragmentPlayer", tmp_pl );
+				SetPlayerLife(GetPlayerLife()+1);
+				beforeLife = GetPlayerLife();
+				// Extend!!
+				SetSystemAscii02(0.75, [255,96,255], 120, "LIFE   EXTEND");
+//				SetSystemAscii(GetScreenWidth-92, 128, 0.6, [255,96,255], 120, "LIFE   EXTEND");
+				CallSound(snd1UP);
+			}
+			frg_pl = tmp_pl;
+		}
+		// スペカ
+		/*
+		if (beforeSpell != GetPlayerSpell())
+		{
+			if (beforeSpell < GetPlayerSpell())
+			{
+				// Extend!!
+				SetSystemAscii(GetScreenWidth-84, 128+28, 0.6, [96,255,96], 120, "SPELL  EXTEND");
+				SetSystemAscii02(0.75, [96,255,96], 120, "SPELL  EXTEND");
+				CallSound(sndExtSpell);
+			}
+			beforeSpell = GetPlayerSpell();
+		}
+		*/
+		if (tmp_sp != frg_sp)
+		{
+			let nel	= GetAreaCommonData(CAREA_SYSTEM, "FragmentSpell_Next", 99 );
+			if (nel <= tmp_sp)
+			{
+				tmp_sp -= nel;
+				SetAreaCommonData(CAREA_SYSTEM, "FragmentSpell", tmp_sp );
+				SetPlayerSpell(GetPlayerSpell()+1);
+				beforeSpell = GetPlayerSpell();
+				// Extend!!
+//				SetSystemAscii(GetScreenWidth-84, 128+28, 0.6, [96,255,96], 120, "SPELL  EXTEND");
+				SetSystemAscii02(0.75, [96,255,96], 120, "SPELL  EXTEND");
+				CallSound(sndExtSpell);
+			}
+			frg_sp = tmp_sp;
+		}
+
+		// 願いアイテム
+		if (GetWishItemCount() >= GetWishItemMax())
+		{
+			AddWishItemCount(-GetWishItemMax());
+			// ランクアップ
+			AddMagnitude(-1);
+			CallSound(sndExtMag);
+			
+			// ∞モード＝ボム、レガシー＝残機
+			if (IsInfinityMode())
+			{
+//				NotifyEventAll(ev_GetItem, MY_ITEM_SPELL_S);
+				SetItem(GetStgFrameWidth/2, GetStgFrameHeight/2-64, MY_ITEM_SPELL_S);
+			}
+			else
+			{
+//				NotifyEventAll(ev_GetItem, MY_ITEM_LIFE_S);
+				SetItem(GetStgFrameWidth/2, GetStgFrameHeight/2-64, MY_ITEM_LIFE_S);
+			}
+				SetSystemAscii02(0.75, [255,255,96], 120, "MAGNITUDE  UP");
+		}
+		yield;
+	}
+}
+
+//----------------------------------------------------
+//  アイテム回収ボーダーライン
+//----------------------------------------------------
+task TCheckBorderLine()
+{
+	let BorderLineMin = GetAreaCommonData(CAREA_SYSTEM, "PLAYER_COLLECT_L_MIN", 0 );
+	let BorderLineMax = GetAreaCommonData(CAREA_SYSTEM, "PLAYER_COLLECT_L_MAX", 0 );
+	
+	let borderRate = 0;
+	let timer = 120;
+	loop
+	{
+		if (EnemyKillCount > 0)
+		{
+			borderRate = min(60, borderRate+EnemyKillCount);
+			timer = 30;
+			EnemyKillCount = 0;
+		}
+		else if (timer <= 0)
+		{
+			borderRate = max(0, borderRate-1/8);
+		}
+		let tmpBorder = BorderLineMin + (BorderLineMax-BorderLineMin) * (borderRate/60)^0.5;
+		SetAreaCommonData(CAREA_SYSTEM, "PLAYER_COLLECT_L", tmpBorder );
+		timer--;
+		yield;
+	}
+}

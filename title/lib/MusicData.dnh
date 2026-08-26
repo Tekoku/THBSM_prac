@@ -1,0 +1,261 @@
+// MUSIC
+
+//サンプル数を返す
+function GetMusicSample(musicID)
+{
+	alternative(musicID)
+	case(0)  { return([773888,3693000]); }	//　タイトル
+	case(1)  { return([969984,2154336]); }	//　プレイヤーズスコア
+	case(2)  { return([339570,6174000]); }	//　1 road
+	case(3)  { return([817664,4410600]); }	//　1 boss
+	case(4)  { return([1055666,5428402]); }	//　2 road
+	case(5)  { return([843776,4887552]); }	//　2 boss
+	case(6)  { return([1278724,8097951]); }	//　3 road
+	case(7)  { return([566528,8127064]); }	//　3 boss
+	case(8)  { return([347100,9078000]); }	//　4 road
+	case(9)  { return([594700,11602560]); }	//　4 boss
+	case(10)  { return([713206,9688800]); }	//　5 road
+	case(11)  { return([6240750,11892899]); }	//　5 boss
+	case(12)  { return([1090100,4169400]); }	//　6 road
+	case(13)  { return([5221400,14593899]); }	//　6 boss
+	case(14)  { return([5405400,7495600]); }	//　6 boss2
+	case(15)  { return([1024300,8540100]); }	//　Ex road
+	case(16)  { return([534100,7038000]); }		//　Ex boss
+	case(17)  { return([868494,5486981]); }		//　ed
+	case(18)  { return([1222240,8560220]); }	//　st
+
+/*
+	case(10)  { return([414000,9526800]); }	//　5 road
+	case(11)  { return([0,999999999]); }	//　5 boss
+	case(12)  { return([1091300,4171000]); }	//　6 road
+	case(13)  { return([0,999999999]); }	//　6 boss
+	case(14)  { return([0,999999999]); }	//　6 boss2
+*/
+
+	others  { return([0,0]); }
+}
+
+//BGMのパスを返す
+function GetMusicPath(musicID)
+{
+	let musicDir = GetCurrentScriptDirectory() ~ "../../music/";
+	
+	alternative(musicID)
+	case(0)  { return(musicDir ~ "m1.ogg"); }	//　タイトル
+	case(1)  { return(musicDir ~ "m2.ogg"); }	//　プレイヤーズスコア
+	case(2)  { return(musicDir ~ "r1.ogg"); }	//　1 road
+	case(3)  { return(musicDir ~ "b1.ogg"); }	//　1 boss
+	case(4)  { return(musicDir ~ "r2.ogg"); }	//　2 road
+	case(5)  { return(musicDir ~ "b2.ogg"); }	//　2 boss
+	case(6)  { return(musicDir ~ "r3.ogg"); }	//　3 road
+	case(7)  { return(musicDir ~ "b3.ogg"); }	//　3 boss
+	case(8)  { return(musicDir ~ "r4.ogg"); }	//　4 road
+	case(9)  { return(musicDir ~ "b4.ogg"); }	//　4 boss
+	case(10) { return(musicDir ~ "r5.ogg"); }	//　5 road
+	case(11) { return(musicDir ~ "b5.ogg"); }	//　5 boss
+	case(12) { return(musicDir ~ "r6.ogg"); }	//　6 road
+	case(13) { return(musicDir ~ "b6.ogg"); }	//　6 boss
+	case(14) { return(musicDir ~ "b6b.ogg"); }	//　6 boss2
+	case(15) { return(musicDir ~ "r7.ogg"); }	//　Ex road
+	case(16) { return(musicDir ~ "b7.ogg"); }	//　Ex boss
+	case(17) { return(musicDir ~ "e1.ogg"); }	//　ed
+	case(18) { return(musicDir ~ "e2.ogg"); }	//　st
+	others { return(""); }
+}
+
+//BGMのパスを返す
+function GetMusicText(musicID)
+{
+	let obj = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
+
+	alternative(musicID)
+	case(0)	//　タイトル
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪01 幻想一夜物語 ～ Asterhyshm Line");
+		Obj_SetValue(obj, "_NAME", "♪01 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：めいす");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"タイトル画面のテーマです。[r]星空と雨を意識しつつ、[r]割といつもの感じに落ち着いたかなと。[r]出撃準備って雰囲気です。ええ。[r]雨の音ってなんだか落ち着きません？人によるのかしら。");
+	}
+	case(1)	//　プレイヤーズスコア
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪-- プレイヤーズスコア");
+		Obj_SetValue(obj, "_NAME", "♪-- ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：???");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"コメントなどない");
+	}
+	case(2)	//　1 road
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪02 フラワリングパッセージ");
+		Obj_SetValue(obj, "_NAME", "♪02 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：しゃわ");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"1面のテーマです。[r]初っぱならしく、これから何が始まるのかな？という[r]期待交えた妖しげな雰囲気と開花の悦びを表現しました。[r]サビで一気にヒラけるかんじ、とても好きです。[r]花ビラだけに。");
+	}
+	case(3)	//　1 boss
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪03 妖花乱麻 ～ Warning Glory!");
+		Obj_SetValue(obj, "_NAME", "♪03 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：中山奈那/篠村桜花");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"ファブリティス　イフォーニアのテーマです。[r]仲良く共闘する様子をサビの追いかけで表現してみました。[r]元気な妖精っていいですよね。なんというか……いいよね！[r]姉妹丼ではなく他人丼とはこれいかに。");
+	}
+	case(4)	//　2 road
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪04 夕焼けトンビを追って");
+		Obj_SetValue(obj, "_NAME", "♪04 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：よいやみ");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"2面のテーマです。[r]タイトル通り、宵闇時の節操感そのものをイメージしつつ、[r]単純ですがトンビの鳴き声を演出として入れてみました。[r]関係ないですが僕は最近カラスに糞を落とされました。頭に。");
+	}
+	case(5)	//　2 boss
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪05 風雷の鳶加藤");
+		Obj_SetValue(obj, "_NAME", "♪05 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：リュウオウ");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"鷹藤 鳶子のテーマです。[r]それは残像だッ！一見強敵なんですが、その誇り高き性格からか[r]逆にこらしめたくなるザコ役のニオイがプンプンしてきます。[r]スピーディでミステリック。まあでも、所詮2面止まりな曲。");
+	}
+	case(6)	//　3 road
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪06 天下分け目の星結界");
+		Obj_SetValue(obj, "_NAME", "♪06 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：HAMRIKU");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"3面のテーマです。[r]広大な星空は、想像よりも騒々しく...。[r]物語はまだ中盤ですが、曲の方は思い切り盛り上げてみました。[r]ここがターニングポイント。まさに天下分け目なのです。");
+	}
+	case(7)	//　3 boss
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪07 レインティアケージ");
+		Obj_SetValue(obj, "_NAME", "♪07 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：水月");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"シェリア・リュラックのテーマです。[r]なんだかとっても怪しげな曲ですね。[r]雨に光が当たるときらきらします。星みたいです。[r]そんなきらきら感を意識しつつ作りました。");
+	}
+	case(8)	//　4 road
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪08 輝く夜を侵す者");
+		Obj_SetValue(obj, "_NAME", "♪08 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：Monday");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"4面のテーマです。[r]迷いの竹林を突っ切っていくイメージで作りました。[r]迷いつつも、ただただ前に進んでいく、…そんな感じです。[r]少し原作曲のオマージュ的な要素も入れてみましたがどうでしょうか。");
+	}
+	case(9)	//　4 boss
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪09 九曜天照 ～ Sunlight Reburst");
+		Obj_SetValue(obj, "_NAME", "♪09 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：フランシウム");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"望月 一曜のテーマです。[r]色んな術を使う派手派手しい忍者です。忍者のクセにそれって[r]忍んでないんじゃ、って感じですがそれが今のトレンドなんです。[r]曲も、そこそこの和風感とそこそこの威圧感を出してみたつもりです。");
+	}
+	case(10)	//　5 road
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪10 進撃の相州喇叭");
+		Obj_SetValue(obj, "_NAME", "♪10 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：KAI");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"5面のテーマです。[r]一歩ずつ歩み出し、次第に増してゆく軽快さと少しばかりの恐怖。[r]そんなイメージを曲に込めました。[r]進撃と喇叭がテーマの力強い曲調の中に、[r]どこか闇夜のような美しさや妖しさが表現できていればなと。");
+	}
+	case(11)	//　5 boss
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪11 イルネスイリュージョナー");
+		Obj_SetValue(obj, "_NAME", "♪11 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：夜狐夜叉");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"明津 禰津のテーマです。[r]キャラの設定資料を見て和と妖を自分なりに表現してみました。[r]キャラクターがとても素晴らしいので[r]それにふさわしい曲になっているといいんですが、、(汗）");
+	}
+	case(12)	//　6 road
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪12 光と影の魔宝城");
+		Obj_SetValue(obj, "_NAME", "♪12 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：井老君");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"6面のテーマです。[r]忍びの世界とは奥深いものです。[r]影の世界で暮らしているとやはり太陽の光には弱いのでしょうか。[r]ボス曲に繋げやすいように短い構成にしています[r]聴きやすいといいなあ\(^^;");
+	}
+	case(13)	//　6 boss
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪13 言ノ葉ノ大魔法 ～ Starry Wisdom");
+		Obj_SetValue(obj, "_NAME", "♪13 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：Wanwan");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"フーマ・ミシャンドラのテーマです。[r]言葉によって感情を表現したり相互理解を行うことは、[r]ある意味で魔法のようなものなのかもしれませんね。[r]曲の方は私らしいラスボス風でどこか古くさい感じにしました。");
+	}
+	case(14)	//　6 boss2
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪14 風な恨みそ花の春 ～ Eternal Wind");
+		Obj_SetValue(obj, "_NAME", "♪14 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：古山智之");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"？？？のテーマです。[r]原曲のラスボス感に、さらに宇宙っぽさを足してみました。[r]静かに灯った光がだんだん大きくなっていくような、[r]そんな感じ……かな？[r]精神とはこころの中の宇宙である、なんてね。");
+	}
+	case(17)	//　ed1
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪17 琴の音と言の葉");
+		Obj_SetValue(obj, "_NAME", "♪17 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：漉餡");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"エンディングのテーマです。[r]言葉は発することで意味を持ちます。[r]わいわいがやがや…言葉と音が重なる感じに。[r]なんだか縁日っぽい…？気のせいです。[r]とりあえず収束、そして終息。一旦ね…？");
+	}
+	case(18)	//　ed2
+	{
+		// 名前
+		Obj_SetValue(obj, "NAME", "♪18 天下統一ヒストリー ～ New Age Dream");
+		Obj_SetValue(obj, "_NAME", "♪18 ???");
+		// 作曲者
+		Obj_SetValue(obj, "COMP", "作曲：ido");
+		// 作曲者
+		Obj_SetValue(obj, "COMMENT",
+			"スタッフロールのテーマです。[r]古臭さと新時代を感じさせる、さっぱりとした曲です。[r]作品の掉尾を飾るということでかなり難儀しました。[r]暗い曲では……ないよね？");
+	}
+	
+	return(obj);
+}

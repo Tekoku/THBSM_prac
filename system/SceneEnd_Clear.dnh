@@ -1,0 +1,852 @@
+#include "./lib/lib_SystemScene.dnh"
+#include "../lib/lib_HighScore.dnh"
+
+
+/*--------エンディング用--------*/
+#include "../img/ed/ed_files.dnh"
+#include "../img/ed/ed_scores.dnh"
+
+
+let STUFF_FLG = true;
+
+
+//　ゲームクリア時
+
+@Initialize{
+	SetAutoDeleteObject(true);
+	SetHightScore();
+
+	TBackground();
+	TEnding();
+}
+
+@MainLoop{
+	yield;
+}
+
+@Finalize{
+	//ClosePackage();
+}
+
+
+
+task TEnding()
+{
+	/*
+	エンディング関係
+	*/
+	let flgBad = GetAreaCommonData(CAREA_TITLE, "FlgBadEnding", false);
+	SetAreaCommonData(CAREA_TITLE, "FlgBadEnding", false);
+	
+	SetFlag(flgBad);
+
+	if (!flgBad)
+	{
+		ENDING_INTRO();
+		ENDING();
+
+		while(STUFF_FLG) { yield; }
+	}
+	else
+	{
+		WHITEOUT_ED2();
+		
+		PlayMusic(1, 120, 30);
+	}
+
+	TBackgroundEd();
+	wait(240);
+	RankCheck();
+	TMenu();
+}
+
+function ENDING_INTRO()
+{
+	// BGM
+	PlayMusic(18, 120, 30);
+
+	TCamera();
+	ENDING_BASE();
+	ENDING_BASE2();
+	ED_PARTICLE();
+
+	wait(60);
+	wait(180+120);
+
+	// カメラ処理
+	task TCamera()
+	{
+		// カメラ初期設定
+		SetCameraFocusXYZ(0, 0, 0);
+		SetCameraRadius(400);
+		SetCameraAzimuthAngle(-90);
+		SetCameraElevationAngle(70);
+
+		/*
+		ascent(i in 0 .. 240)
+		{
+			let tmp = (1+cos((i+1)/240*180))/2;
+			SetCameraFocusXYZ(0, -tmp*400, -25);
+			SetCameraRadius(400+600*tmp);
+			SetCameraAzimuthAngle(-90);
+			SetCameraElevationAngle(75);
+			yield;
+		}
+		*/
+		SetCameraFocusXYZ(0, 0, -25);
+		SetCameraRadius(400);
+		SetCameraAzimuthAngle(-90);
+		SetCameraElevationAngle(75);
+		
+		let t = 0;
+		while(STUFF_FLG)
+		{
+			SetCameraAzimuthAngle(-90+sin(t/6)*10);
+			SetCameraElevationAngle(70+cos(t/4)*5);
+			t++;
+			yield;
+		}
+	}
+
+
+	// エンディングのベース背景
+	task ENDING_BASE()
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, 50);
+		ObjSprite2D_SetDestRect(obj, 0, 0, GetScreenWidth, GetScreenHeight);
+		ObjRender_SetColor(obj, 0, 0, 0);
+
+		let obj2 = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj2, 90);
+		ObjSprite2D_SetDestRect(obj2, 0, 0, GetScreenWidth, GetScreenHeight);
+		ObjRender_SetBlendType(obj2, BLEND_ADD_ARGB);
+		ObjRender_SetColor(obj2, 255, 255, 255);
+		
+		descent(i in 0 .. 180)
+		{
+			let tmp = sin((i+1)/180*90);
+			ObjRender_SetAlpha(obj2, tmp*255);
+			yield;
+		}
+		Obj_Delete(obj2);
+		while(STUFF_FLG)
+		{
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	// エンディングのベース背景
+	task ENDING_BASE2()
+	{
+		let objImg = ObjPrim_Create(OBJ_SPRITE_3D);
+		ObjPrim_SetTexture(objImg, imgEffectFumaMC);
+		Obj_SetRenderPriorityI(objImg, 60);
+		ObjSprite3D_SetSourceDestRect(objImg, 0, 0, 512, 512);
+		ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+		ObjRender_SetAngleX(objImg, -15);
+		
+		let t = 0;
+		while(STUFF_FLG)
+		{
+			if (t < 540)
+			{
+				let tmp = sin((t+1)/540*90);
+				let tmp_s = 0.5+1.5*tmp;
+				ObjRender_SetZ(objImg, (1-tmp)*800-150);
+				ObjRender_SetScaleXYZ(objImg, tmp_s, tmp_s, tmp_s);
+			}
+			ObjRender_SetAngleZ(objImg, t/4);
+			t++;
+			yield;
+		}
+		Obj_Delete(objImg);
+
+	}
+
+
+	// パーティクル
+	task ED_PARTICLE()
+	{
+		while(STUFF_FLG)
+		{
+			ED_ParticleSingle([randEffect(-256,256),randEffect(-256,256),-200], [randEffect(-2,2),randEffect(-2,2),randEffect(1,4)], [randEffect(16,128),randEffect(16,128),randEffect(16,128)]);
+			wait(5);
+		}
+
+		task ED_ParticleSingle(pos, vpos, color)
+		{
+			let objImg = ObjPrim_Create(OBJ_SPRITE_3D);
+			ObjPrim_SetTexture(objImg, imgEffectBright);
+			Obj_SetRenderPriorityI(objImg, 50);
+			ObjSprite3D_SetSourceDestRect(objImg, 0, 0, 64, 64);
+			ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+			ObjRender_SetFogEnable(objImg, false);
+			ObjSprite3D_SetBillboard(objImg, true);
+			ObjRender_SetColor(objImg, color[0], color[1], color[2]);
+			
+			let x = pos[0];
+			let y = pos[1];
+			let z = pos[2];
+			ascent(i in 0 .. 60)
+			{
+				if (!STUFF_FLG) { break; }
+				ObjRender_SetAlpha(objImg, (i+1)/60*255);
+				ObjRender_SetPosition(objImg, x, y, z);
+				x += vpos[0];
+				y += vpos[1];
+				z += vpos[2];
+				yield;
+			}
+			descent(i in 0 .. 120)
+			{
+				if (!STUFF_FLG) { break; }
+				ObjRender_SetAlpha(objImg, (i+1)/120*255);
+				ObjRender_SetPosition(objImg, x, y, z);
+				x += vpos[0];
+				y += vpos[1];
+				z += vpos[2];
+				yield;
+			}
+			Obj_Delete(objImg);
+		}
+	}
+}
+
+function ENDING()
+{
+	let edPriority = 60;
+	let ED_PAGE = 0;
+	let BT_ANGLE = 0;
+	let BT_ANGLE2 = 0;
+	let BT_ANGLE3 = 0;
+	
+	let objBookBase = ED_BookBase();
+	let t = 0;
+	ascent(i in 0 .. 480)
+	{
+		let tmp = sin((i+1)/480*90);
+		let tmp2 = sin((t+1)/600*90);
+		let a = (1-tmp2)*720;
+		let r = 100;
+		ObjRender_SetPosition(objBookBase, 0-r*cos(a), 0-r*sin(a), (1-tmp2)*600);
+		ObjRender_SetAngleZ(objBookBase, a);
+		t++;
+		yield;
+	}
+	descent(i in 0 .. 120)
+	{
+		let tmp = (1-cos(i/120*180))/2;
+		let tmp2 = sin((t+1)/600*90);
+		let a = (1-tmp2)*720;
+		let r = 100*tmp;
+		ObjRender_SetPosition(objBookBase, 0-r*cos(a), 0-r*sin(a), (1-tmp2)*600);
+		ObjRender_SetAngleZ(objBookBase, a);
+		t++;
+		yield;
+	}
+
+	// 本体
+	function ED_BookBase()
+	{
+		let objBookBase = ObjPrim_Create(OBJ_PRIMITIVE_3D);
+		_ED_BookBase(objBookBase);
+		return(objBookBase);
+	}
+	
+	task _ED_BookBase(objBookBase)
+	{
+		let BX = 200;
+		let BY = 40;
+		let BZ = BX*1.4;
+		
+		// 表紙, 裏, 下側
+		let objBook = ObjMesh_Create();
+		Obj_SetRenderPriorityI(objBook, edPriority);
+		ObjMesh_Load(objBook, imgEDBook);
+		ObjRender_SetZWrite(objBook, true);
+		ObjRender_SetZTest(objBook, true);
+		
+		let objBookTop = [ObjPrim_Create(OBJ_PRIMITIVE_3D), ObjPrim_Create(OBJ_PRIMITIVE_3D)];
+		ascent(j in 0 .. 2)
+		{
+			Obj_SetRenderPriorityI(objBookTop[j], edPriority);
+			ObjPrim_SetPrimitiveType(objBookTop[j], PRIMITIVE_TRIANGLESTRIP);
+			ObjPrim_SetTexture(objBookTop[j], [imgEDBook01, imgEDBook02][j]);
+			ObjPrim_SetVertexCount(objBookTop[j], 2*2);
+			ObjPrim_SetVertexPosition(objBookTop[j], 0, BX,   0, -BZ/2);
+			ObjPrim_SetVertexPosition(objBookTop[j], 1, BX,   0,  BZ/2);
+			ObjPrim_SetVertexPosition(objBookTop[j], 2,  0,   0, -BZ/2);
+			ObjPrim_SetVertexPosition(objBookTop[j], 3,  0,   0,  BZ/2);
+			ObjPrim_SetVertexUVT(objBookTop[j], 0, 384, 512);
+			ObjPrim_SetVertexUVT(objBookTop[j], 1, 384, 0);
+			ObjPrim_SetVertexUVT(objBookTop[j], 2, 0, 512);
+			ObjPrim_SetVertexUVT(objBookTop[j], 3, 0, 0);
+			ObjRender_SetZWrite(objBookTop[j], true);
+			ObjRender_SetZTest(objBookTop[j], true);
+		}
+		TOpen();
+		TPage();
+		
+		let t = 0;
+		while(STUFF_FLG)
+		{
+			if (t < 30)
+			{
+				let tmp_a = (t+1)/30*255;
+				ObjRender_SetAlpha(objBook, tmp_a);
+				ascent(j in 0 .. 2) { ObjRender_SetAlpha(objBookTop[j], tmp_a); }
+			}
+			let x = ObjRender_GetX(objBookBase);
+			let y = ObjRender_GetY(objBookBase);
+			let z = ObjRender_GetZ(objBookBase);
+			let a = ObjRender_GetAngleZ(objBookBase);
+			ObjRender_SetPosition(objBook, x, y, z);
+			ascent(j in 0 .. 2) { ObjRender_SetPosition(objBookTop[j], x, y, z); }
+			ObjRender_SetAngleZ(objBook, a);
+			ObjRender_SetAngleZ(objBookTop[0], a+BT_ANGLE);
+			ObjRender_SetAngleZ(objBookTop[1], a+BT_ANGLE2);
+			t++;
+			yield;
+		}
+		Obj_Delete(objBookBase);
+		ascent(j in 0 .. 2) { Obj_Delete(objBookTop[j]); }
+		
+		task TPage()
+		{
+			let PAGE_TIMER = 360;
+			
+			wait(540+60);
+			// ページ単体
+			ED_BookPageEx(imgEDNames[1], imgEDNames[0], PAGE_TIMER-5, 5);
+			wait(PAGE_TIMER+5*5);
+			ED_BookPageEx(imgEDNames[2], imgEDNames[0], PAGE_TIMER-5, 5);
+			wait(PAGE_TIMER+5*5);
+			ED_BookPage(imgEDNames[3], imgEDNames[4], PAGE_TIMER-5);
+			wait(PAGE_TIMER);
+			ED_BookPage(imgEDNames[5], imgEDNames[6], PAGE_TIMER-5+120);
+			wait(PAGE_TIMER+120);
+			ED_BookPage(imgEDNames[7], imgEDNames[8], PAGE_TIMER-5+120);
+			wait(PAGE_TIMER+120);
+			ED_BookPage(imgEDNames[9], imgEDNames[10], PAGE_TIMER-5+120);
+			wait(PAGE_TIMER+120);
+			ED_BookPage(imgEDNames[11], imgEDNames[12], PAGE_TIMER-5+120);
+			wait(PAGE_TIMER+120);
+			ED_BookPage(imgEDNames[13], imgEDNames[14], PAGE_TIMER-5+120);
+			wait(PAGE_TIMER+120);
+			ED_BookPage(imgEDNames[15], imgEDNames[16], PAGE_TIMER-5+120);
+			wait(PAGE_TIMER+120);
+			ED_BookPageEx(imgEDNames[17], imgEDNames[18], PAGE_TIMER-5, 5);
+			wait(PAGE_TIMER+5*5);
+			ED_BookPage(imgEDNames[19], imgEDNames[20], PAGE_TIMER-5);
+			wait(PAGE_TIMER);
+			ED_BookPage(imgEDNames[21], imgEDNames[22], PAGE_TIMER-5);
+			wait(PAGE_TIMER);
+			ED_BookPageEx(imgEDNames[23], imgEDNames[0], PAGE_TIMER-5, 5);
+			wait(PAGE_TIMER+5*5);
+			ED_BookPage(imgEDNames[24], imgEDNames[0], PAGE_TIMER-5);
+			wait(PAGE_TIMER);
+			TClose();
+			wait(300);
+			ED_MIYABI();
+			wait(480);
+			ED_THANKYOU();
+			wait(360);
+			ED_WHITEOUT();
+		}
+		
+		// 表紙を開く
+		task TOpen()
+		{
+			ascent(i in 0 .. 180)
+			{
+				let tmp = (1-cos(((i+1)/180)*180))/2;
+				BT_ANGLE = 0+tmp*185;
+				BT_ANGLE2 = 0+tmp*185-1;
+				if (i == 0) { wait(540); }
+				yield;
+			}
+		}
+		
+		// 閉じる
+		task TClose()
+		{
+			let t = 0;
+			ascent(i in 0 .. 180)
+			{
+				let tmp = (1-cos(i/180*180))/2;
+				let a = tmp*180;
+				let r = 100*tmp;
+				ObjRender_SetPosition(objBookBase, 0-r*cos(a), 0-r*sin(a), 0);
+				ObjRender_SetAngleZ(objBookBase, a);
+				BT_ANGLE = 185-a;
+				BT_ANGLE2 = 185-1-a;
+				BT_ANGLE3 = -a;
+				yield;
+			}
+			ascent(i in 0 .. 360)
+			{
+				let tmp = (1-cos(i/360*180))/2;
+				let a = 180+tmp*360;
+				let r = 100;
+				ObjRender_SetPosition(objBookBase, 0-r*cos(a), 0-r*sin(a), tmp*800);
+				ObjRender_SetAngleZ(objBookBase, a);
+				yield;
+			}
+		}
+
+	}
+
+	// ページ単体
+	task ED_BookPageEx(imgPage1, imgPage2, delay, blank_count)
+	{
+		ED_BookPage(imgPage1, imgEDNames[0], delay);
+		wait(delay+5);
+		descent(i in 1 .. blank_count-1)
+		{
+			ED_BookPage(imgEDNames[0], imgEDNames[0], 0);
+			wait(5);
+		}
+		wait(5);
+		ED_BookPage(imgEDNames[0], imgPage2, 0);
+	}
+	
+	task ED_BookPage(imgPage1, imgPage2, delay)
+	{
+		let BX = 200;
+		let BY = 40;
+		let BZ = BX*1.4;
+		let CP = 8;
+		let timer = 60;
+		let to_angle = 180;
+		let nowPAGE = -1;
+		
+		let objPage = [ObjPrim_Create(OBJ_PRIMITIVE_3D), ObjPrim_Create(OBJ_PRIMITIVE_3D), ObjPrim_Create(OBJ_PRIMITIVE_3D)];
+		ascent(j in 0 .. 3)
+		{
+			Obj_SetRenderPriorityI(objPage[j], edPriority);
+			ObjPrim_SetPrimitiveType(objPage[j], PRIMITIVE_TRIANGLESTRIP);
+			ObjPrim_SetTexture(objPage[j], [imgEDBook03, imgPage1, imgPage2][j]);
+			ObjPrim_SetVertexCount(objPage[j], (CP+1)*2);
+			ObjRender_SetZWrite(objPage[j], true);
+			ObjRender_SetZTest(objPage[j], true);
+			if (j < 2)
+			{
+				ascent(i in 0 .. CP+1)
+				{
+					let tmp = i/CP;
+					ObjPrim_SetVertexPosition(objPage[j], i*2+0, BX*tmp, 0, -BZ/2);
+					ObjPrim_SetVertexPosition(objPage[j], i*2+1, BX*tmp, 0,  BZ/2);
+					ObjPrim_SetVertexUVT(objPage[j], i*2+0, tmp*384, 512);
+					ObjPrim_SetVertexUVT(objPage[j], i*2+1, tmp*384, 0);
+				}
+			}
+			else
+			{
+				ascent(i in 0 .. CP+1)
+				{
+					let tmp = i/CP;
+					ObjPrim_SetVertexPosition(objPage[j], i*2+0, BX*tmp, 0, -BZ/2);
+					ObjPrim_SetVertexPosition(objPage[j], i*2+1, BX*tmp, 0,  BZ/2);
+					ObjPrim_SetVertexUVT(objPage[j], i*2+0, (1-tmp)*384, 512);
+					ObjPrim_SetVertexUVT(objPage[j], i*2+1, (1-tmp)*384, 0);
+				}
+			}
+		}
+		
+		let t = 0;
+		ascent(t in 0 .. timer)
+		{
+			let tmp_t = (1-cos(t/(timer-1)*180))/2;
+			let tmp_t2 = sin(tmp_t*180);
+			ascent(i in 0 .. CP+1)
+			{
+				let tmp = i/CP;
+				let br = BX*tmp;
+				ascent(j in 0 .. 3)
+				{
+					let offset_a = [0, tmp_t, min(0, -10+tmp_t*15)][j];
+					let ba = to_angle*tmp_t + cos(tmp*180)*tmp_t2*45+offset_a;
+					let tmp_bx = cos(ba)*br;
+					let tmp_by = sin(ba)*br;
+					ObjPrim_SetVertexPosition(objPage[j], i*2+0, tmp_bx, tmp_by, -BZ/2);
+					ObjPrim_SetVertexPosition(objPage[j], i*2+1, tmp_bx, tmp_by,  BZ/2);
+				}
+			}
+			
+			let x = ObjRender_GetX(objBookBase);
+			let y = ObjRender_GetY(objBookBase);
+			let z = ObjRender_GetZ(objBookBase);
+			let a = ObjRender_GetAngleZ(objBookBase) + BT_ANGLE3;
+			ascent(j in 0 .. 3)
+			{
+				ObjRender_SetPosition(objPage[j], x, y, z);
+				ObjRender_SetAngleZ(objPage[j], a);
+			}
+
+			if (t == 0)
+			{
+				wait(delay);
+			}
+			yield;
+		}
+		ED_PAGE++;
+		nowPAGE = ED_PAGE;
+		while(nowPAGE >= ED_PAGE && STUFF_FLG)
+		{
+			let x = ObjRender_GetX(objBookBase);
+			let y = ObjRender_GetY(objBookBase);
+			let z = ObjRender_GetZ(objBookBase);
+			let a = ObjRender_GetAngleZ(objBookBase) + BT_ANGLE3;
+			ascent(j in 0 .. 3)
+			{
+				ObjRender_SetPosition(objPage[j], x, y, z);
+				ObjRender_SetAngleZ(objPage[j], a);
+			}
+			yield;
+		}
+		ascent(j in 0 .. 3) { Obj_Delete(objPage[j]); }
+	}
+
+
+	// NO MIYABI!
+	task ED_MIYABI()
+	{
+		let x = GetScreenWidth/2;
+		let y = GetScreenHeight/2;
+		let sc = 0.6;
+		
+		_ED_MIYABI2(x, y, [128, 140, 255], sc, imgEdMiyabi);
+		
+		ascent(t in 0 .. 60)
+		{
+			let c = (t+1)/60*24;
+			_ED_MIYABI(x, y, randEffect(-0.15,0.15), randEffect(-0.5,0), [randEffect(0,c/2),randEffect(0,c/2),randEffect(0,c)], sc, imgEdMiyabi);
+			wait(2);
+		}
+		loop(120)
+		{
+			let c = 24;
+			_ED_MIYABI(x, y, randEffect(-0.15,0.15), randEffect(-0.5,0), [randEffect(0,c/2),randEffect(0,c/2),randEffect(0,c)], sc, imgEdMiyabi);
+			wait(2);
+		}
+		descent(t in 0 .. 60)
+		{
+			let c = (t+1)/60*24;
+			_ED_MIYABI(x, y, randEffect(-0.15,0.15), randEffect(-0.5,0), [randEffect(0,c/2),randEffect(0,c/2),randEffect(0,c)], sc, imgEdMiyabi);
+			wait(2);
+		}
+	}
+	task ED_THANKYOU()
+	{
+		let x = GetScreenWidth/2+128;
+		let y = GetScreenHeight/2+128;
+		let sc = 0.4;
+		
+		_ED_MIYABI2(x, y, [255, 255, 255], sc, imgEdThank);
+		
+		ascent(t in 0 .. 24)
+		{
+			let c = (t+1)/24*48;
+			_ED_MIYABI(x, y, randEffect(-0.1,0.1), randEffect(-0.1,0.1), [randEffect(0,c),randEffect(0,c),randEffect(0,c)], sc, imgEdThank);
+			wait(5);
+		}
+		loop(48)
+		{
+			let c = 48;
+			_ED_MIYABI(x, y, randEffect(-0.1,0.1), randEffect(-0.1,0.1), [randEffect(0,c),randEffect(0,c),randEffect(0,c)], sc, imgEdThank);
+			wait(5);
+		}
+		descent(t in 0 .. 24)
+		{
+			let c = (t+1)/24*48;
+			_ED_MIYABI(x, y, randEffect(-0.1,0.1), randEffect(-0.1,0.1), [randEffect(0,c),randEffect(0,c),randEffect(0,c)], sc, imgEdThank);
+			wait(5);
+		}
+	}
+	task _ED_MIYABI(x, y, vx, vy, color, scale, imgFile)
+	{
+		let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(objImg, imgFile);
+		Obj_SetRenderPriorityI(objImg, 70);
+		ObjSprite2D_SetSourceRect(objImg, 0, 0, 1024, 256);
+		ObjSprite2D_SetDestCenter(objImg);
+		ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+		ObjRender_SetColor(objImg, color[0], color[1], color[2]);
+		ObjRender_SetScaleXYZ(objImg, scale, scale, 1);
+		
+		ascent(t in 0 .. 30)
+		{
+			ObjRender_SetPosition(objImg, x, y, 0);
+			ObjRender_SetAlpha(objImg, (t+1)/30*255);
+			x += vx; y += vy;
+			yield;
+		}
+		descent(t in 0 .. 90)
+		{
+			ObjRender_SetPosition(objImg, x, y, 0);
+			ObjRender_SetAlpha(objImg, (t+1)/90*255);
+			x += vx; y += vy;
+			yield;
+		}
+		Obj_Delete(objImg);
+	}
+
+	task _ED_MIYABI2(x, y, color, scale, imgFile)
+	{
+		let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(objImg, imgFile);
+		Obj_SetRenderPriorityI(objImg, 71);
+		ObjSprite2D_SetSourceRect(objImg, 0, 0, 1024, 256);
+		ObjSprite2D_SetDestCenter(objImg);
+		ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+		ObjRender_SetColor(objImg, color[0], color[1], color[2]);
+		ObjRender_SetScaleXYZ(objImg, scale, scale, 1);
+		
+		ascent(t in 0 .. 120)
+		{
+			ObjRender_SetPosition(objImg, x, y, 0);
+			ObjRender_SetAlpha(objImg, (t+1)/120*255);
+			yield;
+		}
+		wait(240);
+		descent(t in 0 .. 120)
+		{
+			ObjRender_SetPosition(objImg, x, y, 0);
+			ObjRender_SetAlpha(objImg, (t+1)/120*255);
+			yield;
+		}
+		Obj_Delete(objImg);
+	}
+
+	task ED_WHITEOUT()
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, 50);
+		ObjSprite2D_SetDestRect(obj, 0, 0, GetScreenWidth, GetScreenHeight);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetColor(obj, 255, 255, 255);
+
+		ascent(i in 0 .. 180)
+		{
+			let tmp = sin((i+1)/180*90);
+			ObjRender_SetAlpha(obj, tmp*255);
+			yield;
+		}
+		STUFF_FLG = false;
+		descent(i in 0 .. 240)
+		{
+			let tmp = sin((i+1)/240*90);
+			ObjRender_SetAlpha(obj, tmp*255);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+//----------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------
+task TMenu
+{
+	// ゲームオーバーBGM
+//	if (GetPlayMode() != GAME_SPELL) { PlayMusic(1, 120, 30); }
+	
+	//メニュー配置
+	let mx			= GetScreenWidth/2;
+	let my			= 330;
+	let myRESULT_HELP = 107777;
+	
+	let texts		= ["リプレイを保存する", "タイトルに戻る"];
+	let listResult		= [RESULT_SAVE_REPLAY, RESULT_END];
+	let listReverify	= [ false, true ];
+	let rgb			= [160,160,64];
+	let continue		= GetContinueCount();
+
+	//　こんてぬー
+	if( continue > 0 )
+	{
+		texts		= ["タイトルに戻る"];
+		listResult	= [RESULT_END];
+		listReverify	= [ true ];
+	}
+	let countMenu	= length(texts);
+
+	//　メニュータイトル作成
+	let objParent = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
+	Obj_SetValue(objParent, "VALUE", 0);
+
+
+
+	//　項目作成
+	ascent( var iText in 0 .. countMenu )
+	{
+		TMenuItem(objParent, iText, mx-12, my-32, texts[iText] );
+		my += 32;
+		mx += 8;
+	//	if (iText == 0) { mx += 32; }
+	}
+	
+	//　8フレーム待機
+	loop( 30 ){ yield; }
+	
+	//キー状態がリセットされるまで待機
+	WaitForResetKeyEx([VK_OK, VK_CANCEL, VK_PAUSE]);
+	
+	loop
+	{
+		//キー入力待ち
+		let downKey = CheckKey_Menu(8, [VK_UP, VK_DOWN, VK_CANCEL, VK_OK]);
+
+		alternative (downKey)
+		case (VK_UP)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValue(objParent, "VALUE", -1, countMenu);
+		}
+		case (VK_DOWN)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValue(objParent, "VALUE", 1, countMenu);
+		}
+		case (VK_CANCEL)
+		{
+			Obj_SetValue(objParent, "VALUE", 0);
+			CallSoundPackage(sndTtCancel);
+		}
+		case (VK_OK)
+		{
+			let selectIndex = Obj_GetValueD(objParent, "VALUE", 0);
+			
+			let menu_flg = true;
+			if (listReverify[selectIndex])
+			{
+				CallSoundPackage(sndTtDecide);
+				menu_flg = TReverify(330, 270);
+			}
+
+			if (menu_flg)
+			{
+				if (listResult[selectIndex] == myRESULT_HELP)
+				{
+					// ヘルプ
+					CallSoundPackage(sndTtDecide);
+					SceneManual(-1);
+				}
+				else
+				{
+					//　リザルトセット
+					SetScriptResult( listResult[selectIndex] );
+					
+					if( listResult[ selectIndex ] == RESULT_SAVE_REPLAY )
+					{
+						CallSoundPackage(sndTtDecide);
+						CallReplaySaveScene();
+					}
+					else
+					{
+						//　得点リセット
+						AddScore( -GetScore() );
+						CallSoundPackage(sndTtDecide);
+						loop( 12 ){ yield; }
+						CloseScript( GetOwnScriptID() );
+						return;
+					}
+				}
+			}
+		}
+		loop(3) { yield; }	//適当に固定ディレイ
+	}
+	Obj_Delete(objParent);
+}
+
+
+
+
+function CallReplaySaveScene()
+{
+	let csd			= GetCurrentScriptDirectory();
+	let pathScript	= csd ~ "./SceneReplay.dnh";
+	let idScript	= LoadScript(pathScript);
+	let cc			= 0;
+	
+	IsReplaySave = true;
+	SetScriptArgument(idScript, 0, 1);	//クリア時はキーボードを真ん中に
+	StartScript(idScript);
+	
+	while( !IsCloseScript(idScript) )
+	{
+		// はっぱっぱ
+		if( cc%10 == 0 ){
+			CreatePauseEffect([randEffect(32,32+384),randEffect(-64,256)], 90+randEffect(-32,32), 1, 0, 10,
+								[255,255,255], randEffect(32,64), 128 );
+		}
+		cc++;
+		yield;
+	}
+	
+	IsReplaySave = false;
+}
+
+
+// エンディングのベース背景
+task WHITEOUT_ED2()
+{
+	let obj2 = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj2, 90);
+	ObjSprite2D_SetDestRect(obj2, 0, 0, GetScreenWidth, GetScreenHeight);
+	ObjRender_SetBlendType(obj2, BLEND_ADD_ARGB);
+	ObjRender_SetColor(obj2, 255, 255, 255);
+	
+	descent(i in 0 .. 240)
+	{
+		let tmp = sin((i+1)/240*90);
+		ObjRender_SetAlpha(obj2, tmp*255);
+		yield;
+	}
+	Obj_Delete(obj2);
+}
+
+// 背景
+task TBackgroundEd
+{
+	// ベースの背景
+	let objBaseBg = ObjPrim_Create(OBJ_SPRITE_2D); //2Dスプライトオブジェクト生成
+	ObjPrim_SetTexture(objBaseBg, imgEdBack);
+	ObjSprite2D_SetSourceRect(objBaseBg, 0, 0, GetScreenWidth, GetScreenHeight);
+	ObjSprite2D_SetDestRect(objBaseBg, 0, 0, GetScreenWidth, GetScreenHeight);
+	Obj_SetRenderPriorityI(objBaseBg, 0);
+	
+	ascent(i in 0 .. 60)
+	{
+		ObjRender_SetAlpha(objBaseBg, (i+1)/60*255);
+		yield;
+	}
+}
+
+// 解放フラグ
+function SetFlag(isBadEnding)
+{
+	// クリアフラグ
+	if (!isBadEnding)
+	{
+		CDM_SetExtraStageFlag( GetPlayerType() );	// フラグは自機共通（会話が変わらない為）
+		CDM_SetAllClearFlag( GetPlayerTypeEx(), Difficult() );
+		// ゲームクリアフラグN
+		SetAreaCommonData(CAREA_STAGE, "GAME_CLEAR", 1 );
+	}
+}
+
+// ハイスコア保存
+function SetHightScore()
+{
+	let stage_clear		= GetAreaCommonData(CAREA_SYSTEM, "ClearStage", false);
+	if (GetPlayMode() == GAME_MAIN)
+	{
+		let com = "";
+		if (Difficult() == D_EXTRA) { com = "ExClear"; }
+		else { com = "Clear"; }
+		
+		AddHighScore(Difficult(), GetPlayerTypeEx(), IsInfinityMode(), 0, GetPlayMode(), GetScore(), com);
+	}
+}

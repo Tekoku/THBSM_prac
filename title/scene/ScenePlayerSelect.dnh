@@ -1,0 +1,461 @@
+// 難易度選択画面
+function ScenePlayerSelect(selectedDedault)
+{
+	let playMode = GetAreaCommonData(CAREA_TITLE, "PlayMode", GAME_NONE );
+	let selectedDifficult = GetAreaCommonData(CAREA_TITLE, "GameRank", 0 );
+	let selectedStage = GetAreaCommonData(CAREA_TITLE, "StageIndex", 0 )-1;
+	let stayGraphic = (playMode != GAME_SPELL);	// 立ち絵を退場させるか？
+
+	let selectedDedault1 = trunc(selectedDedault/2);
+	let selectedDedault2 = selectedDedault%2;
+	
+	//自動選択
+	let tmpMemory = CheckMenuMemory();
+	if (tmpMemory >= 0)
+	{
+		SetAreaCommonData(CAREA_TITLE, "PlayerType", tmpMemory );
+		return(tmpMemory);
+	}
+	
+	// 画像ファイル
+	let imgPlayerText = [imgTtPlayer1, imgTtPlayer2, imgTtPlayer3];
+	let imgPlayerWeapon = [[imgTtWeapon1_1, imgTtWeapon1_2], [imgTtWeapon2_1, imgTtWeapon2_2], [imgTtWeapon3_1, imgTtWeapon3_2]];
+	let imgPlayerPic = [imgTtPicPlayer1, imgTtPicPlayer2, imgTtPicPlayer3];
+	let imgPlayerShadow = [imgTtPicPlayer1b, imgTtPicPlayer2b, imgTtPicPlayer3b];
+	
+	let selectMax = length(imgPlayerText);	// プレイヤー選択用
+	let selectMax2 = 2;	// 装備選択用
+	let resultIndex = -1;
+	let animeTimer = 10;
+	
+	let objParent = ObjText_Create();	//適当なオブジェクトを生成（データのやり取り用）
+	Obj_SetValue(objParent, "VALUE", selectedDedault1);
+	Obj_SetValue(objParent, "VALUE2", selectedDedault2);
+	Obj_SetValue(objParent, "LEVEL", 0);	// 選択階層
+	
+	// デフォ値
+	let allow_flag = [[true, true], [true, true], [true, true]];
+	
+	if (playMode == GAME_SPELL)
+	{
+	}
+	else if (playMode == GAME_PRACTICE)
+	{
+		allow_flag = [
+			[CDM_GetPracticeStageFlag(PLAYER_REIMU_A, selectedStage, selectedDifficult), CDM_GetPracticeStageFlag(PLAYER_REIMU_B, selectedStage, selectedDifficult)],
+			[CDM_GetPracticeStageFlag(PLAYER_MARISA_A, selectedStage, selectedDifficult), CDM_GetPracticeStageFlag(PLAYER_MARISA_B, selectedStage, selectedDifficult)],
+			[CDM_GetPracticeStageFlag(PLAYER_SANAE_A, selectedStage, selectedDifficult), CDM_GetPracticeStageFlag(PLAYER_SANAE_B, selectedStage, selectedDifficult)]
+		];
+	}
+	
+	// 選択拒否
+	ascent(i in 0 .. 3)
+	{
+		if (!(allow_flag[i][0] || allow_flag[i][1]))
+			{ SetIgnoreMenuIndex(objParent, i); }
+		
+		ascent(j in 0 .. 2)
+		{
+			if (!(allow_flag[i][j]))
+				{ SetIgnoreMenuIndexWeapon(objParent, i, j); }
+		}
+	}
+	
+	//メニュー配置
+	local
+	{
+		TMenuItemPlayer(objParent, imgPlayerText, imgPlayerPic, imgPlayerShadow, imgPlayerWeapon);
+		// タイトル
+		MenuPartsFace(objParent, 2);
+	}
+	wait(5);
+	//キー状態がリセットされるまで待機
+	WaitForResetKeyEx([VK_OK, VK_CANCEL]);
+
+	loop
+	{
+		//キー入力待ち
+		let downKey = CheckKey_MenuEx(30, 6, [VK_LEFT, VK_RIGHT, VK_OK, VK_CANCEL]);
+		
+		alternative (downKey)
+		case (VK_LEFT)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValue(objParent, "VALUE", -1, selectMax);
+		}
+		case (VK_RIGHT)
+		{
+			CallSoundPackage(sndTtSelect);
+			Menu_AddValue(objParent, "VALUE", 1, selectMax);
+		}
+		case (VK_OK)
+		{
+			if (GetIgnoreMenuIndex(objParent, Obj_GetValueD(objParent, "VALUE", -1)))
+			{
+				CallSoundPackage(sndTtCancel);
+			}
+			else
+			{
+				CallSoundPackage(sndTtDecide);
+				Obj_SetValue(objParent, "LEVEL", 1);	// 選択階層
+				let tmpWeapon = SceneWeaponSelect();
+				if (tmpWeapon < 0)
+				{
+					Obj_SetValue(objParent, "LEVEL", 0);	// 選択階層
+				}
+				else
+				{
+					let tmpPlayer = Obj_GetValueD(objParent, "VALUE", -1);
+					resultIndex = tmpPlayer*2 + tmpWeapon;
+					baseMenuFlag++;
+					MenuEnter(objParent);
+					break;
+				}
+			}
+		}
+		case (VK_CANCEL)
+		{
+			CallSoundPackage(sndTtCancel);
+			Obj_SetValue(objParent, "LEVEL", -1);
+			baseMenuFlag--;
+			yield;
+			break;
+		}
+		wait(2);	//適当に固定ディレイ
+	}
+	if (resultIndex < 0 || !stayGraphic) { Obj_Delete(objParent); }
+	else { DelayDalateObj(objParent, 60); }
+
+	// 値をセット
+	SetAreaCommonData(CAREA_TITLE, "PlayerType", resultIndex );
+	return(resultIndex);
+	
+	// 装備選択用
+	function SceneWeaponSelect()
+	{
+		wait(5);	// 固定ディレイ
+		
+		let tmpResult = -1;
+		loop
+		{
+			//キー入力待ち
+			let downKey = CheckKey_MenuEx(30, 6, [VK_LEFT, VK_RIGHT, VK_OK, VK_CANCEL]);
+			
+			alternative (downKey)
+			case (VK_LEFT)
+			{
+				CallSoundPackage(sndTtSelect);
+				Menu_AddValue(objParent, "VALUE2", -1, selectMax2);
+			}
+			case (VK_RIGHT)
+			{
+				CallSoundPackage(sndTtSelect);
+				Menu_AddValue(objParent, "VALUE2", 1, selectMax2);
+			}
+			case (VK_OK)
+			{
+				if (GetIgnoreMenuIndexWeapon(objParent,
+					Obj_GetValueD(objParent, "VALUE", -1),
+					Obj_GetValueD(objParent, "VALUE2", -1)))
+				{
+					CallSoundPackage(sndTtCancel);
+				}
+				else
+				{
+					tmpResult = Obj_GetValueD(objParent, "VALUE2", selectedDedault2);
+					break;
+				}
+			}
+			case (VK_CANCEL)
+			{
+				CallSoundPackage(sndTtCancel);
+				break;
+			}
+			wait(2);	//適当に固定ディレイ
+		}
+		return (tmpResult);
+	}
+	
+	// メニュー選択時モーション
+	function MenuEnter(parent)
+	{
+		CallSoundPackage(sndTtDecide);
+		Obj_SetValue(parent, "FLASH", 1);
+		wait(15);
+	}
+	// メニューパーツ
+	task TMenuItemPlayer(parent, imgPlText, imgPlPic, imgPlShadow, imgPlWeapons)
+	{
+		let posText = [400, 280];
+		let posPic = [180, 300];
+		
+		let before_index = -99999;
+		let selected_index = -1;
+		let before_index2 = -99999;
+		let selected_index2 = -1;
+		let before_level = -99999;
+		let selected_level = -1;
+		while(!Obj_IsDeleted(parent))
+		{
+			selected_index = Obj_GetValueD(parent, "VALUE", -1);
+			selected_index2 = Obj_GetValueD(parent, "VALUE2", -1);
+			selected_level = Obj_GetValueD(parent, "LEVEL", -1);
+			
+			if (before_index != selected_index)
+			{
+				// プレヤー画像
+				let muki = ChkIndex(before_index, selected_index);
+				TMenuItemPlayer_Pic(parent, selected_index, imgPlPic[selected_index], imgPlShadow[selected_index], posPic, muki);
+				// プレイヤー文字
+				TMenuItemPlayer_Text(parent, selected_index, imgPlText[selected_index], posText, muki);
+				
+				before_index = selected_index;
+			}
+			if (before_index2 != selected_index2)
+			{
+				if (selected_level == 1)
+				{
+					let muki = ChkIndex2(before_index2, selected_index2);
+					// 装備
+					TMenuItemPlayer_Weapon(parent, selected_index, selected_index2, imgPlWeapons[selected_index][selected_index2], posText, muki);
+				}
+				before_index2 = selected_index2;
+			}
+			if (before_level != selected_level)
+			{
+				if (selected_level == 0) {
+					let muki = ChkIndex(before_index, selected_index);
+					// プレイヤー文字
+					TMenuItemPlayer_Text(parent, selected_index, imgPlText[selected_index], posText, muki);
+				}
+				else if (selected_level == 1) {
+					let muki = ChkIndex2(before_index2, selected_index2);
+					// 装備
+					TMenuItemPlayer_Weapon(parent, selected_index, selected_index2, imgPlWeapons[selected_index][selected_index2], posText, muki);
+				}
+				before_level = selected_level;
+			}
+			yield;
+		}
+	}
+
+	// メニューパーツ（文字用）
+	task TMenuItemPlayer_Text(parent, index, imgPlText, pos, muki)
+	{
+		let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objText, 22);
+		ObjPrim_SetTexture(objText, imgPlText);
+		ObjSprite2D_SetDestRect(objText, -256, -128, 256, 128);
+		ObjSprite2D_SetSourceRect(objText, 0, 0, 512, 256);
+		ObjRender_SetPosition(objText, pos[0], pos[1], 0);
+		
+		if (GetIgnoreMenuIndex(parent, index))
+		{
+			// 選択不可：モノトーン化
+			SetMonotoneTexture(objText, 1);
+			ObjRender_SetColor(objText, 160, 160, 160);
+		}
+		
+		let t = 0;
+		while(!Obj_IsDeleted(parent) && index == Obj_GetValueD(parent, "VALUE", -1) &&
+			Obj_GetValueD(parent, "LEVEL", 0) == 0)
+		{
+			if (t < 15)
+			{
+				let tmp = (1-sin((t+1)/15*90));
+				ObjRender_SetAngleY(objText, tmp*90*muki);
+				ObjRender_SetX(objText, pos[0]+tmp*132*muki);
+			}
+			t++;
+			yield;
+		}
+		if (Obj_GetValueD(parent, "LEVEL", 0) != 0)
+		{
+			// 決定、キャンセルボタン
+			descent(t in 0 .. 10)
+			{
+				let tmp = cos((t+1)/10*90);
+				ObjRender_SetAngleX(objText, tmp*90);
+				ObjRender_SetY(objText, pos[1]-tmp*128);
+				yield;
+			}
+		}
+		else
+		{
+			muki = -ChkIndex(index, Obj_GetValueD(parent, "VALUE", -1));
+			descent(t in 0 .. 15)
+			{
+				let tmp = cos((t+1)/15*90);
+				ObjRender_SetAngleY(objText, tmp*90*muki);
+				ObjRender_SetX(objText, pos[0]+tmp*132*muki);
+				yield;
+			}
+		}
+		Obj_Delete(objText);
+	}
+	// メニューパーツ（画像用）
+	task TMenuItemPlayer_Pic(parent, index, imgPlPic, imgPlShadow, pos, muki)
+	{
+		let objPic = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objPic, 21);
+		ObjPrim_SetTexture(objPic, imgPlPic);
+		ObjSprite2D_SetDestRect(objPic, -256, -256, 256, 256);
+		ObjSprite2D_SetSourceRect(objPic, 0, 0, 512, 512);
+		ObjRender_SetPosition(objPic, pos[0], pos[1], 0);
+
+		let objShadow = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objShadow, 20);
+		ObjPrim_SetTexture(objShadow, imgPlShadow);
+		ObjSprite2D_SetDestRect(objShadow, -256, -256, 256, 256);
+		ObjSprite2D_SetSourceRect(objShadow, 0, 0, 512, 512);
+		ObjRender_SetPosition(objShadow, pos[0], pos[1], 0);
+		ObjRender_SetAlpha(objShadow, 0);
+		
+		if (GetIgnoreMenuIndex(parent, index))
+		{
+			// 選択不可：モノトーン化
+			SetMonotoneTexture(objPic, 0.8);
+			SetMonotoneTexture(objShadow, 0.6);
+		}
+		let alpha = 0;
+		let alpha_s = 0;
+		let t = 0;
+		while(!Obj_IsDeleted(parent) && index == Obj_GetValueD(parent, "VALUE", -1))
+		{
+			if (t < 15)
+			{
+				let tmp = sin((t+1)/15*90);
+				alpha = tmp*255;
+			//	ObjRender_SetAlpha(objPic, alpha);
+				ObjRender_SetX(objPic, pos[0]+(1-tmp)*64*muki);
+			} else if (t < 60) {
+				let tmp = sin((t+1-15)/45*90);
+				ObjRender_SetX(objShadow, ObjRender_GetX(objPic)-tmp*32);
+				alpha_s = 255;
+				ObjRender_SetAlpha(objShadow, alpha_s);
+			}
+			t++;
+			yield;
+		}
+		muki = -ChkIndex(index, Obj_GetValueD(parent, "VALUE", -1));
+		descent(t in 0 .. 10)
+		{
+			let tmp = (1-cos((t+1)/10*90));
+			ObjRender_SetAlpha(objPic, alpha*tmp);
+			ObjRender_SetX(objPic, ObjRender_GetX(objPic)+4*muki);
+			ObjRender_SetAlpha(objShadow, alpha_s*tmp);
+			yield;
+		}
+		Obj_Delete(objPic);
+		Obj_Delete(objShadow);
+	}
+	// メニューパーツ（装備用）
+	task TMenuItemPlayer_Weapon(parent, pl_index, index, imgPlWeapon, pos, muki)
+	{
+		let px = pos[0];
+		let py = pos[1] + trunc(index-(selectMax2-1)/2) * 128;
+		let objText= ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(objText, 22);
+		ObjPrim_SetTexture(objText, imgPlWeapon);
+		ObjSprite2D_SetDestRect(objText, -256, -128, 256, 128);
+		ObjSprite2D_SetSourceRect(objText, 0, 0, 512, 256);
+		ObjRender_SetPosition(objText, px, py, 0);
+		
+		if (GetIgnoreMenuIndexWeapon(parent, pl_index, index))
+		{
+			// 選択不可：モノトーン化
+			SetMonotoneTexture(objText, 1);
+			ObjRender_SetColor(objText, 160, 160, 160);
+		}
+		
+		let t = 0;
+		while(!Obj_IsDeleted(parent) && index == Obj_GetValueD(parent, "VALUE2", -1) &&
+			Obj_GetValueD(parent, "LEVEL", 0) == 1 && !Obj_GetValueD(parent, "FLASH", 0))
+		{
+			if (t < 15)
+			{
+				let tmp = (1-sin((t+1)/15*90));
+				ObjRender_SetAngleY(objText, tmp*90*muki);
+				ObjRender_SetX(objText, pos[0]+tmp*132*muki);
+			}
+			t++;
+			yield;
+		}
+		// 選択決定
+		if (Obj_GetValueD(parent, "FLASH", 0))
+		{
+			descent(t in 0 .. 20)
+			{
+				let alpha = 255 - ((trunc(t/3)+1)%2)*128;
+				ObjRender_SetAlpha(objText, alpha);
+				yield;
+			}
+			ObjRender_SetAlpha(objText, 255);
+			while(!Obj_IsDeleted(parent)) { yield; }
+		}
+		else if (Obj_GetValueD(parent, "LEVEL", 0) != 1)
+		{
+			// キャンセルボタン
+			descent(t in 0 .. 10)
+			{
+				let tmp = cos((t+1)/10*90);
+				ObjRender_SetAngleX(objText, tmp*90);
+				ObjRender_SetY(objText, pos[1]-tmp*128);
+				yield;
+			}
+		}
+		else
+		{
+			muki = -ChkIndex2(index, Obj_GetValueD(parent, "VALUE2", -1));
+			descent(t in 0 .. 15)
+			{
+				let tmp = cos((t+1)/15*90);
+				ObjRender_SetAngleY(objText, tmp*90*muki);
+				ObjRender_SetX(objText, pos[0]+tmp*132*muki);
+				yield;
+			}
+		}
+		Obj_Delete(objText);
+	}
+	
+	function ChkIndex(index, to_index)
+	{
+		let tmp = 1;
+		if (index > to_index) { tmp = -tmp; }
+		if ((index == 0 && to_index == selectMax-1) || (index == selectMax-1 && to_index == 0)) { tmp = -tmp; }
+		return(tmp);
+	}
+	function ChkIndex2(index, to_index)
+	{
+		let tmp = 1;
+		if (index > to_index) { tmp = -tmp; }
+		if ((index == 0 && to_index == selectMax2-1) || (index == selectMax2-1 && to_index == 0)) { tmp = -tmp; }
+		return(tmp);
+	}
+	task DelayDalateObj(obj, timer)
+	{
+		wait(timer);
+		Obj_Delete(obj);
+	}
+	// メニュー選択不可フラグ
+	function SetIgnoreMenuIndexWeapon(obj, index, wp_index)
+	{
+		Obj_SetValue(obj, "ALLOW"~IntToString(index)~"_"~IntToString(wp_index), true);
+	}
+	function GetIgnoreMenuIndexWeapon(obj, index, wp_index)
+	{
+		return(Obj_GetValueD(obj, "ALLOW"~IntToString(index)~"_"~IntToString(wp_index), false));
+	}
+	// モノトーン化
+	function SetMonotoneTexture(obj, power)
+	{
+		//ゆがみオブジェクトにシェーダを設定
+		ObjShader_SetShaderF(obj, hlslMonotone);
+		ObjShader_SetTechnique(obj, "TecMonotone");
+		//シェーダにパラメータを設定
+		ObjShader_SetFloat(obj, "power_", power);
+	}
+}
+
+
+
