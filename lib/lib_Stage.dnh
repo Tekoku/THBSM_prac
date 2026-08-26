@@ -1,0 +1,411 @@
+//ステージ道中関連の処理
+#include "./lib_Chapter.dnh"
+#include "./lib_StageTitle.dnh"
+#include "./loadlib/file_LoadStgImg.dnh"
+#include "./lib_ChapterSkip.dnh"
+
+// 背景画像
+let STAGE_ID = -1;
+let NEXT_STAGE_ID = -1;
+let StageTimer = 0;
+
+let middleBossKilled = false;	// 中ボス撃破フラグ（早回し用）
+let flgStagePlural = 0;		// 連続再生終了フラグ
+let flgStopSetZako = false;	// 雑魚配置停止中
+
+// ---------------------------
+//  メイン処理
+// ---------------------------
+// 単体ステージ開始時に起動
+sub StageInit()
+{
+	init();
+	
+	if (GetScriptArgumentCount() > 0) { STAGE_ID = GetScriptArgument(0); }
+	//コモンデータ初期化（テストプレイ用）
+	if (!IsCommonDataAreaExists(CAREA_STAGE)) { CreateCommonDataArea(CAREA_STAGE); }
+	//ステージID
+	SetAreaCommonData(CAREA_STAGE, "StageIndex", STAGE_ID );
+	//次のステージ
+	SetAreaCommonData(CAREA_STAGE, "NextStageIndex", NEXT_STAGE_ID);
+	//プラクティスフラグON
+	CDM_SetPracticeStageFlag(GetPlayerTypeEx(), GetStageIndex()-1, Difficult());
+	// ItemBorderLine
+	DisplayBorderLine(79,0);
+	//弾消去範囲をリセット
+	InitDeleteClip();
+	//ショットデータ読み込み
+	LoadAllShotData();
+	//アイテム数リセット
+	SetAreaCommonData(CAREA_STAGE, "StageWishItem", 0);
+
+	//道中カウンター
+	TStageTimer();
+	//デバッグ用
+//	TItemCountView();
+}
+
+//終了
+function StageEND()
+{
+	if (GetStageIndex() != 0)
+	{
+		//アイテム全取得
+		CollectAllItems();
+		wait(30);
+		//クリアボーナス表示
+		StageBonus();
+		wait(180);
+		//  背景削除
+		NotifyEvent(GetStageBG_ID(), ev_CloseScript, 1);
+		wait(60);
+	}
+	// 不要な画像のアンロード
+//	UnoadStageAllTexture(STAGE_ID);
+
+	// プラクティスクリアフラグON
+	if (GetPlayMode() == GAME_PRACTICE || STAGE_ID == STAGE_EXTRA)
+	{
+		SetAreaCommonData(CAREA_SYSTEM, "ClearStage", true);
+	}
+	
+	// スコアを記録
+	AddStageScore(GetStageIndex(), GetScore());
+	
+	// 色々記録
+	SetAreaCommonData(CAREA_STAGE, "STAGE_Score", GetScore());
+	SetAreaCommonData(CAREA_STAGE, "STAGE_Graze", GetGraze());
+	SetAreaCommonData(CAREA_STAGE, "STAGE_Death", GetAllDeathCount());
+	SetAreaCommonData(CAREA_STAGE, "STAGE_Difficult", Difficult());
+	SetAreaCommonData(CAREA_STAGE, "STAGE_Mode", IsInfinityMode());
+	
+	//色々リセット
+	SetAreaCommonData(CAREA_STAGE, "LWWishItem", -1);
+	
+	// ステージ終了処理
+	if ((GetPlayMode() != GAME_MAIN && GetPlayMode() != GAME_DEBUG) || !IsFinalStage())
+	{
+		wait(60);
+		
+		SetAreaCommonData(CAREA_SYSTEM, "PlayerPosition", [GetPlayerX, GetPlayerY]);	// 自機座標記録
+		CloseMine(0);	//終了
+	} else {
+		// 最終ステージ
+//		CloseMine(0);	//終了
+	}
+}
+
+// ステージ終了時のスコアを記録
+function AddStageScore(index, score)
+{
+	let tmpString = GetAreaCommonData(CAREA_STAGE, "StageScore", "");
+	
+	if (length(tmpString) > 0) { tmpString = tmpString ~ "|"; }
+	tmpString = tmpString ~
+		IntToString(index) ~ ":" ~ IntToString(score);
+	
+	SetAreaCommonData(CAREA_STAGE, "StageScore", tmpString);
+}
+
+// イベント
+sub StageEvent
+{
+	alternative(GetEventType())
+	case(ev_PluralClosed) { flgStagePlural++; }
+}
+
+
+//クリアボーナス
+task StageBonus()
+{
+	// ボーナス
+	let bonusScore = trunc(((GetStageIndex() + Difficult() + 1) * (1/2 + 1)) * 200000) * 10;
+	if (GetStageIndex() == STAGE_EXTRA) { bonusScore = 95781430; }	// Exボーナス
+	else if (IsFinalStage()) { bonusScore *= 2; }
+
+	TGainSpell_Bonus(GetStgFrameWidth/2, 110, 195,
+		[0, 0, 256, 64]);
+	wait(15);
+	TGainSpell_Bonus(GetStgFrameWidth/2, 160, 180,
+		[0, 64, 256, 128]);
+	wait(30);
+	local
+	{
+		let count = 10;
+		let keta_count = 0;
+		let wt = 150;
+		let score = bonusScore;
+			
+		let setY = 208;
+		let setX = GetStgFrameWidth/2 + trunc(trunc(log10(score))*17/2);
+		
+		score = min(score, 9999999990);
+		let listNum = DigitToArray(score, count);
+
+		descent(iObj in 0 .. count)
+		{
+			let num = listNum[iObj];
+			if (num == -1) { break; }
+			if (keta_count > 2 && keta_count % 3 == 0 && iObj != 0)
+			{
+				setX += 8;
+				TGainSpell_Sub(setX, setY, 11, wt);
+				setX -= 14;
+				wt -= 3;
+				loop(3) { yield; }
+			}
+			TGainSpell_Sub(setX, setY, num, wt);
+			setX -= 16;
+			wt -= 2;
+			loop(2) { yield; }
+			keta_count++;
+		}
+	}
+	loop(100)
+	{
+		//スコア加算
+		AddScore(bonusScore/100);
+		yield;
+	}
+
+	// GetSpellCardBonus
+	task TGainSpell_Bonus(x, y, timer, imgPos)
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(obj, imgSystemStgClear);
+		Obj_SetRenderPriorityI(obj, 71);
+		ObjSprite2D_SetSourceRect(obj, imgPos[0], imgPos[1], imgPos[2], imgPos[3]);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetPosition(obj, x, y, 0);
+
+		ascent(i in 0 .. 15)
+		{
+			let tmp = (i+1)/15;
+			ObjRender_SetScaleY(obj, tmp);
+			yield;
+		}
+		loop(timer-15) { yield; }
+		descent(i in 0 .. 15)
+		{
+			let tmp = (i+1)/15;
+			ObjRender_SetScaleY(obj, tmp);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+	// 得点部分（文字１つ）
+	task TGainSpell_Sub(x, y, num, timer)
+	{
+		let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+		ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLELIST);
+		ObjPrim_SetVertexCount(obj, 6);
+		ObjPrim_SetTexture(obj, imgSystemNumber);
+		Obj_SetRenderPriorityI(obj, 71);
+		SetPrimNumber_Base(obj, 0, 0, -18, 18, 36);
+		SetPrimNumber(obj, 0, num);
+		ObjRender_SetX(obj, x);
+
+		ascent(i in 0 .. 25)
+		{
+			let tmp = (i+1)/25;
+			ObjRender_SetY(obj, y-sin(tmp*180)*24);
+			ObjRender_SetColor(obj, 255*tmp, 255*tmp, 255*tmp);
+			ObjRender_SetAlpha(obj, 255*tmp);
+			yield;
+		}
+		loop(timer-30) { yield; }
+		descent(i in 0 .. 15)
+		{
+			let tmp = (i+1)/15;
+			ObjRender_SetScaleY(obj, tmp);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+//ステージ終了処理
+sub My_CloseStageScene()
+{
+	FinalizeSystemCommonData();
+	CloseStgScene();
+}
+
+// ---------------------------
+//  フラグ管理
+// ---------------------------
+//カウンター
+task TStageTimer()
+{
+	let speedMod = GetAreaCommonData(CAREA_STAGE, "StageModification", 0 );
+	let addTimer = 1 + speedMod;
+	loop
+	{
+		if (GetRoadTimerFlag()) { StageTimer += addTimer; }
+		yield;
+	}
+}
+
+//背景等の処理待ちフラグ
+function NextStageScene()
+{
+	SetAreaCommonData(CAREA_STAGE, "StageScene",
+		GetAreaCommonData(CAREA_STAGE, "StageScene", 0)+1);
+}
+
+//背景スクリプト起動
+function SetStageBackGround(filename)
+{
+	let idBG = LoadScript(filename);
+	StartScript(idBG);
+	SetAreaCommonData(CAREA_STAGE, "ScriptBackground", idBG);	//ID記録
+}
+
+//最後のステージ？
+function IsFinalStage()
+{
+	return(GetAreaCommonData(CAREA_STAGE, "NextStageIndex", -1) < 0);
+}
+
+// ---------------------------
+//  ボス関連
+// ---------------------------
+// ロード済みのボス出現
+function CallBoss()
+{
+	NotifyEventAll(ev_ResistBoss, 1);
+}
+function CallBoss2()
+{
+	NotifyEventAll(ev_ResistBoss2, 1);
+}
+// LoadScriptInThread → StartScript
+function StartScriptInThread(path)
+{
+	let idScript = LoadScriptInThread(path);
+	StartScriptDelay(idScript, 120);
+	return(idScript);
+}
+// ボスがいなくなってからロード開始
+task StartScriptInThreadWaitBoss(path)
+{
+	WaitForBossKilled();
+	let idScript = LoadScriptInThread(path);
+	StartScriptDelay(idScript, 120);
+//	return(idScript);
+}
+task StartScriptDelay(idScript, delay)
+{
+	wait(delay);
+	StartScript( idScript );
+}
+
+// ボス撃破待ち
+task CheckBossKilled()
+{
+	middleBossKilled = false;
+	
+	let tmpFlag = flgStagePlural;
+	while (flgStagePlural == tmpFlag) { yield; }
+	middleBossKilled = true;
+}
+
+
+// ---------------------------
+//  コモンデータ
+// ---------------------------
+//コモンデータ更新
+sub LoadSystemCommonData()
+{
+	if (IsReplay()) {
+		LoadCommonDataAreaFromReplayFile(CAREA_STAGE);
+		LoadCommonDataAreaFromReplayFile(CAREA_SYSTEM);
+		LoadCommonDataAreaFromReplayFile(CAREA_REPLAY);
+	} else {
+		SaveCommonDataAreaToReplayFile(CAREA_STAGE);
+		SaveCommonDataAreaToReplayFile(CAREA_SYSTEM);
+	}
+	// 初期値を設定
+	SetAreaCommonData(CAREA_SYSTEM, "AsciiTexts", []);
+}
+//コモンデータ保存
+sub FinalizeSystemCommonData()
+{
+	if (IsReplay()) {
+	} else {
+		SaveCommonDataAreaToReplayFile(CAREA_REPLAY);
+	}
+}
+
+// ---------------------------
+//  その他ステージ関連
+// ---------------------------
+// ステージ用乱数
+function randStage(min, max, seed)
+{
+	let tmp = ((seed^2*9491+19681)%65536)/65536;
+	return(min+(max-min)*tmp)
+}
+// ステージ用待機処理（sec秒間待機）
+function WaitRoad(frame)
+{
+	let wait_frame = StageTimer + frame;
+	while(StageTimer <= wait_frame)
+	{
+		yield;
+	}
+}
+function WaitRoad_Enemy(frame)
+{
+	let wait_frame = StageTimer + frame;
+	while(StageTimer <= wait_frame && length(GetAllEnemyID()) > 0)
+	{
+		yield;
+	}
+}
+function WaitForBossKilled()
+{
+	let tmpFlag = flgStagePlural;
+//	SetRoadTimerFlag(false);
+	while (flgStagePlural == tmpFlag) { yield; }
+//	SetRoadTimerFlag(true);
+}
+function WaitForMiddleBossKilled()
+{
+//	SetRoadTimerFlag(false);
+	while (!middleBossKilled) { yield; }
+//	SetRoadTimerFlag(true);
+}
+
+
+//　ItemBorderLine
+task DisplayBorderLine(layer,delay)
+{
+	if (GetPlayMode() == GAME_PRACTICE ||
+		(GetPlayMode() == GAME_MAIN && STAGE_ID == 1))
+	{
+		// アニメ
+	}
+	// 矢印
+	DisplayBorderLine_sub();
+}
+
+// ItemBorderLine 横の矢印
+task DisplayBorderLine_sub()
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, imgSystemIBorder);
+	Obj_SetRenderPriorityI(obj, 90);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 32, 64);
+	ObjSprite2D_SetDestRect(obj, 0, -32, 32, 32);
+	ObjRender_SetX(obj, -2);
+	
+	let effY = GetPlayerAutoItemCollectLine()+GetStgFrameTop;
+	while(!Obj_IsDeleted(obj))
+	{
+		let tmp = GetPlayerAutoItemCollectLine()+GetStgFrameTop;
+		effY = (effY*0.75+tmp*0.25);
+		ObjRender_SetY(obj, effY);
+		yield;
+	}
+}

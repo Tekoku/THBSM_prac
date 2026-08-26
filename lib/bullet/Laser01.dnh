@@ -1,0 +1,331 @@
+let defaultLaserGraze = 6;	//グレイズ間隔
+
+//射出レーザー
+function My_CreateLooseLaserA1(x, y, speed, angle, l_len, l_wid, graphic, delay)
+{
+	let obj = CreateLooseLaserA1(x, y, speed, angle, l_len, l_wid, graphic, delay);
+	ObjLaser_SetGrazeInvalidFrame(obj, defaultLaserGraze);
+	LaserDelayEffect(obj, l_wid, delay);
+	return(obj);
+}
+function My_CreateLooseLaserA2(x, y, speed, angle, add_s, max_s, l_len, l_wid, graphic, delay)
+{
+	let obj = CreateLooseLaserA1(x, y, speed, angle, l_len, l_wid, graphic, delay);
+	ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, add_s, 0, max_s);
+	ObjLaser_SetGrazeInvalidFrame(obj, defaultLaserGraze);
+	LaserDelayEffect(obj, l_wid, delay);
+	return(obj);
+}
+
+//へにょりレーザー
+function My_CreateCurveLaserA1(x, y, speed, angle, l_len, l_wid, graphic, delay)
+{
+	let obj = CreateCurveLaserA1(x, y, 0, angle, l_len, l_wid, graphic, 0);
+	ObjMove_AddPatternA1(obj, 0, speed, angle);
+	ObjLaser_SetGrazeInvalidFrame(obj, defaultLaserGraze);
+	ObjCrLaser_SetTipDecrement(obj, 0);
+	LaserDelayEffect(obj, l_wid, delay);
+	return(obj);
+}
+task My_CreateCurveLaserA1_sub(obj, delay)
+{
+	ObjShot_SetIntersectionEnable(obj, false);
+	Obj_SetVisible(obj, false);
+	wait(delay);
+	ObjShot_SetIntersectionEnable(obj, true);
+	Obj_SetVisible(obj, true);
+}
+
+// 減算レーザー
+task My_CreateSubtractLooseLaserA1(x, y, speed, angle, l_len, l_wid, graphic, delay)
+{
+	let objEff = CreateLooseLaserA1(x, y, speed, angle, l_len, l_wid*1.2, graphic, delay);
+	ObjShot_SetIntersectionEnable(objEff, false);
+	ObjShot_SetItemChange(objEff, false);
+	LaserDelayEffect(objEff, l_wid, delay);
+	
+	wait(delay);
+	if (!Obj_IsDeleted(objEff))
+	{
+		let obj = CreateLooseLaserA1(x, y, speed, angle, l_len, l_wid, graphic, 0);
+		ObjLaser_SetGrazeInvalidFrame(obj, defaultLaserGraze);
+		ObjRender_SetBlendType(obj, BLEND_SUBTRACT);
+		Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI()+1);
+		while(!Obj_IsDeleted(obj))
+		{
+			yield;
+		}
+		Obj_Delete(objEff);
+	}
+}
+
+// ディレイ高速レーザー
+task CreateDelayLaser(x, y, angle, speed, l_width, l_length, graphic, delay)
+{
+	let dummy_len = 600;
+	let l_graphic = BGW_BEAM_RED + (graphic-1)%16;
+	// 予告線
+	let objDummy = CreateStraightLaserA1(x, y, angle, 0, 3, 36000, l_graphic, 0);
+	ObjStLaser_SetSource(objDummy, false);
+	ObjShot_SetAutoDelete(objDummy, false);
+	ObjShot_SetItemChange(objDummy, false);
+	ObjShot_SetIntersectionEnable(objDummy, false);
+	ObjRender_SetAlpha(objDummy, 192);
+	// ディレイえへくと
+	LaserDelayEffect(objDummy, 16, delay);
+	
+	// 発射予告
+	ascent(i in 0 .. 20)
+	{
+		if (Obj_IsDeleted(objDummy)) { return; }
+		let ll = (i+1)/20 * dummy_len;
+		ObjLaser_SetLength(objDummy, ll);
+		yield;
+	}
+	wait(delay-20);
+	if (Obj_IsDeleted(objDummy)) { return; }
+	CallSound(sndLaser2);
+	FadeLaser(objDummy, 30);
+	ascent(i in 0 .. 10)
+	{
+		if (Obj_IsDeleted(objDummy)) { return; }
+		let tmp_len = l_length * (i/10/2+0.5);
+		let tmp_wid = l_width * (1-i/10*0.9);
+		let objL = CreateLooseLaserA1(x, y, speed, angle, tmp_len, tmp_wid, graphic, 0);
+		if (i != 0) { ObjShot_SetItemChange(objL, false); }
+		yield;
+	}
+	
+	task FadeLaser(objDummy, timer)
+	{
+		ascent(i in 0 .. timer)
+		{
+			if (Obj_IsDeleted(objDummy)) { break; }
+			ObjRender_SetAlpha(objDummy, (timer-i)/timer*255);
+			yield;
+		}
+		Obj_Delete(objDummy);
+	}
+}
+
+// 設置レーザー
+function My_CreateStraightLaserA1(x, y, angle, l_length, l_width, timer, graphic, delay, flgSource)
+{
+	// 予告線＆操作用
+	let objDummy = CreateStraightLaserA1(x, y, angle, l_length, 2, timer+delay, graphic, 0);
+	ObjStLaser_SetSource(objDummy, false);
+//	ObjShot_SetAutoDelete(objDummy, false);
+	ObjShot_SetItemChange(objDummy, false);
+	ObjShot_SetIntersectionEnable(objDummy, false);
+	ObjRender_SetAlpha(objDummy, 192);
+	
+	My_CreateStraightLaserA1_sub(objDummy, l_width, delay, flgSource);
+	return(objDummy);
+}
+task My_CreateStraightLaserA1_sub(parent, l_width, delay, flgSource)
+{
+	let max_scale = l_width/18;
+	let scale = 0;
+	let t = 0;
+
+	// ディレイえへくと
+	let objEffect = [-1, -1];
+	if (flgSource) { objEffect = [CreateDelayEffect(parent), CreateDelayEffect(parent)]; }
+	descent(i in 0 .. delay)
+	{
+		if (Obj_IsDeleted(parent)) { break; }
+		scale = (1 + (t%4)/8) * max_scale;
+		if (t < 10) { scale *= (t+1)/10; }
+		// 根本
+		ObjRender_SetScaleXYZ(objEffect[0], scale, scale, 1);
+		ObjRender_SetAngleZ(objEffect[0], t*166);
+		ObjRender_SetPosition(objEffect[0], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+		// 先っちょ
+		ObjRender_SetScaleXYZ(objEffect[1], scale, scale, 1);
+		ObjRender_SetAngleZ(objEffect[1], t*166);
+		ObjRender_SetPosition(objEffect[1],
+			ObjMove_GetX(parent)+ObjLaser_GetLength(parent)*cos(ObjStLaser_GetAngle(parent)), ObjMove_GetY(parent)+ObjLaser_GetLength(parent)*sin(ObjStLaser_GetAngle(parent)), 0);
+		t++;
+		yield;
+	}
+	
+	// レーザー本体
+	let obj = -1;
+	if (!Obj_IsDeleted(parent))
+	{
+		let pri = Obj_GetValueD(parent, "PRIORITY", GetShotRenderPriorityI());
+		obj = CreateStraightLaserA1(ObjMove_GetX(parent), ObjMove_GetY(parent),
+			ObjStLaser_GetAngle(parent), ObjLaser_GetLength(parent), 0, 99999, ObjShot_GetImageID(parent), 0);
+		ObjLaser_SetGrazeInvalidFrame(obj, defaultLaserGraze);
+		ObjStLaser_SetSource(obj, false);
+		ObjShot_SetAutoDelete(obj, false);
+		Obj_SetRenderPriorityI(obj, pri);
+	}
+	
+	t = 0;
+	while(!Obj_IsDeleted(parent))
+	{
+		if (t < 15)
+		{
+			let tmp = ((t+1)/15)^2;
+			ObjLaser_SetRenderWidth(obj, l_width*tmp);
+			ObjLaser_SetIntersectionWidth(obj, l_width*tmp/2);
+			ObjRender_SetAlpha(parent, (1-tmp)*192);
+		}
+		scale = (1 + (t%4)/8) * max_scale;
+		// レーザー
+		ObjMove_SetPosition(obj, ObjMove_GetX(parent), ObjMove_GetY(parent));
+		ObjStLaser_SetAngle(obj, ObjStLaser_GetAngle(parent));
+		ObjLaser_SetLength(obj, ObjLaser_GetLength(parent));
+		ObjLaser_SetInvalidLength(obj, 0, 0);
+		// 根本
+		ObjRender_SetScaleXYZ(objEffect[0], scale, scale, 1);
+		ObjRender_SetAngleZ(objEffect[0], t*166);
+		ObjRender_SetPosition(objEffect[0], ObjMove_GetX(parent), ObjMove_GetY(parent), 0);
+		// 先っちょ
+		ObjRender_SetScaleXYZ(objEffect[1], scale, scale, 1);
+		ObjRender_SetAngleZ(objEffect[1], t*166);
+		ObjRender_SetPosition(objEffect[1],
+			ObjMove_GetX(parent)+ObjLaser_GetLength(parent)*cos(ObjStLaser_GetAngle(parent)), ObjMove_GetY(parent)+ObjLaser_GetLength(parent)*sin(ObjStLaser_GetAngle(parent)), 0);
+		t++;
+		yield;
+	}
+	ObjShot_SetIntersectionEnable(obj, false);
+	descent(i in 0 .. 15)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		let tmp = ((i+1)/15)^2;
+		ObjLaser_SetRenderWidth(obj, l_width*tmp);
+		// 根本
+		ObjRender_SetScaleXYZ(objEffect[0], scale*tmp, scale*tmp, 1);
+		// 先っちょ
+		ObjRender_SetScaleXYZ(objEffect[1], scale*tmp, scale*tmp, 1);
+		yield;
+	}
+	Obj_Delete(obj);
+	Obj_Delete(objEffect[0]);
+	Obj_Delete(objEffect[1]);
+}
+
+
+//射出レーザーの根本えへくと
+task LaserDelayEffect(objLaser, width, delay)
+{
+	let timer = ObjLaser_GetLength(objLaser) / ObjMove_GetSpeed(objLaser) + delay;
+	let scale = width / 18;
+	let obj = CreateDelayEffect(objLaser);
+	descent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(objLaser)) { break; }
+		let tmp_scale = (1 + (t%4)/8) * scale;
+		if (t < 10) { tmp_scale *= (t+1)/10; }
+		ObjRender_SetScaleXYZ(obj, tmp_scale, tmp_scale, 1);
+		ObjRender_SetAngleZ(obj, t*166);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+// えへくと製作
+function CreateDelayEffect(objLaser)
+{
+	let ix = BULLET_EFFECT[ObjShot_GetImageID(objLaser)%8] * 32;	//えへくと色
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI()+1);
+	ObjPrim_SetTexture(obj, imgEffectBullet);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjRender_SetPosition(obj, ObjMove_GetX(objLaser), ObjMove_GetY(objLaser), 0);
+	ObjSprite2D_SetSourceRect(obj, ix, 0, ix+32, 32);
+	ObjSprite2D_SetDestCenter(obj);
+	return(obj);
+}
+
+// 予告線　シンプル
+task LaserDelayEffect01(objBase, x, y, angle, graphic, delay)
+{
+	let objDummy = CreateStraightLaserA1(x, y, angle, 0, 3, delay, graphic, 0);
+	ObjStLaser_SetSource(objDummy, false);
+	ObjShot_SetAutoDelete(objDummy, false);
+	ObjShot_SetItemChange(objDummy, false);
+	ObjShot_SetIntersectionEnable(objDummy, false);
+	ObjRender_SetAlpha(objDummy, 192);
+	
+	let objSource = CreateDelayEffect(objDummy);
+	let scale = 12 / 18;
+	
+	ascent(t in 0 .. delay)
+	{
+		if (Obj_IsDeleted(objBase)) { ObjShot_FadeDelete(objDummy); break; }
+		let tmp_scale = (1 + (t%4)/8) * scale;
+		if (t < 10) { tmp_scale *= (t+1)/10; }
+		ObjRender_SetScaleXYZ(objSource, tmp_scale, tmp_scale, 1);
+		ObjRender_SetAngleZ(objSource, t*166);
+		
+		if (t < 30)
+		{
+			let tmp = sin((t+1)/30*90);
+			ObjLaser_SetLength(objDummy, 800*tmp);
+		}
+		yield;
+	}
+	Obj_Delete(objSource);
+}
+// 予告線　閉じるタイプ
+task LaserDelayEffect02(objBase, x, y, angle, graphic, delay)
+{
+	let count = ceil(delay-30)/5;
+	ascent(i in 0 .. 9)
+	{
+		if (Obj_IsDeleted(objBase)) { return; }
+		_LaserDelayEffect02(x, y, angle+i/2, 60+i*15, graphic, 45);
+		_LaserDelayEffect02(x, y, angle-i/2, -60-i*15, graphic, 45);
+		wait(5);
+	}
+
+	task _LaserDelayEffect02(x, y, angle, offset_angle, graphic, delay)
+	{
+		// 予告線
+		let objDummy = CreateStraightLaserA1(x, y, angle+offset_angle, 800, 3, delay, graphic, 0);
+		ObjStLaser_SetSource(objDummy, false);
+		ObjShot_SetAutoDelete(objDummy, false);
+		ObjShot_SetItemChange(objDummy, false);
+		ObjShot_SetIntersectionEnable(objDummy, false);
+		
+		ascent(i in 0 .. delay)
+		{
+			let tmp = cos((i+1)/delay*90);
+			ObjStLaser_SetAngle(objDummy, angle+offset_angle*tmp);
+			ObjRender_SetAlpha(objDummy, 255*(1-tmp));
+			yield;
+		}
+	}
+}
+// 予告線　直線に広がるタイプ
+task LaserDelayEffect03(objBase, x, y, angle, graphic, delay)
+{
+	let count = ceil((delay-45)/8);
+	ascent(i in 0 .. count)
+	{
+		if (Obj_IsDeleted(objBase)) { return; }
+		_LaserDelayEffect03(x, y, angle, graphic, 45, cos(angle+90)*16, sin(angle+90)*16);
+		_LaserDelayEffect03(x, y, angle, graphic, 45, cos(angle-90)*16, sin(angle-90)*16);
+		wait(8);
+	}
+
+	task _LaserDelayEffect03(x, y, angle, graphic, timer, vx, vy)
+	{
+		// 予告線
+		let objDummy = CreateStraightLaserA1(x, y, angle, 800, 4, timer, graphic, 0);
+		ObjStLaser_SetSource(objDummy, false);
+		ObjShot_SetAutoDelete(objDummy, false);
+		ObjShot_SetItemChange(objDummy, false);
+		ObjShot_SetIntersectionEnable(objDummy, false);
+		
+		ascent(i in 0 .. timer)
+		{
+			let tmp = sin((i+1)/timer*90);
+			ObjMove_SetPosition(objDummy, x+tmp*vx, y+tmp*vy);
+			ObjRender_SetAlpha(objDummy, 255*(1-tmp));
+			yield;
+		}
+	}
+}

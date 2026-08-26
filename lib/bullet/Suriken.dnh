@@ -1,0 +1,96 @@
+// -------------------- SHURIKEEEEEEN!!! -------------------- //
+function SurikenShoot(x, y, speed, angle, graphic, delay, is_rotate)
+{
+	let eff_shuriken = BGW_KUNAI_RED + (graphic-1)%8;
+	SurikenEffect(x, y, angle, eff_shuriken);
+	wait(delay);
+	if (!eAlive) { return(-1); }
+	else
+	{
+		let obj = CreateShurikenA1(x, y, speed, angle, graphic, 0, is_rotate, -1);
+		ObjShot_SetSpellResist(obj, true);
+		
+		// ‹OÕ—p
+		ascent(i in 1 .. 5)
+		{
+			let obj_sub = CreateShurikenA1(x, y, speed, angle, graphic, i*2, is_rotate, obj);
+			ObjRender_SetAlpha(obj_sub, 192*(5-i)/5);
+			Obj_SetRenderPriorityI(obj_sub, GetShotRenderPriorityI-1);
+		}
+		return(obj);
+	}
+}
+task SurikenEffect(x, y, angle, graphic)
+{
+	let vx = cos(angle)*16;
+	let vy = sin(angle)*16;
+	
+	let t = 0;
+	while(x > 0 && x < GetStgFrameWidth && y > 0 && y < GetStgFrameHeight)
+	{
+		if (!eAlive) { return; }
+		let sc = min(5, 1+t/8);
+		SurikenEffect_sub(x, y, angle, graphic, sc);
+		x += vx;
+		y += vy;
+		t++;
+		yield;
+	}
+	
+	task SurikenEffect_sub(x, y, angle, graphic, scale)
+	{
+		let obj = CreateShotA1(x, y, 2, angle, graphic, 0);
+		let obj2 = CreateShotA1(x, y, 2, angle, graphic, 0);
+		SetShotDisabled(obj);
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		SetShotDisabled(obj2);
+		ObjRender_SetBlendType(obj2, BLEND_SUBTRACT);
+		descent(i in 0 .. 45)
+		{
+			let tmp = (i+1)/45;
+			let sc = sin(tmp*180)*tmp*scale;
+			ObjRender_SetScaleXYZ(obj, sc, sc, 0);
+			ObjRender_SetAlpha(obj, tmp*255);
+			ObjRender_SetScaleXYZ(obj2, sc*0.5, sc*0.5, 0);
+			ObjRender_SetAlpha(obj2, tmp*255);
+			yield;
+		}
+		Obj_Delete(obj);
+		Obj_Delete(obj2);
+	}
+}
+
+function CreateShurikenA1(x, y, speed, angle, graphic, delay, is_rotate, parent)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, delay);
+	if (is_rotate) { _CreateShurikenA1(obj); }
+	return(obj);
+	
+	task _CreateShurikenA1(obj)
+	{
+		wait(delay);
+		
+		let objParent = parent;
+		if (objParent < 0) { objParent = obj; }
+		
+		let eff_angle = 0;
+		while(!Obj_IsDeleted(obj) && !Obj_IsDeleted(objParent))
+		{
+			if (ObjMove_GetSpeed(obj) > 0) { eff_angle += 15; }
+			ObjRender_SetAngleZ(obj, eff_angle);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+task RollShot(obj, angle)
+{
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		ObjRender_SetAngleZ(obj, t*angle);
+		t++;
+		yield;
+	}
+}

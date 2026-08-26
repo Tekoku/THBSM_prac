@@ -1,0 +1,15 @@
+//画面外チェック
+function CheckDispIN(obj, size)
+{
+	return(-size <= ObjMove_GetX(obj) &&
+		GetStgFrameWidth+size >= ObjMove_GetX(obj) &&
+		-size <= ObjMove_GetY(obj) &&
+		GetStgFrameHeight+size >= ObjMove_GetY(obj));
+}
+function CheckDispINEx(x, y, size)
+{
+	return(-size <= x &&
+		GetStgFrameWidth+size >= x &&
+		-size <= y &&
+		GetStgFrameHeight+size >= y);
+}

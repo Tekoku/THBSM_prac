@@ -1,0 +1,258 @@
+// ---------------- キャラごとの画像
+
+let charaDir = imgDir ~ "character/";
+
+// カットインに使用しているファイルを返す
+function LoadingImageFile_Cutin()
+{
+	return(
+		[
+		/*
+			imgCharaSetujo[2],
+			imgCharaAnza[2],
+			imgCharaKoukai[2],
+			imgCharaKoukai[7],
+			imgCharaSasha[2],
+			imgCharaUka[2],
+			imgCharaRaku[2],
+			imgCharaMinayu[3],
+			imgCharaRinne[2],
+			imgCharaTokubi[3],
+			imgCharaVinka[9],
+			imgCharaMint[9],
+			imgCharaAzuma[2],
+			imgCharaKayano[2],
+			imgCharaTenyu[1],
+			*/
+		]
+	);
+}
+
+// キャラクター立ち絵のロード
+task LoadCharacterAllTexture(bossID)
+{
+	let tmpPath = _CharacterAllTexture(bossID);
+	ascent(i in 0 .. length(tmpPath))
+	{
+		LoadTextureInLoadThread(tmpPath[i]);
+		yield;
+	}
+}
+// アンロード
+// カットイン用もアンロードされるけどキニシナイ！
+task UnloadCharacterAllTexture(bossID)
+{
+	let tmpPath = _CharacterAllTexture(bossID);
+	ascent(i in 0 .. length(tmpPath))
+	{
+		RemoveTexture(tmpPath[i]);
+		yield;
+	}
+}
+function _CharacterAllTexture(bossID)
+{
+	let tmpPath;
+	alternative(bossID)
+	/*
+	case (BOSS_ID_REIMU)	{ tmpPath = imgCharaReimu; }
+	case (BOSS_ID_MARISA)	{ tmpPath = imgCharaMarisa; }
+	case (BOSS_ID_SANAE)	{ tmpPath = imgCharaSanae; }
+	case (BOSS_ID_TOKUBI)	{ tmpPath = imgCharaTokubi; }
+	case (BOSS_ID_MINAYU)	{ tmpPath = imgCharaMinayu; }
+	case (BOSS_ID_SETUJO)	{ tmpPath = imgCharaSetujo; }
+	case (BOSS_ID_KOUKAI)	{ tmpPath = imgCharaKoukai; }
+	case (BOSS_ID_ANZA)	{ tmpPath = imgCharaAnza; }
+	case (BOSS_ID_SASHA)	{ tmpPath = imgCharaSasha; }
+	case (BOSS_ID_UKA)	{ tmpPath = imgCharaUka; }
+	case (BOSS_ID_RAKU)	{ tmpPath = imgCharaRaku; }
+	case (BOSS_ID_VINKA)	{ tmpPath = imgCharaVinka; }
+	case (BOSS_ID_AZUMA)	{ tmpPath = imgCharaAzuma; }
+	case (BOSS_ID_KAYANO)	{ tmpPath = imgCharaKayano; }
+	case (BOSS_ID_TENYU)	{ tmpPath = imgCharaTenyu; }
+	*/
+	others { tmpPath = []; }
+	return(tmpPath);
+}
+
+
+let imgCharaReimu = [
+	"",	// ドット
+	"",	// スペカ名
+	"",	// ネーム（↑使うかもしれないので取っておく）
+	charaDir ~ "Reimu/R_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Reimu/R_a2.png",
+	charaDir ~ "Reimu/R_a3.png",
+	charaDir ~ "Reimu/R_a4.png",
+	charaDir ~ "Reimu/R_a5.png",
+	charaDir ~ "Reimu/R_a6.png",
+	charaDir ~ "Reimu/R_a7.png",
+	charaDir ~ "Reimu/R_a8.png",
+	charaDir ~ "Reimu/R_a9.png",
+	charaDir ~ "Reimu/R_a10.png",
+];
+let imgCharaMarisa = [
+	"",	// ドット
+	"",	// スペカ名
+	"",	// ネーム（↑使うかもしれないので取っておく）
+	charaDir ~ "Marisa/M_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Marisa/M_a2.png",
+	charaDir ~ "Marisa/M_a3.png",
+	charaDir ~ "Marisa/M_a4.png",
+	charaDir ~ "Marisa/M_a5.png",
+	charaDir ~ "Marisa/M_a6.png",
+	charaDir ~ "Marisa/M_a7.png",
+	charaDir ~ "Marisa/M_a8.png",
+	charaDir ~ "Marisa/M_a9.png",
+];
+let imgCharaSanae = [
+	"",	// ドット
+	"",	// スペカ名
+	"",	// ネーム（↑使うかもしれないので取っておく）
+	charaDir ~ "Sanae/Sanae_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Sanae/Sanae_a2.png",
+	charaDir ~ "Sanae/Sanae_a3.png",
+	charaDir ~ "Sanae/Sanae_a4.png",
+	charaDir ~ "Sanae/Sanae_a5.png",
+	charaDir ~ "Sanae/Sanae_a6.png",
+	charaDir ~ "Sanae/Sanae_a7.png",
+	charaDir ~ "Sanae/Sanae_a8.png",
+	charaDir ~ "Sanae/Sanae_a9.png",
+	charaDir ~ "Sanae/Sanae_a10.png",
+];
+
+let imgCharaFabritis = [
+	charaDir ~ "Fabritis/dotFabritis.png",	// ドット
+	charaDir ~ "Fabritis/sname.png",	// スペカ名
+	charaDir ~ "Fabritis/ename.png",	// ネーム
+	charaDir ~ "Fabritis/F_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Fabritis/F_a2.png",
+	charaDir ~ "Fabritis/F_a3.png",
+	charaDir ~ "Fabritis/F_a4.png",
+	charaDir ~ "Fabritis/F_a5.png",
+	charaDir ~ "Fabritis/F_a6.png",
+	charaDir ~ "Fabritis/F_boro1.png",
+	charaDir ~ "Fabritis/F_boro2.png",
+	charaDir ~ "Fabritis/F_a1b.png",
+];
+
+let imgCharaIphonea = [
+	charaDir ~ "Iphonea/dotIphonea.png",	// ドット
+	charaDir ~ "Fabritis/sname.png",		// スペカ名
+	charaDir ~ "Fabritis/ename.png",		// ネーム
+	charaDir ~ "Iphonea/I_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Iphonea/I_a2.png",
+	charaDir ~ "Iphonea/I_a3.png",
+	charaDir ~ "Iphonea/I_a4.png",
+	charaDir ~ "Iphonea/I_boro1.png",
+	charaDir ~ "Iphonea/I_boro2.png",
+];
+
+let imgCharaTobiko = [
+	charaDir ~ "Tobiko/dotTobiko.png",	// ドット
+	charaDir ~ "Tobiko/sname.png",		// スペカ名
+	charaDir ~ "Tobiko/ename.png",		// ネーム
+	charaDir ~ "Tobiko/T_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Tobiko/T_a2.png",
+	charaDir ~ "Tobiko/T_a3.png",
+	charaDir ~ "Tobiko/T_a4.png",
+	charaDir ~ "Tobiko/T_a5.png",
+	charaDir ~ "Tobiko/T_boro1.png",
+	charaDir ~ "Tobiko/T_boro2.png",
+	charaDir ~ "Tobiko/dotTobiko2.png",	// ドット 迷彩
+];
+let imgCharaShelia = [
+	charaDir ~ "Shelia/dotShelia.png",	// ドット
+	charaDir ~ "Shelia/sname.png",		// スペカ名
+	charaDir ~ "Shelia/ename.png",		// ネーム
+	charaDir ~ "Shelia/S_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Shelia/S_a2.png",
+	charaDir ~ "Shelia/S_a3.png",
+	charaDir ~ "Shelia/S_a4.png",
+	charaDir ~ "Shelia/S_a5.png",
+	charaDir ~ "Shelia/S_a6.png",
+	charaDir ~ "Shelia/S_boro1.png",
+	charaDir ~ "Shelia/S_boro2.png",
+];
+let imgCharaMokou = [
+	charaDir ~ "Mokou/dotMokou.png",	// ドット
+	charaDir ~ "Mokou/sname.png",		// スペカ名
+	charaDir ~ "Mokou/ename.png",		// ネーム
+	charaDir ~ "Mokou/Moko_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Mokou/Moko_a2.png",
+	charaDir ~ "Mokou/Moko_a3.png",
+	charaDir ~ "Mokou/Moko_a4.png",
+	charaDir ~ "Mokou/Moko_a5.png",
+];
+let imgCharaIchiyou = [
+	charaDir ~ "Ichiyou/dotIchiyou.png",	// ドット
+	charaDir ~ "Ichiyou/sname.png",		// スペカ名
+	charaDir ~ "Ichiyou/ename.png",		// ネーム
+	charaDir ~ "Ichiyou/Itiyo_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Ichiyou/Itiyo_a2.png",
+	charaDir ~ "Ichiyou/Itiyo_a3.png",
+	charaDir ~ "Ichiyou/Itiyo_a4.png",
+	charaDir ~ "Ichiyou/Itiyo_a5.png",
+	charaDir ~ "Ichiyou/Itiyo_a6.png",
+	charaDir ~ "Ichiyou/Itiyo_a7.png",
+	charaDir ~ "Ichiyou/Itiyo_boro1.png",
+	charaDir ~ "Ichiyou/Itiyo_boro2.png",
+	charaDir ~ "Ichiyou/dotIchiyouInv.png",	// ドット2
+];
+let imgCharaNezu = [
+	charaDir ~ "Nezu/dotNezu.png",	// ドット
+	charaDir ~ "Nezu/sname.png",		// スペカ名
+	charaDir ~ "Nezu/ename.png",		// ネーム
+	charaDir ~ "Nezu/N_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Nezu/N_a2.png",
+	charaDir ~ "Nezu/N_a3.png",
+	charaDir ~ "Nezu/N_a4.png",
+	charaDir ~ "Nezu/N_a5.png",
+	charaDir ~ "Nezu/N_a6.png",
+	charaDir ~ "Nezu/N_boro1.png",
+	charaDir ~ "Nezu/N_boro2.png",
+	charaDir ~ "Nezu/R_bake1.png",
+	charaDir ~ "Nezu/R_bake2.png",
+	charaDir ~ "Nezu/R_bake3.png",
+	charaDir ~ "Nezu/R_bake4.png",
+	charaDir ~ "Nezu/M_bake1.png",
+	charaDir ~ "Nezu/M_bake2.png",
+	charaDir ~ "Nezu/M_bake3.png",
+	charaDir ~ "Nezu/M_bake4.png",
+	charaDir ~ "Nezu/Sanae_bake1.png",
+	charaDir ~ "Nezu/Sanae_bake2.png",
+	charaDir ~ "Nezu/Sanae_bake3.png",
+	charaDir ~ "Nezu/Sanae_bake4.png",
+	charaDir ~ "Nezu/dotNezuR.png",	// 化けドット
+	charaDir ~ "Nezu/dotNezuM.png",	// 化けドット
+	charaDir ~ "Nezu/dotNezuS.png",	// 化けドット
+	charaDir ~ "Nezu/N_cutin.png",	// カットイン用
+];
+let imgCharaMishandra = [
+	charaDir ~ "Mishandra/dotMishandra.png",	// ドット
+	charaDir ~ "Mishandra/sname.png",		// スペカ名
+	charaDir ~ "Mishandra/ename.png",		// ネーム
+	charaDir ~ "Mishandra/Fuma_a1.png",		// ↓以降立ち絵
+	charaDir ~ "Mishandra/Fuma_a2.png",
+	charaDir ~ "Mishandra/Fuma_a3.png",
+	charaDir ~ "Mishandra/Fuma_a4.png",
+	charaDir ~ "Mishandra/Fuma_a5.png",
+	charaDir ~ "Mishandra/Fuma_a6.png",
+	charaDir ~ "Mishandra/Fuma_a7.png",
+	charaDir ~ "Mishandra/Fuma_a8.png",
+];
+let imgCharaSanada = [
+	charaDir ~ "Sanada/dotSanada.png",	// ドット
+	charaDir ~ "Sanada/sname.png",		// スペカ名
+	charaDir ~ "Sanada/ename.png",		// ネーム
+	charaDir ~ "Sanada/Sanada_a01.png",		// ↓以降立ち絵
+	charaDir ~ "Sanada/Sanada_a02.png",
+	charaDir ~ "Sanada/Sanada_a03.png",
+	charaDir ~ "Sanada/Sanada_a04.png",
+	charaDir ~ "Sanada/Sanada_a05.png",
+	charaDir ~ "Sanada/Sanada_a06.png",
+	charaDir ~ "Sanada/Sanada_a07.png",
+	charaDir ~ "Sanada/Sanada_a08.png",
+	charaDir ~ "Sanada/Sanada_b01.png",
+	charaDir ~ "Sanada/Sanada_b02.png",
+	charaDir ~ "Sanada/Sanada_b03.png",
+];

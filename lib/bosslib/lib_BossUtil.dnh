@@ -1,0 +1,476 @@
+#include "../lib_ChapterSkip.dnh"
+
+// オブジェクトにボスIDを埋め込む
+function Boss_SetIDtoObj(obj, bossID)
+{
+	Obj_SetValue(obj, "BOSS_ID", bossID);	//ID記録
+}
+
+// ボスの初期位置セット
+function Boss_InitPosition(obj)
+{
+	let pos;
+	let bossID = GetBossID(obj);
+	if (length(bossID) > 0) { pos = GetAreaCommonData(CAREA_STAGE, "POS"~bossID, [0, 0]); }
+	else { pos = [0, 0]; }
+	ObjMove_SetPosition(obj, pos[0], pos[1]);
+}
+
+// ボスの位置を記録or上書き
+// 引数：配列[x, y]
+function Boss_SetInitPosition(obj, pos)
+{
+	let bossID = GetBossID(obj);
+	if (length(bossID) > 0) { SetAreaCommonData(CAREA_STAGE, "POS"~bossID, pos); }
+}
+// キャラIDから直接指定
+function Boss_SetInitPositionEx(bossID, pos)
+{
+	SetAreaCommonData(CAREA_STAGE, "POS"~bossID, pos);
+}
+
+// ボスの判別用IDを取得
+function GetBossID(obj)
+{
+	return( Obj_GetValueD(obj, "BOSS_ID", "") );
+}
+
+// 当たり判定チェック
+task TIntersection(obj)
+{
+	while(!Obj_GetValueD(obj, "KILLED", false) &&
+		ObjEnemy_GetInfo(obj, INFO_LIFE) > 0)
+	{
+		//当たり判定登録
+		if (GetEnemyVisible(obj))
+		{
+			let hs = Obj_GetValueD(obj, "HIT_TO_SHOT", bossHitToShot);
+			if (hs > 0)
+			{
+				ObjEnemy_SetIntersectionCircleToShot(obj, ObjMove_GetX(obj), ObjMove_GetY(obj), hs);
+			}
+			let hp = Obj_GetValueD(obj, "HIT_TO_PL", bossHitToPlayer);
+			if (hp > 0)
+			{
+				ObjEnemy_SetIntersectionCircleToPlayer(obj, ObjMove_GetX(obj), ObjMove_GetY(obj), hp);
+			}
+		}
+		yield;
+	}
+	//動きを停止
+	ObjMove_SetSpeed(obj, 0);
+	ObjMove_SetAcceleration(obj, 0);
+	Obj_SetValue(obj, "ANIME_STOP", 1);
+}
+// 当たり判定共有タイプ用
+task TIntersectionEx(obj, obj2)
+{
+	while(!Obj_GetValueD(obj, "KILLED", false) &&
+		ObjEnemy_GetInfo(obj, INFO_LIFE) > 0)
+	{
+		//当たり判定登録
+		if (GetEnemyVisible(obj))
+		{
+			let hs = Obj_GetValueD(obj, "HIT_TO_SHOT", bossHitToShot);
+			if (hs > 0)
+			{
+				ObjEnemy_SetIntersectionCircleToShot(obj, ObjMove_GetX(obj2), ObjMove_GetY(obj2), hs);
+			}
+			let hp = Obj_GetValueD(obj, "HIT_TO_PL", bossHitToPlayer);
+			if (hp > 0)
+			{
+				ObjEnemy_SetIntersectionCircleToPlayer(obj, ObjMove_GetX(obj2), ObjMove_GetY(obj2), hp);
+			}
+		}
+		yield;
+	}
+}
+
+//終了待機タスク
+task TEnd()
+{
+	yield;
+	
+	//終了待機
+	loop
+	{
+		let killCount = 0;
+		ascent(i in 0 .. length(objAllEnemys))
+		{
+			let tmp_obj = objAllEnemys[i];
+			//撃破された！
+			if (Obj_IsDeleted(tmp_obj) || ObjEnemy_GetInfo(tmp_obj, INFO_LIFE) <= 0 ||
+				Obj_GetValueD(tmp_obj, "ANIME_STOP", 0) || Obj_GetValueD(tmp_obj, "KILLED", false))
+			{
+				killCount++;
+			}
+		}
+		// 終了条件
+		if ((bossEndType == BOSS_END_SINGLE && killCount > 0) ||
+			(bossEndType == BOSS_END_LAST1 && killCount > length(objAllEnemys)-2) ||
+			killCount > length(objAllEnemys)-1) { break; }
+		yield;
+	}
+	// 終了フラグ立て
+	eAlive = false;
+	
+	//スペカ終了実時間（爆発エフェクト分でずれるのでこちらで）
+	SetAreaCommonData(CAREA_STAGE, "SpellRealTime2", GetStageTime());
+	
+	//スペカ取得フラグ等をセット
+	local
+	{
+		let isTimeout = false;
+		let isGetSpellCard = false;
+		if (!(ObjEnemyBossScene_GetInfo(objScene, INFO_IS_DURABLE_SPELL) || ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) > 0 ))
+			{ isTimeout = true; }
+		if (ObjEnemyBossScene_GetInfo(objScene, INFO_IS_SPELL) &&
+			ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SHOOTDOWN_COUNT) <= 0 &&
+			ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SPELL_COUNT) <= 0 && !isTimeout)
+			{ isGetSpellCard = true; }
+		SetAreaCommonData(CAREA_STAGE, "BeforeTimeout", isTimeout);
+		SetAreaCommonData(CAREA_STAGE, "BeforeGetSpell", isGetSpellCard);
+		SetAreaCommonData(CAREA_STAGE, "BeforeUseSpell", (ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SPELL_COUNT) > 0));
+		SetAreaCommonData(CAREA_STAGE, "BeforeShootDown", (ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SHOOTDOWN_COUNT) > 0));
+	}
+
+	// ボス全員分に対して実行
+	ObjEnemy_SetLife(objEnemy, 0);	//メインボスの体力をゼロに（これをやらないと↓が判定されない）
+	let isExplode = ObjEnemyBossScene_GetInfo(objScene, INFO_IS_LAST_STEP);
+	
+	ascent(i in 0 .. length(objAllEnemys))
+	{
+		Boss_Finalize(objAllEnemys[i], isExplode, true);
+	}
+	
+	// チャプター終了
+	if (GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_PRACTICE)
+	{
+		if (isExplode && !Obj_GetValueD(objScene, "RUN_AWAY", false)) { ChapterFinishBoss(120); }
+		else { ChapterFinishBoss(0); }
+	}
+}
+// 終了前処理
+task Boss_Finalize(tmp_objBoss, isExplode, flgPreparation)
+{
+	if (!Obj_IsDeleted(tmp_objBoss))
+	{
+		let eX = ObjMove_GetX(tmp_objBoss);
+		let eY = ObjMove_GetY(tmp_objBoss);
+		
+		// とりあえず体力ゼロに
+		ObjEnemy_SetLife(tmp_objBoss, 0);
+		
+		// フラグオフなら削除処理のみ
+		if (flgPreparation)
+		{
+			//被弾チェック回避
+			SetEnemyVisible(tmp_objBoss, false);
+			
+			//弾消し
+			if (ObjEnemyBossScene_GetInfo(objScene, INFO_IS_SPELL))
+				{ DeleteShotAll_Delay(eX, eY); }
+			else
+				{ DeleteShotAll_Effect(eX, eY); }
+			
+			//爆発エフェクト
+			if (isExplode && !Obj_GetValueD(tmp_objBoss, "KILLED", false)
+				&& !Obj_GetValueD(objScene, "RUN_AWAY", false))
+			{
+				if (Obj_GetValueD(tmp_objBoss, "IS_DUMMY", false)) {
+				//	wait(60);
+				} else {
+					// practice tool: suppress explode effect while divload transition scene is alive
+					if(!GetRawdel()){
+						BossFinalExplode(tmp_objBoss, bossBigExplode);
+					}
+				}
+			}
+			
+			//アイテムドロップ
+			if (!Obj_GetValueD(tmp_objBoss, "KILLED", false) &&
+				!Obj_GetValueD(tmp_objBoss, "IS_DUMMY", false) &&
+				( ObjEnemyBossScene_GetInfo(objScene, INFO_IS_DURABLE_SPELL) ||
+					ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) > 0 ) &&
+				!( ObjEnemyBossScene_GetInfo(objScene, INFO_IS_LAST_SPELL) &&
+					ObjEnemyBossScene_GetInfo(objScene, INFO_PLAYER_SHOOTDOWN_COUNT) > 0 )
+			) {
+				Boss_SetStarItem(eX, eY, bossNormalDropStar);
+				Boss_SetItem(tmp_objBoss, bossDropItem);
+				Boss_SetSpecialItem(tmp_objBoss, bossDropItemSpecial);
+
+			// 撃破カウントにプラス
+				KilledEnemyCount(objEnemy, bossKillCount);
+			}
+		}
+		
+		//終了処理
+		//ボスの座標記録
+		Boss_SetInitPosition(tmp_objBoss, [eX, eY]);
+		Obj_Delete(tmp_objBoss);
+		CloseMine(240);		//しゅーりょー
+	}
+}
+
+// 当たり判定リセット
+function SetBossIntersection(obj, bossHitToShot, bossHitToPlayer)
+{
+	Obj_SetValue(obj, "HIT_TO_SHOT", bossHitToShot);
+	Obj_SetValue(obj, "HIT_TO_PL", bossHitToPlayer);
+}
+
+// 初期位置へ移動し、攻撃開始
+task standBy(objEnemy, xIni, yIni, wIni)
+{
+	let wr = ((ObjMove_GetY(objEnemy)-yIni)^2+(ObjMove_GetX(objEnemy)-xIni)^2)^0.5;
+	if (wIni > 5 && wr > 16) { SetAction(objEnemy, ACT_MOVE, 600); }
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, xIni, yIni, 15, 4, 0.1, 12);
+	
+	//移動中は判定を消す
+	SetEnemyVisible(objEnemy, false);
+	wait(wIni);
+	SetEnemyVisible(objEnemy, true);
+}
+
+// ボスシーンの初期設定
+function BossScene_SetInit(objNewScene, bossID, pos)
+{
+	// 座標設定（空配列を入力した場合は記録しない）
+	if (length(pos) > 1)
+		{ Boss_SetInitPositionEx(bossID, pos); }
+	// ボスIDの記録
+	Boss_SetIDtoObj(objNewScene, bossID);
+	// ボスネーム表示状態
+	BossScene_SetNameVisible(objNewScene, false);
+}
+
+// 連続再生終了フラグ
+function FinalizePlural()
+{
+	NotifyEventAll(ev_PluralClosed, 0);
+}
+
+// ボスネームの表示状態を変更
+function BossScene_SetNameVisible(objScene, value)
+{
+	Obj_SetValue(objScene, "BOSS_NAME_VISIBLE", value);
+}
+
+// ボス撃破チェック
+function CheckBossAlive(obj)
+{
+	return(!(Obj_IsDeleted(obj) || Obj_GetValueD(obj, "ANIME_STOP", 0)));
+}
+
+// 体力割合
+function GetBossLifeRate(obj)
+{
+	return( ObjEnemy_GetInfo(obj, INFO_LIFE) / Obj_GetValueD(obj, "MAX_LIFE", 1) );
+}
+
+// 無敵時間の設定
+task SetInvincible(objEnemy, dIni)
+{
+	ObjEnemy_SetDamageRate(objEnemy, 0, 0);
+	wait(dIni);
+	ObjEnemy_SetDamageRate(objEnemy, dIni_Shot, dIni_Shot*dIni_Spell);
+}
+
+///体力チェックと判定設置（使い魔用）
+function WaitForKilledFamilier(obj, emnToShot, emnToPlayer)
+{
+	Obj_SetValue(obj, "TO_SHT", emnToShot);
+	Obj_SetValue(obj, "TO_PL", emnToPlayer);
+	
+	while(!Obj_GetValueD(obj, "KILLED", false) &&
+		ObjEnemy_GetInfo(obj, INFO_LIFE) > 0)
+	{
+		if (!eAlive)
+		{
+			ObjEnemy_SetLife(obj, 0);
+			Obj_SetValue(obj, "KILLED", true);
+			break;
+		}
+		//当たり判定登録
+		//画面内にいる時のみ判定あり
+//		if (GetEnemyVisible(obj) &&
+//			MinX <= ObjMove_GetX(obj) && MaxX >= ObjMove_GetX(obj) &&
+//			MinY <= ObjMove_GetY(obj) && MaxY >= ObjMove_GetY(obj) )
+		//使い魔は基本的に枠から出ないので省略
+		if (GetEnemyVisible(obj))
+		{
+			emnToShot = Obj_GetValueD(obj, "TO_SHT", emnToShot);
+			emnToPlayer = Obj_GetValueD(obj, "TO_PL", emnToPlayer);
+			if (emnToShot) { ObjEnemy_SetIntersectionCircleToShot(obj, ObjMove_GetX(obj), ObjMove_GetY(obj), emnToShot); }
+			if (emnToPlayer) { ObjEnemy_SetIntersectionCircleToPlayer(obj, ObjMove_GetX(obj), ObjMove_GetY(obj), emnToPlayer); }
+		}
+		yield;
+	}
+	//動きを停止
+	ObjMove_SetSpeed(obj, 0);
+	ObjMove_SetAcceleration(obj, 0);
+	Obj_SetValue(obj, "ANIME_STOP", 1);
+}
+
+
+// ボスをランダムに動かす
+function EnemyRandomMove(EnemyID, CenterY, MaxDistance)
+{
+	_EnemyRandomMove(EnemyID, CenX, CenterY, CenX*0.75, 72, MaxDistance/2, MaxDistance, 0.75);
+}
+function EnemyRandomMoveEx(EnemyID, CenterX, CenterY, RangeWidth, RangeHeight, MaxDistance, ToPlayerRate)
+{
+	_EnemyRandomMove(EnemyID, CenterX, CenterY, RangeWidth, RangeHeight, MaxDistance/2, MaxDistance, ToPlayerRate);
+}
+
+function _EnemyRandomMove(EnemyID, CenterX, CenterY, RangeWidth, RangeHeight, MinDistance, MaxDistance, ToPlayerRate)
+{
+	let pos = EnemyRandomMove_GetPos(EnemyID, CenterX, CenterY, RangeWidth, RangeHeight, MinDistance, MaxDistance, ToPlayerRate);
+	
+	SetAction(EnemyID, ACT_MOVE, 600);	//移動モーション
+	ObjMove_SetDestAtWeightSpeedUp(EnemyID, pos[0], pos[1],
+		15, 4, 0.1, 12);
+}
+function _EnemyRandomMove02(EnemyID, CenterX, CenterY, RangeWidth, RangeHeight, MinDistance, MaxDistance, ToPlayerRate, timer)
+{
+	let pos = EnemyRandomMove_GetPos(EnemyID, CenterX, CenterY, RangeWidth, RangeHeight, MinDistance, MaxDistance, ToPlayerRate);
+	
+	SetAction(EnemyID, ACT_MOVE, timer);	//移動モーション
+	MoveTo(EnemyID, pos[0], pos[1], timer);
+}
+function EnemyRandomMove_GetPos(EnemyID, CenterX, CenterY, RangeWidth, RangeHeight, MinDistance, MaxDistance, ToPlayerRate)
+{
+	let xp = [ CenterX-RangeWidth/2,  CenterX-RangeWidth/4,  CenterX+RangeWidth/4,  CenterX+RangeWidth/2];
+	let yp = [CenterY-RangeHeight/2, CenterY-RangeHeight/4, CenterY+RangeHeight/4, CenterY+RangeHeight/2];
+	let moveangle = 0;
+	let dist = rand(MinDistance, MaxDistance);
+
+	// 最大３回再計算
+	loop(3)
+	{
+		if( ObjMove_GetX(EnemyID) < xp[1] )
+		{
+			// A,B,Cの時、右に移動する
+			if( ObjMove_GetY(EnemyID) < yp[1] ) { // Aのとき
+				moveangle = rand(0,60);
+			} else if( ObjMove_GetY(EnemyID) > yp[2] ) { // Cのとき
+				moveangle = rand(-60,0);
+			} else { // Bのとき
+				moveangle = rand(-60,60);
+			}
+		}
+
+		else if( ObjMove_GetX(EnemyID) > xp[2] )
+		{
+			// G,H,Iの時、左に移動する
+			if( ObjMove_GetY(EnemyID) < yp[1] ) { // Gのとき
+				moveangle = rand(120,180);
+			} else if( ObjMove_GetY(EnemyID) > yp[2] ) { // Iのとき
+				moveangle = rand(180,240);
+			} else { // Hのとき
+				moveangle = rand(120,240);
+			}
+
+		}
+
+		else
+		{
+			// D,E,F,D',E',F'の時、2/3で自機側に、1/3で自機と反対側に移動する
+			if ( ObjMove_GetX(EnemyID) < GetPlayerX ) { // 敵が自機より左側(D,E,F)のとき
+				if (rand(0,1) < ToPlayerRate)
+				{
+					// ToPlayerRateで自機側(=右側)に移動
+					if( ObjMove_GetY(EnemyID) < yp[1] ) { // Dのとき
+						moveangle = rand(0,60);
+					} else if( ObjMove_GetY(EnemyID) > yp[2] ) { // Fのとき
+						moveangle = rand(-60,0);
+					} else { // Eのとき
+						moveangle = rand(-60,60);
+					}
+				}
+				else {
+					// 自機と反対側(=左側)に移動
+					if( ObjMove_GetY(EnemyID) < yp[1] ) { // Dのとき
+						moveangle = rand(120,180);
+					} else if( ObjMove_GetY(EnemyID) > yp[2] ) { // Fのとき
+						moveangle = rand(180,240);
+					} else { // Eのとき
+						moveangle = rand(120,240);
+					}
+				}
+			} else {
+				// 敵が自機より右側(D',E',F')のとき
+				if (rand(0,1)<1/3) {
+					// 1/3で自機と反対側(=右側)に移動
+					if( ObjMove_GetY(EnemyID) < yp[1] ) { // D'のとき
+						moveangle = rand(0,60);
+					} else if( ObjMove_GetY(EnemyID) > yp[2] ) { // F'のとき
+						moveangle = rand(-60,0);
+					} else { // E'のとき
+						moveangle = rand(-60,60);
+					}
+				} else {
+					// 1/3で自機側(=左側)に移動
+					if( ObjMove_GetY(EnemyID) < yp[1] ) { // D'のとき
+						moveangle = rand(120,180);
+					} else if( ObjMove_GetY(EnemyID) > yp[2] ) { // F'のとき
+						moveangle = rand(180,240);
+					} else { // E'のとき
+						moveangle = rand(120,240);
+					}
+				}
+			}
+		}
+
+		if( ObjMove_GetX(EnemyID)+cos(moveangle)*dist < xp[3] && ObjMove_GetX(EnemyID)+cos(moveangle)*dist > xp[0]
+		 && ObjMove_GetY(EnemyID)+sin(moveangle)*dist < yp[3] && ObjMove_GetY(EnemyID)+sin(moveangle)*dist > yp[0] ) {
+			break;
+		}
+		// 再抽選
+	}
+	return([ObjMove_GetX(EnemyID)+cos(moveangle)*dist, ObjMove_GetY(EnemyID)+sin(moveangle)*dist])
+}
+
+
+//ボス登場えへくと
+task EffectEntryBoss(objTarget, eff_colors, pos)
+{
+	let timer = 60;
+	let objImg = GetBossImageID(objTarget);
+	ObjMove_SetPosition(objTarget, pos[0], pos[1]);
+	ObjRender_SetAlpha(objImg, 0);
+	
+	let size = 200;
+	let add_a = 3.5;
+	_EffectConcentration_Entry(objTarget, eff_colors , 60, -add_a, size, timer, 60);
+	_EffectConcentration_Entry(objTarget, eff_colors , 60+180, -add_a, size, timer, 60);
+	CallSound(sndPower2);
+
+	ascent(i in 0 .. 4)
+	{
+		_EffectConcentrationCircle(ObjMove_GetX(objTarget), ObjMove_GetY(objTarget), 5, 60-i*5);
+		wait(10);
+	}
+	ascent(i in 0 .. 60)
+	{
+		let alpha = (i+1)/60*255;
+		ObjRender_SetAlpha(objImg, alpha);
+		yield;
+	}
+}
+task _EffectConcentration_Entry(objTarget, c_indexs, base_angle, add_angle, size, timer, lay)
+{
+	let t = max(timer/2, timer-60);
+	let timer2 = 90;
+	if (t < 60) { timer2 = t+30; }
+	ascent(i in 0 .. t)
+	{
+		if (Obj_IsDeleted(objTarget)) { break; }
+		let ic = c_indexs[trunc(randEffect(0, length(c_indexs)-1))];
+		let ix = (ic%4) * 64;
+		let iy = trunc(ic/4) * 64;
+		let sz = size * (1+i/t*2);
+		_EffectConcentrationP2(objTarget, ix, iy, base_angle+randEffect(-90,90), add_angle, sz, timer2, lay);
+		yield;
+	}
+}

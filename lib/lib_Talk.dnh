@@ -1,0 +1,754 @@
+#include "./lib_Fukidashi.dnh"
+
+let FINISH_TALK = false;
+let SKIP_FLAG = 0;
+let FIRST_WAIT_FLAG = true;
+
+let priorityTalk = 90;
+let objTalkObject = [];
+
+
+//  会話開始
+sub StartTalk
+{
+	SetForbidPlayerShot(true);
+	SetForbidPlayerSpell(true);
+	FINISH_TALK = false;
+}
+
+//  会話終了
+function FinishTalk(fadeOut)
+{
+	if (fadeOut) { FINISH_TALK = true; }
+	// 吹き出し削除
+	DeleteAllFukidashi();
+	wait(45);
+	SetForbidPlayerShot(false);
+	SetForbidPlayerSpell(false);
+}
+
+// -------------------------------------------------
+// 母体的なアレ
+// -------------------------------------------------
+// 画像の範囲を指定、キャラごとに自動判別
+function CreateTalkObject(characterID, isBoss)
+{
+	return(_CreateTalkObject(characterID, isBoss, 0, 0));
+}
+function CreateTalkObjectEx(characterID, isBoss, offset_x, offset_y)
+{
+	return(_CreateTalkObject(characterID, isBoss, offset_x, offset_y));
+}
+// 地の文を出したい場合はこちら！
+function CreateDescriptiveObject()
+{
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetValue(obj, "DES", true);		// 地の文フラグ立て
+	Obj_SetValue(obj, "FW", false);
+	ChangeDescriptive(obj);
+	objTalkObject = objTalkObject ~ [obj];	//配列に登録
+	return(obj);
+}
+
+function _CreateTalkObject(characterID, isBoss, offset_x, offset_y)
+{
+	// 配置位置
+	let imgX = 0;
+	let imgY = 0;
+	// 画像サイズ
+	let cutinSizeX = 256;
+	let cutinSizeY = 256;
+	// 吹き出し位置オフセット
+	let fukiX = 0;
+	let fukiY = 0;
+	// 立ち絵の移動方向
+	let move_position = [-1, 1][isBoss];
+	// 吹き出しの上下方向
+	let fukidashi_top = true;
+	
+	if (isBoss)
+	{
+		// ボス
+		alternative(characterID)
+		case(BOSS_ID_IPHONEA)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40;
+			imgY = GetScreenHeight-160;
+			fukiX = 32;
+			fukiY = -10;
+		}
+		case(BOSS_ID_FABRITIS)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40;
+			imgY = GetScreenHeight-160;
+			fukiX = 32;
+			fukiY = -10;
+		}
+		case(BOSS_ID_TOBIKO)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40+32;
+			imgY = GetScreenHeight-160;
+			fukiX = 32-32;
+			fukiY = -10;
+		}
+		case(BOSS_ID_SHELIA)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40+32;
+			imgY = GetScreenHeight-160;
+			fukiX = 32-32;
+			fukiY = -10;
+		}
+		case(BOSS_ID_MOKOU)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40+16;
+			imgY = GetScreenHeight-160;
+			fukiX = 32-16;
+			fukiY = -10;
+		}
+		case(BOSS_ID_ICHIYOU)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40+16;
+			imgY = GetScreenHeight-160;
+			fukiX = 32-16;
+			fukiY = -10;
+		}
+		case(BOSS_ID_NEZU)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40+16;
+			imgY = GetScreenHeight-160-64;
+			fukiX = 32-16;
+			fukiY = -10+64;
+		}
+		case(BOSS_ID_NEZU_R)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40+16;
+			imgY = GetScreenHeight-160;
+			fukiX = 32-16;
+			fukiY = -10;
+		}
+		case(BOSS_ID_NEZU_M)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40+16;
+			imgY = GetScreenHeight-160;
+			fukiX = 32-16;
+			fukiY = -10;
+		}
+		case(BOSS_ID_NEZU_S)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40+16;
+			imgY = GetScreenHeight-160;
+			fukiX = 32-16;
+			fukiY = -10;
+		}
+		case(BOSS_ID_MISHANDRA)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40+16;
+			imgY = GetScreenHeight-160;
+			fukiX = 32-16;
+			fukiY = -10;
+		}
+		case(BOSS_ID_SANADA)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth+40+16;
+			imgY = GetScreenHeight-160;
+			fukiX = 32-16;
+			fukiY = -10;
+		}
+		others
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = GetStgFrameWidth;
+			imgY = GetScreenHeight;
+			fukiX = 0;
+			fukiY = 0;
+		}
+	}
+	else
+	{
+		// 自機
+		alternative(characterID)
+		case(BOSS_ID_REIMU)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = 180;
+			imgY = GetScreenHeight-160;
+			fukiX = -64;
+			fukiY = -10;
+		}
+		case(BOSS_ID_MARISA)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = 180-32;
+			imgY = GetScreenHeight-160;
+			fukiX = -64+32;
+			fukiY = -10;
+		}
+		case(BOSS_ID_SANAE)
+		{
+			cutinSizeX = 512;
+			cutinSizeY = 512;
+			imgX = 180-16;
+			imgY = GetScreenHeight-160;
+			fukiX = -64+16;
+			fukiY = -10;
+		}
+		others
+		{
+			cutinSizeX = 512*0.8;
+			cutinSizeY = 512*0.8;
+			imgX = 120;
+			imgY = GetScreenHeight-cutinSizeY/2+64;
+			fukiX = 0;
+			fukiY = 0;
+		}
+	}
+	// オフセット
+	imgX += offset_x;
+	imgY += offset_y;
+	// オブジェクト作成
+	return( SetTalkImage(characterID, imgX, imgY, cutinSizeX, cutinSizeY, fukiX, fukiY, move_position, fukidashi_top) );
+}
+
+// 会話処理の親分さん
+function SetTalkImage(characterID, x, y, iw, ih, fuki_x, fuki_y, move_position, fukidashi_top)
+{
+	let obj = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetValue(obj, "POSITION", move_position);
+	Obj_SetValue(obj, "BOSS_ID", characterID);	// IDセット
+	ObjPrim_SetPrimitiveType(obj, PRIMITIVE_TRIANGLEFAN);
+	Obj_SetRenderPriorityI(obj, priorityTalk);
+	ObjPrim_SetVertexCount(obj, 4);
+//	ObjPrim_SetTexture(obj, imgFile);
+	ObjPrim_SetVertexUV(obj, 0, 0, 1/512);
+	ObjPrim_SetVertexUV(obj, 1, 0, 1);
+	ObjPrim_SetVertexUV(obj, 2, 1, 1);
+	ObjPrim_SetVertexUV(obj, 3, 1, 1/512);
+	ObjPrim_SetVertexPosition(obj, 0, -iw/2, -ih/2, 0);
+	ObjPrim_SetVertexPosition(obj, 1, -iw/2, ih/2, 0);
+	ObjPrim_SetVertexPosition(obj, 2, iw/2, ih/2, 0);
+	ObjPrim_SetVertexPosition(obj, 3, iw/2, -ih/2, 0);
+	ObjRender_SetPosition(obj, x, y, 0);
+	// 画像セット
+	ChangeTalkTexture(obj, I_NORMAL);
+	// 吹き出しの向き
+	if (fukidashi_top)
+		{ Obj_SetValue(obj, "F_POSITION", [FUKIDASHI_TOP_LEFT, FUKIDASHI_TOP_RIGHT][move_position > 0]) }
+	else
+		{ Obj_SetValue(obj, "F_POSITION", [FUKIDASHI_LEFT, FUKIDASHI_RIGHT][move_position > 0]) }
+	
+	Obj_SetValue(obj, "FW", false);
+	Obj_SetValue(obj, "VIS", true);
+	TTalkImage(obj, x, y);
+	ChangeFukidashi(obj, x+fuki_x, y+fuki_y);
+	objTalkObject = objTalkObject ~ [obj];	//配列に登録
+	return(obj);
+}
+
+// -------------------------------------------------
+// 会話構成
+// -------------------------------------------------
+
+// 会話メッセージ（吹き出し消去機能つき）
+function SetTalkEx(obj, text)
+{
+	_SetTalkEx(obj, text, 0, 0);
+}
+// 座標オフセット
+function SetTalkEx2(obj, text, offset_x, offset_y)
+{
+	_SetTalkEx(obj, text, offset_x, offset_y);
+}
+function _SetTalkEx(obj, text, offset_x, offset_y)
+{
+	// 吹き出しリセット
+	SetFukidashiType(obj, FUKIDASHI_NORMAL);
+	// 吹き出し削除
+	DeleteAllFukidashi();
+	// 会話
+	_SetTalk(obj, text, offset_x, offset_y);
+	// カットインを前面に出す
+	ChangeImageFoward(obj);
+}
+
+// 会話メッセージ
+function SetTalk(obj, text)
+{
+	_SetTalk(obj, text, 0, 0);
+}
+function _SetTalk(obj, text, offset_x, offset_y)
+{
+	Obj_SetValue(obj, "NEXT", true);
+	Obj_SetValue(obj, "TEXT", text);
+	Obj_SetValue(obj, "OFFSET_X", offset_x);
+	Obj_SetValue(obj, "OFFSET_Y", offset_y);
+}
+
+// 吹き出し削除
+sub DeleteAllFukidashi()
+{
+	ascent(i in 0 .. length(objTalkObject))
+	{
+		SetTalk(objTalkObject[i], "");
+	}
+}
+
+// 選択肢表示（地の文用）
+function SetChoiseWindow(bx, by, selects)
+{
+	return(_MakeChoiseWindow(bx, by, selects, 99));
+}
+
+//  ボタン待機
+function WaitNext()
+{
+	if (FIRST_WAIT_FLAG)
+	{
+		FIRST_WAIT_FLAG = false;
+		while(GetVirtualKeyState(VK_OK) != KEY_FREE) { yield; }
+	}
+	let t = 0;
+	loop
+	{
+		if (t > 2 && (GetVirtualKeyState(VK_OK) == KEY_PUSH || IsSkip() || t > 900))
+			{ return(1); }
+		if (GetVirtualKeyState(VK_OK) == KEY_PUSH || GetVirtualKeyState(VK_OK) == KEY_HOLD)
+			{ SKIP_FLAG++; }
+		else { SKIP_FLAG = 0; }
+		t++;
+		yield;
+	}
+}
+//  タイマー送り
+function WaitNextTimer(timer)
+{
+	wait(timer);
+	return(1);
+}
+
+// 画像変更
+function ChangeTalkTexture(obj, imgType)
+{
+	ObjPrim_SetTexture(obj, GetBossTexture(obj, imgType));
+}
+
+// 会話スキップ中？
+function IsSkip()
+{
+	return(SKIP_FLAG > 45);
+}
+
+// 吹き出し位置変更
+function SetFukidashiPosition(obj, fpos)
+{
+	Obj_SetValue(obj, "F_POSITION", fpos);
+}
+
+// -------------------------------------------------
+// 会話処理
+// -------------------------------------------------
+task TTalkImage(obj, bx, by)
+{
+	let vx = -32*Obj_GetValueD(obj, "POSITION", 1);
+	let vy = -32;
+	let offset_r = -2;
+	
+	let alpha = 0;
+	let t = 0;
+	while(!Obj_IsDeleted(obj) || alpha < 0)
+	{
+		if (FINISH_TALK) {
+			alpha -= 255/20;
+			offset_r -= 0.1;
+			ObjRender_SetAlpha(obj, alpha);
+		} else {
+			if (!Obj_GetValueD(obj, "VIS", true))
+			{
+				offset_r = max(-2, offset_r-0.15);
+				alpha = max(0, alpha-30);
+				Obj_SetRenderPriorityI(obj, priorityTalk);	//レイヤー設定
+			}
+			else if (Obj_GetValueD(obj, "FW", false))
+			{
+				offset_r = min(0, offset_r+0.15);
+				Obj_SetRenderPriorityI(obj, priorityTalk+1);	//レイヤー設定
+			}
+			else if (offset_r < -1)
+			{
+				offset_r = min(-1, offset_r+0.15);
+				Obj_SetRenderPriorityI(obj, priorityTalk);	//レイヤー設定
+			}
+			else
+			{
+				offset_r = max(-1, offset_r-0.15);
+				Obj_SetRenderPriorityI(obj, priorityTalk);	//レイヤー設定
+			}
+			if (alpha < 255)
+			{
+				if (Obj_GetValueD(obj, "VIS", true)) { alpha += 255/30; }
+				ObjRender_SetAlpha(obj, alpha);
+			}
+		}
+		ObjRender_SetPosition(obj, bx+offset_r*vx, by+offset_r*vy, 0);
+		let tmp_c = max(128, 128+(offset_r+1)*128);
+		ObjRender_SetColor(obj, tmp_c, tmp_c, tmp_c);
+		yield;
+	}
+}
+function SetImageFoward(obj, tmp_value)
+{
+	Obj_SetValue(obj, "FW", tmp_value);
+}
+function SetImageVisible(obj, tmp_value)
+{
+	Obj_SetValue(obj, "VIS", tmp_value);
+}
+
+// 画像を手前に
+function ChangeImageFoward(obj)
+{
+	ascent(i in 0 .. length(objTalkObject))
+	{
+		if (obj == objTalkObject[i]) { Obj_SetValue(objTalkObject[i], "FW", true); }
+		else { Obj_SetValue(objTalkObject[i], "FW", false); }
+	}
+}
+// 上の複数バージョン、引数は配列
+function ChangeImageFowardEx(objs)
+{
+	ascent(i in 0 .. length(objTalkObject))
+	{
+		Obj_SetValue(objTalkObject[i], "FW", false);
+	}
+	ascent(i in 0 .. length(objTalkObject))
+	{
+		ascent(j in 0 .. length(objs))
+		{
+			if (objs[j] == objTalkObject[i]) { Obj_SetValue(objTalkObject[i], "FW", true); break; }
+		}
+	}
+}
+
+task FadeTalkImage(obj, timer)
+{
+	let move_position = Obj_GetValueD(obj, "POSITION", 1);
+	if (timer > 0)
+	{
+		let tmp_t = timer;
+		let bx = ObjRender_GetX(obj);
+		let by = ObjRender_GetY(obj);
+		ascent(t in 0 .. tmp_t)
+		{
+			ObjRender_SetPosition(obj,
+				bx+(tmp_t-t-1)/tmp_t*64*move_position, by+(tmp_t-t-1)/tmp_t*64, 0);
+			ObjRender_SetAlpha(obj, 255*(t+1)/tmp_t);
+			yield;
+		}
+	}
+	else
+	{
+		let tmp_t = -timer;
+		let bx = ObjRender_GetX(obj);
+		let by = ObjRender_GetY(obj);
+		descent(t in 0 .. tmp_t)
+		{
+			ObjRender_SetPosition(obj,
+				bx+(tmp_t-t-1)/tmp_t*64*move_position, by+(tmp_t-t-1)/tmp_t*64, 0);
+			ObjRender_SetAlpha(obj, 255*(t+1)/tmp_t);
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+// 吹き出し変更監視
+task ChangeFukidashi(parent, fuki_x, fuki_y)
+{
+	let objFukidashi = -1;
+	let f_position = Obj_GetValueD(parent, "F_POSITION", 1);
+	while(!Obj_IsDeleted(parent))
+	{
+		if (Obj_GetValueD(parent, "NEXT", false))
+		{
+			if (objFukidashi != -1) { DeleteFukidashi(objFukidashi); }
+			let tx = Obj_GetValueD(parent, "TEXT", "");
+			let offset_x = Obj_GetValueD(parent, "OFFSET_X", 0);
+			let offset_y = Obj_GetValueD(parent, "OFFSET_Y", 0);
+			if (length(tx) > 0)
+			{
+				f_position = Obj_GetValueD(parent, "F_POSITION", 1);
+				objFukidashi = MakeFukidashiFront(fuki_x+offset_x, fuki_y+offset_y,
+					Obj_GetValueD(parent, "F_TYPE", FUKIDASHI_NORMAL), f_position, tx);
+			}
+			Obj_SetValue(parent, "TEXT", "");
+			Obj_SetValue(parent, "NEXT", false);
+		}
+		yield;
+	}
+	if (objFukidashi != -1) { DeleteFukidashi(objFukidashi); }
+}
+
+function SetFukidashiType(obj, f_type)
+{
+	Obj_SetValue(obj, "F_TYPE", f_type);
+}
+
+
+// -------------------------------------------------
+// 地の文
+// -------------------------------------------------
+// 吹き出し変更監視（地の文用）
+task ChangeDescriptive(parent)
+{
+	let objFukidashi = -1;
+	let f_position = Obj_GetValueD(parent, "F_POSITION", 1);
+	while(!Obj_IsDeleted(parent))
+	{
+		if (Obj_GetValueD(parent, "NEXT", false))
+		{
+			if (objFukidashi != -1) { DeleteFukidashi(objFukidashi); }
+			let tx = Obj_GetValueD(parent, "TEXT", "");
+			if (length(tx) > 0)
+			{
+				objFukidashi = _MakeDescriptive(tx, 99);
+			}
+			Obj_SetValue(parent, "TEXT", "");
+			Obj_SetValue(parent, "NEXT", false);
+		}
+		yield;
+	}
+	if (objFukidashi != -1) { DeleteFukidashi(objFukidashi); }
+}
+
+// -------------------------------------------------
+// 名前表示
+// -------------------------------------------------
+task SetBossName(obj)
+{
+	let x = 300;
+	let y = 240;
+	let timer = 240;
+	_SetBossName(obj, x, y, timer, objEnemy);
+}
+task SetBossNameEx(obj, x, y, timer, objEnemy)
+{
+	_SetBossName(obj, x, y, timer, objEnemy);
+}
+task _SetBossName(obj, x, y, timer, objEnemy)
+{
+	if (Obj_GetValueD(obj, "B_NAME", false)) { return; }
+	Obj_SetValue(obj, "B_NAME", true);
+	
+	// 星の配置
+	// 384x384基準、左上座標=[0,0]
+	let STARS;
+	alternative(GetBossID(objEnemy))
+	case(BOSS_ID_FABRITIS, BOSS_ID_FABRITIS)
+	{
+		STARS = [[258,362,1],[282,313,1],[158,298,1],[159,225,1],[98,135,1.35],[139,92,1.35],[201,123,1],[255,85,1],[274,195,1],[334,238,1],[368,234,1]];
+	}
+	case(BOSS_ID_TOBIKO)
+	{
+		STARS = [[282,113,1],[252,130,1],[159,159,1],[156,212,1],[262,223,1]];
+	}
+	case(BOSS_ID_SHELIA)
+	{
+		STARS = [[223,106,1],[253,129,1.5],[234,162,1],[228,226,1],[204,169,1],[197,238,1]];
+	}
+	case(BOSS_ID_MOKOU)
+	{
+		STARS = [[143,134,1],[193,110,1],[246,198,1],[307,194,1],[270,249,1],[217,321,1]];
+	}
+	case(BOSS_ID_ICHIYOU)
+	{
+		STARS = [[265,100,1],[227,93,1],[180,153,1],[164,204,1.5],[88,214,1],[114,292,1],[176,269,1],[226,238,1],[286,216,1],[320,201,1],[253,268,1],[313,263,1]];
+	}
+	case(BOSS_ID_NEZU)
+	{
+		STARS = [[272,89,1],[240,162,1],[123,223,1]];
+	}
+	case(BOSS_ID_MISHANDRA)
+	{
+		STARS = [[192,35,2],[56,270,2],[327,270,2]];
+	}
+	case(BOSS_ID_ICHIYOU)
+	{
+		STARS = [];
+	}
+	others
+	{
+		STARS = [];
+	}
+	
+	_SetBossName_Text(obj, x, y, timer, objEnemy);
+	wait(30);
+	_SetBossName_Image(obj, x, y, timer-30, objEnemy, STARS);
+}
+
+task _SetBossName_Text(obj, x, y, timer, objEnemy)
+{
+	// 文字部分
+	let objText = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objText, Boss_GetBossNameImage(objEnemy));
+	Obj_SetRenderPriorityI(objText, priorityTalk+2);
+	ObjRender_SetPosition(objText, x, y, 0);
+	ObjSprite2D_SetSourceRect(objText, 0, 0, 256, 128);
+	ObjSprite2D_SetDestCenter(objText);
+	
+	let alpha = 0;
+	ascent(i in 0 .. 30)
+	{
+		if (FINISH_TALK) { break; }
+		alpha = (i+1)/30 * 255;
+		ObjRender_SetAlpha(objText, alpha);
+		yield;
+	}
+	loop(timer-75)
+	{
+		if (FINISH_TALK) { break; }
+		yield;
+	}
+	descent(i in 0 .. 45)
+	{
+		let tmp_a = (i+1)/45 * alpha;
+		ObjRender_SetAlpha(objText, tmp_a);
+		yield;
+	}
+	Obj_Delete(objText);
+}
+
+task _SetBossName_Image(obj, x, y, timer, objEnemy, STARS)
+{
+	let starct = length(STARS);
+	let scale = 0.75;
+	let imgFile = Boss_GetBossNameImage(objEnemy);
+	// 文字部分
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(objImg, imgFile);
+	Obj_SetRenderPriorityI(objImg, priorityTalk+1);
+	ObjRender_SetPosition(objImg, x, y, 0);
+	ObjSprite2D_SetSourceRect(objImg, 0, 128, 384, 512);
+	ObjSprite2D_SetDestCenter(objImg);
+	ObjRender_SetScaleXYZ(objImg, scale, scale, scale);
+	let objStars = [];
+	ascent(i in 0 .. starct)
+	{
+		let tmp_obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		ObjPrim_SetTexture(tmp_obj, imgFile);
+		Obj_SetRenderPriorityI(tmp_obj, priorityTalk+1);
+		ObjRender_SetPosition(tmp_obj, x, y, 0);
+		ObjSprite2D_SetSourceRect(tmp_obj, 448, 448, 512, 512);
+		ObjRender_SetBlendType(tmp_obj, BLEND_ADD_ARGB);
+		ObjSprite2D_SetDestCenter(tmp_obj);
+		ObjRender_SetScaleXYZ(tmp_obj, 1, 1, 1);
+		objStars = objStars ~ [tmp_obj];
+	}
+	
+	let alpha = 0;
+	let angle = -30;
+	
+	let vx = cos(120);
+	let vy = sin(120);
+	let bx = x - vx*32;
+	let by = y - vy*32;
+	let t = 0;
+	ascent(i in 0 .. 60)
+	{
+		if (FINISH_TALK) { break; }
+		let tmp = sin((i+1)/60*90);
+		alpha = tmp * 128;
+		let tmp_v = ((1-tmp)*1+0.2);
+		angle += tmp_v;
+		bx += tmp_v*vx; by += tmp_v*vy;
+		ObjRender_SetAlpha(objImg, alpha);
+		ObjRender_SetAngleZ(objImg, angle);
+		ObjRender_SetPosition(objImg, bx, by, 0);
+		// 星の座標計算
+		ascent(i in 0 .. starct)
+		{
+			let pos = Rotate2D_XY(STARS[i][0]-192, STARS[i][1]-192, angle);
+			let ex = bx + pos[0]*scale;
+			let ey = by + pos[1]*scale;
+			let es = (1-sin(t*30)/2)/2 * STARS[i][2];
+			ObjRender_SetPosition(objStars[i], ex, ey, 0);
+			ObjRender_SetScaleXYZ(objStars[i], es, es, es);
+			ObjRender_SetAlpha(objStars[i], tmp*128);
+		}
+		t++;
+		yield;
+	}
+	loop(timer-135)
+	{
+		if (FINISH_TALK) { break; }
+		let tmp_v = 0.2;
+		angle += tmp_v;
+		bx += tmp_v*vx; by += tmp_v*vy;
+		ObjRender_SetAngleZ(objImg, angle);
+		ObjRender_SetPosition(objImg, bx, by, 0);
+		// 星の座標計算
+		ascent(i in 0 .. starct)
+		{
+			let pos = Rotate2D_XY(STARS[i][0]-192, STARS[i][1]-192, angle);
+			let ex = bx + pos[0]*scale;
+			let ey = by + pos[1]*scale;
+			let es = (1-sin(t*30)/2)/2 * STARS[i][2];
+			ObjRender_SetPosition(objStars[i], ex, ey, 0);
+			ObjRender_SetScaleXYZ(objStars[i], es, es, es);
+		}
+		t++;
+		yield;
+	}
+	descent(i in 0 .. 45)
+	{
+		let tmp = sin((i+1)/45*90);
+		let tmp_a = tmp * alpha;
+		let tmp_v = 0.2;
+		angle += tmp_v;
+		bx += tmp_v*vx; by += tmp_v*vy;
+		ObjRender_SetAngleZ(objImg, angle);
+		ObjRender_SetAlpha(objImg, tmp_a);
+		ObjRender_SetPosition(objImg, bx, by, 0);
+		// 星の座標計算
+		ascent(i in 0 .. starct)
+		{
+			let pos = Rotate2D_XY(STARS[i][0]-192, STARS[i][1]-192, angle);
+			let ex = bx + pos[0]*scale;
+			let ey = by + pos[1]*scale;
+			let es = tmp * (1-sin(t*30)/2)/2 * STARS[i][2];
+			ObjRender_SetPosition(objStars[i], ex, ey, 0);
+			ObjRender_SetScaleXYZ(objStars[i], es, es, es);
+		}
+		t++;
+		yield;
+	}
+	Obj_Delete(objImg);
+	ascent(i in 0 .. starct)
+	{
+		Obj_Delete(objStars[i]);
+	}
+}

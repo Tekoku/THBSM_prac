@@ -1,0 +1,518 @@
+
+
+//----------------------------------------------------
+//　ｽﾃｰｼﾞﾀｲﾄﾙ表示
+//----------------------------------------------------
+
+let path_stgttl01	= imgEffectStageParticle;
+let path_stgttl02	= imgEffectStageLine;
+//let path_stgttl03	= GetCurrentScriptDirectory() ~ "./../img/world/stg1img/stage-temp.png";
+
+let constellationRGB = [ 255, 64, 255 ];
+
+// ステージ1
+task DisplayStage01( wait, wait2 )
+{
+	loop( wait ){ yield; }
+	let pos		= [ 384/2, 448/2 - 96 ];
+	let layer	= 71;
+	let long	= 300;
+	let obj		= [
+		Constellation( pos, 96, 230, layer, long ),
+		Constellation( pos, 96, 180, layer, long ),
+		Constellation( pos, 64, 260, layer, long ),
+		Constellation( pos, 64, 120, layer, long ),
+		Constellation( pos, 96, 280, layer, long ),
+		Constellation( pos, 96, 110, layer, long ),
+		Constellation( pos, 64, 0, layer, long ),
+		Constellation( pos, 64, 80, layer, long ),
+		Constellation( pos, 96, 10, layer, long ),
+		Constellation( pos, 96, 60, layer, long ),
+		Constellation( pos, 128, 0, layer, long ),
+		Constellation( pos, 128, 70, layer, long ),
+	];
+	// LoadingImageFile_StgTitle(stage_id)[0] … タイトル画像のパス
+	StageTitleDisplay( pos, long, LoadingImageFile_StgTitle(1)[0], [255,255,255] );
+	loop( wait2 ){ yield; }
+	ConstellationLine( obj[0], obj[1], layer, long - wait2 );
+	ConstellationLine( obj[0], obj[2], layer, long - wait2 );
+	ConstellationLine( obj[1], obj[3], layer, long - wait2 );
+	ConstellationLine( obj[2], obj[4], layer, long - wait2 );
+	ConstellationLine( obj[3], obj[5], layer, long - wait2 );
+	ConstellationLine( obj[2], obj[6], layer, long - wait2 );
+	ConstellationLine( obj[3], obj[7], layer, long - wait2 );
+	ConstellationLine( obj[6], obj[8], layer, long - wait2 );
+	ConstellationLine( obj[7], obj[9], layer, long - wait2 );
+	ConstellationLine( obj[8], obj[10], layer, long - wait2 );
+	ConstellationLine( obj[9], obj[11], layer, long - wait2 );
+}
+
+// ステージ2
+task DisplayStage02( wait, wait2 )
+{
+	loop( wait ){ yield; }
+	let pos		= [ 384/2, 448/2 - 96 ];
+	let layer	= 71;
+	let long	= 300;
+	let obj		= [
+		Constellation( pos, 123, 36.5, layer, long ),
+		Constellation( pos, 81, 21.5, layer, long ),
+		Constellation( pos, 94, 112, layer, long ),
+		Constellation( pos, 90, 225, layer, long ),
+		Constellation( pos, 68, 280, layer, long ),
+	];
+	// LoadingImageFile_StgTitle(stage_id)[0] … タイトル画像のパス
+	StageTitleDisplay( pos, long, LoadingImageFile_StgTitle(2)[0], [255,255,255] );
+	loop( wait2 ){ yield; }
+	ConstellationLine( obj[1], obj[0], layer, long - wait2 );
+	ConstellationLine( obj[2], obj[1], layer, long - wait2 );
+	ConstellationLine( obj[4], obj[1], layer, long - wait2 );
+	ConstellationLine( obj[3], obj[4], layer, long - wait2 );
+	ConstellationLine( obj[3], obj[2], layer, long - wait2 );
+}
+
+// ステージ3
+task DisplayStage03( wait, wait2 )
+{
+	loop( wait ){ yield; }
+	let pos		= [ 384/2, 448/2 - 96 ];
+	let layer	= 71;
+	let long	= 300;
+	let obj		= [
+		Constellation( pos, 119, 303, layer, long ),
+		Constellation( pos, 112, 332, layer, long ),
+		Constellation( pos, 50, 321, layer, long ),
+		Constellation( pos, 97, 113, layer, long ),
+		Constellation( pos, 137, 139, layer, long ),
+		Constellation( pos, 41, 230, layer, long ),
+	];
+	// LoadingImageFile_StgTitle(stage_id)[0] … タイトル画像のパス
+	StageTitleDisplay( pos, long, LoadingImageFile_StgTitle(3)[0], [255,255,255] );
+	loop( wait2 ){ yield; }
+	ConstellationLine( obj[1], obj[0], layer, long - wait2 );
+	ConstellationLine( obj[1], obj[2], layer, long - wait2 );
+	ConstellationLine( obj[3], obj[2], layer, long - wait2 );
+	ConstellationLine( obj[4], obj[3], layer, long - wait2 );
+	ConstellationLine( obj[4], obj[5], layer, long - wait2 );
+	ConstellationLine( obj[5], obj[2], layer, long - wait2 );
+}
+
+// ステージ4
+task DisplayStage04( wait, wait2 )
+{
+	loop( wait ){ yield; }
+	let pos		= [ 384/2, 448/2 - 96 ];
+	let layer	= 71;
+	let long	= 300;
+	let obj		= [
+		Constellation( pos, 138, 36, layer, long ),
+		Constellation( pos, 134, 51, layer, long ),
+		Constellation( pos, 80, 84, layer, long ),
+		Constellation( pos, 56, 180-55, layer, long ),
+		Constellation( pos, 125, 180-38, layer, long ),
+		Constellation( pos, 119, 180+1, layer, long ),
+		Constellation( pos, 57, 180+16, layer, long ),
+		Constellation( pos, 58, 180+64, layer, long ),
+		Constellation( pos, 64, 360-79, layer, long ),
+		Constellation( pos, 100, 360-51, layer, long ),
+		Constellation( pos, 21, 180+87, layer, long ),
+		Constellation( pos, 70, 360-25, layer, long ),
+		Constellation( pos, 108, 360-17, layer, long ),
+	];
+	// LoadingImageFile_StgTitle(stage_id)[0] … タイトル画像のパス
+	StageTitleDisplay( pos, long, LoadingImageFile_StgTitle(4)[0], [255,255,255] );
+	loop( wait2 ){ yield; }
+	ConstellationLine( obj[1], obj[0], layer, long - wait2 );
+	ConstellationLine( obj[2], obj[1], layer, long - wait2 );
+	ConstellationLine( obj[3], obj[2], layer, long - wait2 );
+	ConstellationLine( obj[4], obj[3], layer, long - wait2 );
+	ConstellationLine( obj[4], obj[5], layer, long - wait2 );
+	ConstellationLine( obj[5], obj[6], layer, long - wait2 );
+	ConstellationLine( obj[6], obj[3], layer, long - wait2 );
+	ConstellationLine( obj[6], obj[7], layer, long - wait2 );
+	ConstellationLine( obj[7], obj[8], layer, long - wait2 );
+	ConstellationLine( obj[7], obj[10], layer, long - wait2 );
+	ConstellationLine( obj[8], obj[9], layer, long - wait2 );
+	ConstellationLine( obj[10], obj[11], layer, long - wait2 );
+	ConstellationLine( obj[11], obj[12], layer, long - wait2 );
+}
+
+// ステージ5
+task DisplayStage05( wait, wait2 )
+{
+	loop( wait ){ yield; }
+	let pos		= [ 384/2, 448/2 - 96 ];
+	let layer	= 71;
+	let long	= 300;
+	let obj		= [
+		Constellation( pos, 135, 32, layer, long ),
+		Constellation( pos, 68, 58, layer, long ),
+		Constellation( pos, 131, 180+23, layer, long ),
+	];
+	// LoadingImageFile_StgTitle(stage_id)[0] … タイトル画像のパス
+	StageTitleDisplay( pos, long, LoadingImageFile_StgTitle(5)[0], [255,255,255] );
+	loop( wait2 ){ yield; }
+	ConstellationLine( obj[1], obj[0], layer, long - wait2 );
+	ConstellationLine( obj[1], obj[2], layer, long - wait2 );
+}
+
+// ステージ6
+task DisplayStage06( wait, wait2 )
+{
+	loop( wait ){ yield; }
+	let pos		= [ 384/2, 448/2 - 96 ];
+	let layer	= 71;
+	let long	= 300;
+	let obj		= [
+		Constellation( pos, 130, 38, layer, long ),
+		Constellation( pos, 143, 180-27, layer, long ),
+		Constellation( pos, 80, 180+48.5, layer, long ),
+	];
+	// LoadingImageFile_StgTitle(stage_id)[0] … タイトル画像のパス
+	StageTitleDisplay( pos, long, LoadingImageFile_StgTitle(6)[0], [255,255,255] );
+	loop( wait2 ){ yield; }
+	ConstellationLine( obj[0], obj[1], layer, long - wait2 );
+	ConstellationLine( obj[1], obj[2], layer, long - wait2 );
+	ConstellationLine( obj[2], obj[0], layer, long - wait2 );
+}
+
+//　ﾀｲﾄﾙ表示
+task StageTitleDisplay( pos, long, path, rgb ){
+	let sef		= [
+		ObjPrim_Create(OBJ_SPRITE_2D),
+		ObjPrim_Create(OBJ_SPRITE_2D),
+		ObjPrim_Create(OBJ_SPRITE_2D),
+	];
+	
+	// ポエム表示
+	StageTitleDisplay02( pos, long, path, rgb );
+	
+	let i		= 0;
+	let sca		= 0.8;
+	let move1	= 0;
+	let moveA	= 0;
+	let move2	= 0;
+	let moveB	= 0;
+	
+	ascent( i in 0..length(sef) ){
+		ObjPrim_SetTexture(sef[i], path );
+		Obj_SetRenderPriorityI(sef[i], 72 );
+		ObjRender_SetBlendType(sef[i], BLEND_ALPHA );
+		ObjRender_SetAngleXYZ(sef[i], 0, 0, 0 );
+		ObjRender_SetScaleXYZ(sef[i], sca, sca, 0 );
+		ObjRender_SetAlpha(sef[i], 0 );
+	}
+	
+	ObjSprite2D_SetSourceRect(sef[0], 0, 0, 512, 128 );
+	ObjSprite2D_SetDestCenter(sef[0]);
+	
+	ObjRender_SetScaleXYZ(sef[1], sca - 0.3, sca - 0.3, 0 );
+	ObjSprite2D_SetSourceRect(sef[1], 0, 128, 256, 128+64 );
+	ObjSprite2D_SetDestCenter(sef[1]);
+	
+	ObjRender_SetScaleXYZ(sef[2], sca - 0.2, sca - 0.2, 0 );
+	ObjSprite2D_SetSourceRect(sef[2], 256, 128, 512, 128+64 );
+	ObjSprite2D_SetDestCenter(sef[2]);
+	
+	while( move1 < 1 || move2 < 1 ){
+		if( move1 < 1 ){ move1 = 1 * sin( moveA ); }
+		if( move2 < 1 ){ move2 = 1 * sin( moveB ); }
+		
+		ascent( i in 0..length(sef) ){
+			ObjRender_SetAlpha(sef[i], move1*255 );
+		}
+		
+		ObjRender_SetScaleXYZ(sef[0], sca*2 - move2*sca, move2*sca, 0 );
+		ObjRender_SetPosition(sef[0], pos[0], pos[1], 0 );
+		ObjRender_SetPosition(sef[1], pos[0] + 64-move2*64, pos[1]-32, 0 );
+		ObjRender_SetPosition(sef[2], pos[0] - 64+move2*64, pos[1]+32, 0 );
+		
+		moveA += 2;
+		moveB += 1;
+		
+		yield;
+	}
+	move1 = 0;
+	moveA = 0;
+	move2 = 0;
+	moveB = 0;
+	
+	loop( long ){
+		ObjRender_SetPosition(sef[1], pos[0] - move2, pos[1]-32, 0 );
+		ObjRender_SetPosition(sef[2], pos[0] + move2, pos[1]+32, 0 );
+		
+		move2 += 0.1;
+		
+		yield;
+	}
+	while( move1 < 1 || move2 < 1 ){
+		if( move1 < 1 ){ move1 = 1 * sin( moveA ); }
+		
+		ascent( i in 0..length(sef) ){
+			ObjRender_SetAlpha(sef[i], 255 - move1*255 );
+		}
+		
+		ObjRender_SetPosition(sef[1], pos[0] - move2, pos[1]-32, 0 );
+		ObjRender_SetPosition(sef[2], pos[0] + move2, pos[1]+32, 0 );
+		
+		moveA += 2;
+		move2 += 0.1 + moveB;
+		moveB += 0.02;
+		
+		yield;
+	}
+	ascent( i in 0..length(sef) ){
+		Obj_Delete(sef[i]);
+	}
+}
+
+// ポエム部分
+task StageTitleDisplay02( pos, long, path, rgb )
+{
+	let sef		= [
+		ObjPrim_Create(OBJ_SPRITE_2D),
+		ObjPrim_Create(OBJ_SPRITE_2D),
+		ObjPrim_Create(OBJ_SPRITE_2D),
+	];
+	let i		= 0;
+	let sca		= 0.7;
+	let move1	= 0;
+	let moveA	= 0;
+	let move2	= 0;
+	let moveB	= 0;
+	let offset_x	= 0;
+	let offset_y	= 64;
+	let moveX	= [-48, 48, -24];
+	let moveY	= [0, 0, 0];
+	
+	ascent( i in 0..length(sef) ){
+		ObjPrim_SetTexture(sef[i], path );
+		Obj_SetRenderPriorityI(sef[i], 72 );
+		ObjRender_SetBlendType(sef[i], BLEND_ALPHA );
+		ObjRender_SetAngleXYZ(sef[i], 0, 0, 0 );
+		ObjRender_SetScaleXYZ(sef[i], sca, sca, 0 );
+		ObjRender_SetAlpha(sef[i], 0 );
+		ObjSprite2D_SetSourceRect(sef[i], 0, 256+i*32, 512, 256+(i+1)*32 );
+		ObjSprite2D_SetDestCenter(sef[i]);
+		ObjRender_SetScaleXYZ(sef[i], sca, sca, 0 );
+	}
+	
+	while( move1 < 1 || move2 < 1 ){
+		if( move1 < 1 ){ move1 = 1 * sin( moveA ); }
+		if( move2 < 1 ){ move2 = 1 * sin( moveB ); }
+		
+		let muki = 1;
+		ascent( i in 0..length(sef) ){
+			ObjRender_SetAlpha(sef[i], move1*255 );
+			ObjRender_SetPosition(sef[i], pos[0] + offset_x+(1-move2)*moveX[i], pos[1]+offset_y+i*18*sca+(1-move2)*moveY[i], 0 );
+			muki = -muki;
+		}
+		
+		moveA += 2;
+		moveB += 1;
+		
+		yield;
+	}
+	move1 = 0;
+	moveA = 0;
+	move2 = 0;
+	moveB = 0;
+	
+	loop( long ){
+		let muki = 1;
+		ascent( i in 0..length(sef) ){
+			ObjRender_SetPosition(sef[i], pos[0] + offset_x, pos[1]+offset_y+i*18*sca, 0 );
+			muki = -muki;
+		}
+		
+		yield;
+	}
+	while( move1 < 1 || move2 < 1 ){
+		if( move1 < 1 ){ move1 = 1 * sin( moveA ); }
+		
+		let muki = 1;
+		ascent( i in 0..length(sef) ){
+			ObjRender_SetAlpha(sef[i], (1-move1)*255 );
+			ObjRender_SetPosition(sef[i], pos[0] + offset_x+move2*moveX[i], pos[1]+offset_y+i*18*sca+move2*moveY[i], 0 );
+			muki = -muki;
+		}
+		
+		moveA += 2;
+		move2 += moveB;
+		moveB += 0.001;
+		
+		yield;
+	}
+	ascent( i in 0..length(sef) ){
+		Obj_Delete(sef[i]);
+	}
+}
+
+//　星座表示 星部分
+function Constellation( dpos, dist, ang, layer, long ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	Constellation_Update( obj, dpos, dist, ang, layer, long );
+	return obj;
+}
+
+task Constellation_Update( obj, dpos, dist, ang, layer, long ){
+	let pos		= [ 0, 0 ];
+	let move1	= 0;
+	let moveA	= 0;
+	let sca		= 0.4;
+	let alpha	= [ 255, 192 ];
+	let count	= 0;
+	let flash	= 32;
+	let moveA_add	= 0;
+	
+	//　座標
+	let _rect	= [ 3, 0 ];
+	
+	//　回転加算
+	ang += 360;
+	
+	ObjPrim_SetTexture( obj, path_stgttl01 );
+	Obj_SetRenderPriorityI( obj, layer+1 );
+	ObjRender_SetBlendType( obj, BLEND_ADD_ARGB );
+	ObjSprite2D_SetSourceRect( obj, 0 + 64*_rect[0], 0 + 64*_rect[1], 64 + 64*_rect[0], 64 + 64*_rect[1] );
+	ObjSprite2D_SetDestCenter( obj );
+	
+	ObjRender_SetColor( obj, constellationRGB[0], constellationRGB[1], constellationRGB[2] );
+	
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		pos = [
+			dpos[0] + move1*dist * cos( move1*ang ),
+			dpos[1] + move1*dist * sin( move1*ang ) + (1-move1)*dist * cos( move1*ang ),
+		];
+		let scale = move1*sca + move1*0.04*sin(count*flash);
+		ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, scale, scale, 0 );
+		ObjRender_SetAlpha( obj, move1*alpha[count%2] );
+		moveA += 1;
+		count++;
+		yield;
+	}
+	loop( long ){
+		move1 = 1 * sin( moveA );
+		pos = [
+			dpos[0] + move1*dist * cos( move1*ang ),
+			dpos[1] + move1*dist * sin( move1*ang ),
+		];
+		let scale = move1*sca + move1*0.04*sin(count*flash);
+		ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, scale, scale, 0 );
+		ObjRender_SetAlpha( obj, alpha[count%2] );
+		moveA += moveA_add;
+		moveA_add = min(0.05, moveA_add+0.001);
+		count++;
+		yield;
+	}
+	while( moveA < 180 ){
+		move1 = 1 * sin( moveA );
+		pos = [
+			dpos[0] + move1*dist * cos( move1*ang ),
+			dpos[1] + move1*dist * sin( move1*ang ),
+		];
+		let scale = move1*sca + move1*0.04*sin(count*flash);
+		ObjRender_SetPosition( obj, pos[0], pos[1], 0 );
+		ObjRender_SetScaleXYZ( obj, scale, scale, 0 );
+		ObjRender_SetAlpha( obj, move1*alpha[count%2] );
+		moveA += moveA_add;
+		moveA_add = min(5, moveA_add+0.1);
+		count++;
+		yield;
+	}
+	Obj_Delete( obj );
+}
+
+//　星座表示 ﾗｲﾝ部分
+task ConstellationLine( obj1, obj2, layer, long ){
+	let obj		= ObjPrim_Create(OBJ_SPRITE_2D);
+	let pos		= [ 0, 0 ];
+	let move1	= 0;
+	let moveA	= 0;
+	let sca		= 0.1;
+	let alpha	= [ 255, 128 ];
+	let count	= 0;
+	let flash	= 16;
+	
+	//　受け取ったｵﾌﾞｼﾞｪｸﾄの座標
+	let pos1	= [ ObjRender_GetX(obj1), ObjRender_GetY(obj1) ];
+	let pos2	= [ ObjRender_GetX(obj2), ObjRender_GetY(obj2) ];
+	
+	//　2点間の距離
+	let _length	= 0;
+	
+	ObjPrim_SetTexture( obj, path_stgttl02 );
+	Obj_SetRenderPriorityI( obj, layer );
+	ObjRender_SetBlendType( obj, BLEND_ADD_ARGB );
+	ObjPrim_SetPrimitiveType( obj, PRIMITIVE_TRIANGLESTRIP );
+	ObjPrim_SetVertexCount( obj, 4 );
+	
+	ObjRender_SetColor( obj, constellationRGB[0], constellationRGB[1], constellationRGB[2] );
+	
+	while( move1 < 1 ){
+		move1 = 1 * sin( moveA );
+		pos1 = [ ObjRender_GetX(obj1), ObjRender_GetY(obj1) ];
+		pos2 = [ ObjRender_GetX(obj2), ObjRender_GetY(obj2) ];
+		_length	= GetDistance( pos1, pos2 );
+		
+		let scale = move1*sca + move1*0.02*sin(count*flash);
+		ObjRender_SetPosition( obj, pos1[0], pos1[1], 0 );
+		ObjRender_SetScaleXYZ( obj, scale, 1, 0 );
+		ObjRender_SetAngleZ( obj, GetGapAngle( pos1, pos2 )-90 );
+		ObjRender_SetAlpha( obj, alpha[count%2] );
+		
+		ObjPrim_SetVertexPosition( obj, 0, -16, 0, 0 );
+		ObjPrim_SetVertexPosition( obj, 1, -16, move1*_length, 0 );
+		ObjPrim_SetVertexPosition( obj, 2, 16, 0, 0 );
+		ObjPrim_SetVertexPosition( obj, 3, 16, move1*_length, 0 );
+		ObjPrim_SetVertexUVT( obj, 0, 0, 0 );
+		ObjPrim_SetVertexUVT( obj, 1, 0, move1*_length );
+		ObjPrim_SetVertexUVT( obj, 2, 32, 0 );
+		ObjPrim_SetVertexUVT( obj, 3, 32, move1*_length );
+		
+		moveA += 1;
+		count++;
+		yield;
+	}
+	loop( long ){
+		pos1 = [ ObjRender_GetX(obj1), ObjRender_GetY(obj1) ];
+		pos2 = [ ObjRender_GetX(obj2), ObjRender_GetY(obj2) ];
+		_length	= GetDistance( pos1, pos2 );
+		
+		let scale = move1*sca + move1*0.02*sin(count*flash);
+		ObjRender_SetPosition( obj, pos1[0], pos1[1], 0 );
+		ObjRender_SetScaleXYZ( obj, scale, 1, 0 );
+		ObjRender_SetAngleZ( obj, GetGapAngle( pos1, pos2 )-90 );
+		ObjRender_SetAlpha( obj, alpha[count%2] );
+		
+		ObjPrim_SetVertexPosition( obj, 0, -16, 0, 0 );
+		ObjPrim_SetVertexPosition( obj, 1, -16, move1*_length, 0 );
+		ObjPrim_SetVertexPosition( obj, 2, 16, 0, 0 );
+		ObjPrim_SetVertexPosition( obj, 3, 16, move1*_length, 0 );
+		ObjPrim_SetVertexUVT( obj, 0, 0, 0 );
+		ObjPrim_SetVertexUVT( obj, 1, 0, move1*_length );
+		ObjPrim_SetVertexUVT( obj, 2, 32, 0 );
+		ObjPrim_SetVertexUVT( obj, 3, 32, move1*_length );
+		
+		count++;
+		yield;
+	}
+	while( move1 > 0 ){
+		move1 = 1 * sin( moveA );
+		pos1 = [ ObjRender_GetX(obj1), ObjRender_GetY(obj1) ];
+		pos2 = [ ObjRender_GetX(obj2), ObjRender_GetY(obj2) ];
+		_length	= GetDistance( pos1, pos2 );
+		
+		let scale = move1*sca + move1*0.02*sin(count*flash);
+		ObjRender_SetScaleXYZ( obj, move1*scale, 1, 0 );
+		ObjRender_SetAlpha( obj, alpha[count%2] );
+		
+		moveA += 5;
+		count++;
+		yield;
+	}
+	Obj_Delete( obj );
+}

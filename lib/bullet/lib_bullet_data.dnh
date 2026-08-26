@@ -1,0 +1,1087 @@
+	#UserShotData
+	
+	//　テクスチャへのパス
+	shot_image = "./../../img/bullet00.png"
+	delay_color = (255,255,255)
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　01　丸弾
+	
+	//　黒透過
+	ShotData{	id = 1		rect = (0,112,16,128)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 2		rect = (16,112,32,128)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 3		rect = (32,112,48,128)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 4		rect = (48,112,64,128)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 5		rect = (64,112,80,128)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 6		rect = (80,112,96,128)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 7		rect = (96,112,112,128)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 8		rect = (112,112,128,128)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 9		rect = (128,112,144,128)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 10		rect = (144,112,160,128)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 11		rect = (160,112,176,128)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 12		rect = (176,112,192,128)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 13		rect = (192,112,208,128)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 14		rect = (208,112,224,128)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 15		rect = (224,112,240,128)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 16		rect = (240,112,256,128)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　02　中丸弾
+	
+	ShotData{	id = 17		rect = (0,192,32,224)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 18		rect = (32,192,64,224)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 19		rect = (64,192,96,224)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 20		rect = (96,192,128,224)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 21		rect = (128,192,160,224)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 22		rect = (160,192,192,224)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 23		rect = (192,192,224,224)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 24		rect = (224,192,256,224)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　03　大弾
+	
+	ShotData{	id = 25		rect = (0,448,64,512)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 26		rect = (64,448,128,512)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 27		rect = (128,448,192,512)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 28		rect = (192,448,256,512)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 29		rect = (0,512,64,576)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 30		rect = (64,512,128,576)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 31		rect = (128,512,192,576)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 32		rect = (192,512,256,576)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　04　二重丸弾
+	
+	//　黒透過
+	ShotData{	id = 33		rect = (0,128,16,144)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 34		rect = (16,128,32,144)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 35		rect = (32,128,48,144)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 36		rect = (48,128,64,144)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 37		rect = (64,128,80,144)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 38		rect = (80,128,96,144)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 39		rect = (96,128,112,144)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 40		rect = (112,128,128,144)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 41		rect = (128,128,144,144)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 42		rect = (144,128,160,144)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 43		rect = (160,128,176,144)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 44		rect = (176,128,192,144)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 45		rect = (192,128,208,144)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 46		rect = (208,128,224,144)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 47		rect = (224,128,240,144)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 48		rect = (240,128,256,144)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　05　小弾
+	
+	//　黒透過
+	ShotData{	id = 49		rect = (0,320,8,328)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 50		rect = (8,320,16,328)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 51		rect = (16,320,24,328)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 52		rect = (24,320,32,328)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 53		rect = (32,320,40,328)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 54		rect = (40,320,48,328)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 55		rect = (48,320,56,328)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 56		rect = (56,320,64,328)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 57		rect = (64,320,72,328)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 58		rect = (72,320,80,328)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 59		rect = (80,320,88,328)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 60		rect = (88,320,96,328)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 61		rect = (96,320,104,328)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 62		rect = (104,320,112,328)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 63		rect = (112,320,120,328)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 64		rect = (120,320,128,328)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　06　菌弾
+	
+	//　黒透過
+	ShotData{	id = 65		rect = (0,432,16,448)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 66		rect = (16,432,32,448)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 67		rect = (32,432,48,448)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 68		rect = (48,432,64,448)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 69		rect = (64,432,80,448)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 70		rect = (80,432,96,448)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 71		rect = (96,432,112,448)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 72		rect = (112,432,128,448)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 73		rect = (128,432,144,448)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 74		rect = (144,432,160,448)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 75		rect = (160,432,176,448)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 76		rect = (176,432,192,448)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 77		rect = (192,432,208,448)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 78		rect = (208,432,224,448)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 79		rect = (224,432,240,448)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 80		rect = (240,432,256,448)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	collision = 2	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　07　銃弾
+	
+	//　黒透過
+	ShotData{	id = 81		rect = (0,32,16,48)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 82		rect = (16,32,32,48)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 83		rect = (32,32,48,48)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 84		rect = (48,32,64,48)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 85		rect = (64,32,80,48)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 86		rect = (80,32,96,48)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 87		rect = (96,32,112,48)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 88		rect = (112,32,128,48)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 89		rect = (128,32,144,48)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 90		rect = (144,32,160,48)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 91		rect = (160,32,176,48)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 92		rect = (176,32,192,48)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 93		rect = (192,32,208,48)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 94		rect = (208,32,224,48)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 95		rect = (224,32,240,48)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 96		rect = (240,32,256,48)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　08　米弾
+	
+	//　黒透過
+	ShotData{	id = 97		rect = (0,16,16,32)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 98		rect = (16,16,32,32)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 99		rect = (32,16,48,32)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 100	rect = (48,16,64,32)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 101	rect = (64,16,80,32)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 102	rect = (80,16,96,32)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 103	rect = (96,16,112,32)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 104	rect = (112,16,128,32)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 105	rect = (128,16,144,32)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 106	rect = (144,16,160,32)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 107	rect = (160,16,176,32)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 108	rect = (176,16,192,32)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 109	rect = (192,16,208,32)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 110	rect = (208,16,224,32)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 111	rect = (224,16,240,32)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 112	rect = (240,16,256,32)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　09　星弾
+	
+	//　黒透過
+	ShotData{	id = 113	rect = (0,64,16,80)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 114	rect = (16,64,32,80)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 115	rect = (32,64,48,80)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 116	rect = (48,64,64,80)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 117	rect = (64,64,80,80)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 118	rect = (80,64,96,80)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 119	rect = (96,64,112,80)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 120	rect = (112,64,128,80)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 121	rect = (128,64,144,80)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 122	rect = (144,64,160,80)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 123	rect = (160,64,176,80)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 124	rect = (176,64,192,80)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 125	rect = (192,64,208,80)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 126	rect = (208,64,224,80)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 127	rect = (224,64,240,80)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	ShotData{	id = 128	rect = (240,64,256,80)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 4	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　10　クナイ弾
+	
+	//　黒透過
+	ShotData{	id = 129	rect = (0,0,16,16)			delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 130	rect = (16,0,32,16)			delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 131	rect = (32,0,48,16)			delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 132	rect = (48,0,64,16)			delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 133	rect = (64,0,80,16)			delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 134	rect = (80,0,96,16)			delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 135	rect = (96,0,112,16)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 136	rect = (112,0,128,16)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 137	rect = (128,0,144,16)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 138	rect = (144,0,160,16)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 139	rect = (160,0,176,16)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 140	rect = (176,0,192,16)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 141	rect = (192,0,208,16)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 142	rect = (208,0,224,16)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 143	rect = (224,0,240,16)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 144	rect = (240,0,256,16)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　11　細弾
+	
+	//　黒透過
+	ShotData{	id = 145	rect = (0,144,16,160)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 146	rect = (16,144,32,160)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 147	rect = (32,144,48,160)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 148	rect = (48,144,64,160)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 149	rect = (64,144,80,160)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 150	rect = (80,144,96,160)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 151	rect = (96,144,112,160)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 152	rect = (112,144,128,160)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 153	rect = (128,144,144,160)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 154	rect = (144,144,160,160)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 155	rect = (160,144,176,160)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 156	rect = (176,144,192,160)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 157	rect = (192,144,208,160)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 158	rect = (208,144,224,160)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 159	rect = (224,144,240,160)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 160	rect = (240,144,256,160)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　12　札弾
+	
+	//　黒透過
+	ShotData{	id = 161	rect = (0,96,16,112)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 162	rect = (16,96,32,112)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 163	rect = (32,96,48,112)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 164	rect = (48,96,64,112)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 165	rect = (64,96,80,112)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 166	rect = (80,96,96,112)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 167	rect = (96,96,112,112)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 168	rect = (112,96,128,112)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 169	rect = (128,96,144,112)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 170	rect = (144,96,160,112)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 171	rect = (160,96,176,112)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 172	rect = (176,96,192,112)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 173	rect = (192,96,208,112)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 174	rect = (208,96,224,112)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 175	rect = (224,96,240,112)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 176	rect = (240,96,256,112)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　13　ゾウリムシ弾　（永琳奴）
+	
+	//　黒透過
+	ShotData{	id = 177	rect = (0,48,16,64)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 178	rect = (16,48,32,64)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 179	rect = (32,48,48,64)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 180	rect = (48,48,64,64)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 181	rect = (64,48,80,64)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 182	rect = (80,48,96,64)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 183	rect = (96,48,112,64)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 184	rect = (112,48,128,64)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 185	rect = (128,48,144,64)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 186	rect = (144,48,160,64)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 187	rect = (160,48,176,64)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 188	rect = (176,48,192,64)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 189	rect = (192,48,208,64)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 190	rect = (208,48,224,64)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 191	rect = (224,48,240,64)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	ShotData{	id = 192	rect = (240,48,256,64)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	collision = 2	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　14　鱗弾
+	
+	//　黒透過
+	ShotData{	id = 193	rect = (0,80,16,96)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 194	rect = (16,80,32,96)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 195	rect = (32,80,48,96)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 196	rect = (48,80,64,96)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 197	rect = (64,80,80,96)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 198	rect = (80,80,96,96)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 199	rect = (96,80,112,96)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 200	rect = (112,80,128,96)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 201	rect = (128,80,144,96)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 202	rect = (144,80,160,96)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 203	rect = (160,80,176,96)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 204	rect = (176,80,192,96)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 205	rect = (192,80,208,96)		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 206	rect = (208,80,224,96)		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 207	rect = (224,80,240,96)		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 208	rect = (240,80,256,96)		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　15　大星弾
+	
+	ShotData{	id = 209	rect = (0,160,32,192)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 210	rect = (32,160,64,192)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 211	rect = (64,160,96,192)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 212	rect = (96,160,128,192)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 213	rect = (128,160,160,192)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 214	rect = (160,160,192,192)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 215	rect = (192,160,224,192)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 216	rect = (224,160,256,192)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = -3	collision = 4	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　16　蝶弾
+	
+	ShotData{	id = 217	rect = (0,224,32,256)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 218	rect = (32,224,64,256)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 219	rect = (64,224,96,256)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 220	rect = (96,224,128,256)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 221	rect = (128,224,160,256)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 222	rect = (160,224,192,256)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 223	rect = (192,224,224,256)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 224	rect = (224,224,256,256)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　17　ナイフ弾
+	
+	ShotData{	id = 225	rect = (0,256,32,288)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	collision = (3,0,4)	}
+	ShotData{	id = 226	rect = (32,256,64,288)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	collision = (3,0,4)	}
+	ShotData{	id = 227	rect = (64,256,96,288)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	collision = (3,0,4)	}
+	ShotData{	id = 228	rect = (96,256,128,288)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	collision = (3,0,4)	}
+	ShotData{	id = 229	rect = (128,256,160,288)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	collision = (3,0,4)	}
+	ShotData{	id = 230	rect = (160,256,192,288)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	collision = (3,0,4)	}
+	ShotData{	id = 231	rect = (192,256,224,288)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	collision = (3,0,4)	}
+	ShotData{	id = 232	rect = (224,256,256,288)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	collision = (3,0,4)	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　18　グミ弾
+	
+	ShotData{	id = 233	rect = (0,288,32,320)		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 234	rect = (32,288,64,320)		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 235	rect = (64,288,96,320)		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 236	rect = (96,288,128,320)		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 237	rect = (128,288,160,320)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 238	rect = (160,288,192,320)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 239	rect = (192,288,224,320)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	ShotData{	id = 240	rect = (224,288,256,320)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	collision = 4	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　19　ハート弾
+	
+	ShotData{	id = 241	rect = (256,0,288,32)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 242	rect = (288,0,320,32)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 243	rect = (320,0,352,32)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 244	rect = (352,0,384,32)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 245	rect = (384,0,416,32)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 246	rect = (416,0,448,32)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 247	rect = (448,0,480,32)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 248	rect = (480,0,512,32)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　20　矢弾
+	
+	ShotData{	id = 249	rect = (256,32,288,64)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	collision = (2,0,8)	}
+	ShotData{	id = 250	rect = (288,32,320,64)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	collision = (2,0,8)	}
+	ShotData{	id = 251	rect = (320,32,352,64)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	collision = (2,0,8)	}
+	ShotData{	id = 252	rect = (352,32,384,64)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	collision = (2,0,8)	}
+	ShotData{	id = 253	rect = (384,32,416,64)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	collision = (2,0,8)	}
+	ShotData{	id = 254	rect = (416,32,448,64)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	collision = (2,0,8)	}
+	ShotData{	id = 255	rect = (448,32,480,64)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	collision = (2,0,8)	}
+	ShotData{	id = 256	rect = (480,32,512,64)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	collision = (2,0,8)	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　21　神霊弾の元
+	
+	ShotData{	id = 257	rect = (256,96,288,128)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	collision = 6	}
+	ShotData{	id = 258	rect = (288,96,320,128)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	collision = 6	}
+	ShotData{	id = 259	rect = (320,96,352,128)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	collision = 6	}
+	ShotData{	id = 260	rect = (352,96,384,128)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	collision = 6	}
+	ShotData{	id = 261	rect = (384,96,416,128)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	collision = 6	}
+	ShotData{	id = 262	rect = (416,96,448,128)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	collision = 6	}
+	ShotData{	id = 263	rect = (448,96,480,128)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	collision = 6	}
+	ShotData{	id = 264	rect = (480,96,512,128)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	collision = 6	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　22　神霊弾
+	
+	ShotData{	id = 265	rect = (256,128,320,192)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	collision = 15	}
+	ShotData{	id = 266	rect = (320,128,384,192)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	collision = 15	}
+	ShotData{	id = 267	rect = (384,128,448,192)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	collision = 15	}
+	ShotData{	id = 268	rect = (448,128,512,192)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	collision = 15	}
+	ShotData{	id = 269	rect = (256,192,320,256)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	collision = 15	}
+	ShotData{	id = 270	rect = (320,192,384,256)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	collision = 15	}
+	ShotData{	id = 271	rect = (384,192,448,256)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	collision = 15	}
+	ShotData{	id = 272	rect = (448,192,512,256)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	collision = 15	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　23　サニーレーザーの先っちょ
+	
+	ShotData{	id = 273	rect = (256,512,288,544)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 274	rect = (288,512,320,544)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 275	rect = (320,512,352,544)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 276	rect = (352,512,384,544)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 277	rect = (384,512,416,544)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 278	rect = (416,512,448,544)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 279	rect = (448,512,480,544)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 280	rect = (480,512,512,544)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	
+	//　階調反転
+	ShotData{	id = 281	rect = (256,544,288,576)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 282	rect = (288,544,320,576)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 283	rect = (320,544,352,576)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 284	rect = (352,544,384,576)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 285	rect = (384,544,416,576)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 286	rect = (416,544,448,576)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 287	rect = (448,544,480,576)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	ShotData{	id = 288	rect = (480,544,512,576)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 128	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　24　ふぐ刺し
+	ShotData{
+		id = 289
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (3, 0, 338, 32, 368 )
+			animation_data = (3, 0, 370, 32, 400 )
+		}
+	}
+	ShotData{
+		id = 290
+		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (3, 32, 338, 64, 368 )
+			animation_data = (3, 32, 370, 64, 400 )
+		}
+	}
+	ShotData{
+		id = 291
+		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (3, 64, 338, 96, 368 )
+			animation_data = (3, 64, 370, 96, 400 )
+		}
+	}
+	ShotData{
+		id = 292
+		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (3, 96, 338, 128, 368 )
+			animation_data = (3, 96, 370, 128, 400 )
+		}
+	}
+	ShotData{
+		id = 293
+		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (3, 128, 338, 160, 368 )
+			animation_data = (3, 128, 370, 160, 400 )
+		}
+	}
+	ShotData{
+		id = 294
+		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (3, 160, 338, 192, 368 )
+			animation_data = (3, 160, 370, 192, 400 )
+		}
+	}
+	ShotData{
+		id = 295
+		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (3, 192, 338, 224, 368 )
+			animation_data = (3, 192, 370, 224, 400 )
+		}
+	}
+	ShotData{
+		id = 296
+		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (3, 224, 338, 256, 368 )
+			animation_data = (3, 224, 370, 256, 400 )
+		}
+	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　25　縦長弾
+	ShotData{
+		id = 297
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (2, 0, 400, 16, 416 )
+			animation_data = (2, 0, 416, 16, 432 )
+		}
+	}
+	ShotData{
+		id = 298
+		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (2, 16, 400, 32, 416 )
+			animation_data = (2, 16, 416, 32, 432 )
+		}
+	}
+	ShotData{
+		id = 299
+		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (2, 32, 400, 48, 416 )
+			animation_data = (2, 32, 416, 48, 432 )
+		}
+	}
+	ShotData{
+		id = 300
+		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (2, 48, 400, 64, 416 )
+			animation_data = (2, 48, 416, 64, 432 )
+		}
+	}
+	ShotData{
+		id = 301
+		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (2, 64, 400, 80, 416 )
+			animation_data = (2, 64, 416, 80, 432 )
+		}
+	}
+	ShotData{
+		id = 302
+		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (2, 80, 400, 96, 416 )
+			animation_data = (2, 80, 416, 96, 432 )
+		}
+	}
+	ShotData{
+		id = 303
+		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (2, 96, 400, 112, 416 )
+			animation_data = (2, 96, 416, 112, 432 )
+		}
+	}
+	ShotData{
+		id = 304
+		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (2, 112, 400, 128, 416 )
+			animation_data = (2, 112, 416, 128, 432 )
+		}
+	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　26　デススマのやつ
+	ShotData{
+		id = 305
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (3, 256, 256, 288, 288 )
+			animation_data = (3, 256, 288, 288, 320 )
+			animation_data = (3, 256, 320, 288, 352 )
+			animation_data = (3, 256, 352, 288, 384 )
+		}
+	}
+	ShotData{
+		id = 306
+		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (3, 288, 256, 320, 288 )
+			animation_data = (3, 288, 288, 320, 320 )
+			animation_data = (3, 288, 320, 320, 352 )
+			animation_data = (3, 288, 352, 320, 384 )
+		}
+	}
+	ShotData{
+		id = 307
+		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (3, 320, 256, 352, 288 )
+			animation_data = (3, 320, 288, 352, 320 )
+			animation_data = (3, 320, 320, 352, 352 )
+			animation_data = (3, 320, 352, 352, 384 )
+		}
+	}
+	ShotData{
+		id = 308
+		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (3, 352, 256, 384, 288 )
+			animation_data = (3, 352, 288, 384, 320 )
+			animation_data = (3, 352, 320, 384, 352 )
+			animation_data = (3, 352, 352, 384, 384 )
+		}
+	}
+	ShotData{
+		id = 309
+		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (3, 384, 256, 416, 288 )
+			animation_data = (3, 384, 288, 416, 320 )
+			animation_data = (3, 384, 320, 416, 352 )
+			animation_data = (3, 384, 352, 416, 384 )
+		}
+	}
+	ShotData{
+		id = 310
+		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (3, 416, 256, 448, 288 )
+			animation_data = (3, 416, 288, 448, 320 )
+			animation_data = (3, 416, 320, 448, 352 )
+			animation_data = (3, 416, 352, 448, 384 )
+		}
+	}
+	ShotData{
+		id = 311
+		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (3, 448, 256, 480, 288 )
+			animation_data = (3, 448, 288, 480, 320 )
+			animation_data = (3, 448, 320, 480, 352 )
+			animation_data = (3, 448, 352, 480, 384 )
+		}
+	}
+	ShotData{
+		id = 312
+		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 3
+		AnimationData{
+			animation_data = (3, 480, 256, 512, 288 )
+			animation_data = (3, 480, 288, 512, 320 )
+			animation_data = (3, 480, 320, 512, 352 )
+			animation_data = (3, 480, 352, 512, 384 )
+		}
+	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　27　炎弾
+	ShotData{
+		id = 313
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 4
+		AnimationData{
+			animation_data = (4, 256, 384, 288, 416 )
+			animation_data = (4, 256, 416, 288, 448 )
+			animation_data = (4, 256, 448, 288, 480 )
+			animation_data = (4, 256, 480, 288, 512 )
+		}
+	}
+	ShotData{
+		id = 314
+		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 4
+		AnimationData{
+			animation_data = (4, 288, 384, 320, 416 )
+			animation_data = (4, 288, 416, 320, 448 )
+			animation_data = (4, 288, 448, 320, 480 )
+			animation_data = (4, 288, 480, 320, 512 )
+		}
+	}
+	ShotData{
+		id = 315
+		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 4
+		AnimationData{
+			animation_data = (4, 320, 384, 352, 416 )
+			animation_data = (4, 320, 416, 352, 448 )
+			animation_data = (4, 320, 448, 352, 480 )
+			animation_data = (4, 320, 480, 352, 512 )
+		}
+	}
+	ShotData{
+		id = 316
+		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 4
+		AnimationData{
+			animation_data = (4, 352, 384, 384, 416 )
+			animation_data = (4, 352, 416, 384, 448 )
+			animation_data = (4, 352, 448, 384, 480 )
+			animation_data = (4, 352, 480, 384, 512 )
+		}
+	}
+	ShotData{
+		id = 317
+		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 4
+		AnimationData{
+			animation_data = (4, 384, 384, 416, 416 )
+			animation_data = (4, 384, 416, 416, 448 )
+			animation_data = (4, 384, 448, 416, 480 )
+			animation_data = (4, 384, 480, 416, 512 )
+		}
+	}
+	ShotData{
+		id = 318
+		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 4
+		AnimationData{
+			animation_data = (4, 416, 384, 448, 416 )
+			animation_data = (4, 416, 416, 448, 448 )
+			animation_data = (4, 416, 448, 448, 480 )
+			animation_data = (4, 416, 480, 448, 512 )
+		}
+	}
+	ShotData{
+		id = 319
+		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 4
+		AnimationData{
+			animation_data = (4, 448, 384, 480, 416 )
+			animation_data = (4, 448, 416, 480, 448 )
+			animation_data = (4, 448, 448, 480, 480 )
+			animation_data = (4, 448, 480, 480, 512 )
+		}
+	}
+	ShotData{
+		id = 320
+		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 4
+		AnimationData{
+			animation_data = (4, 480, 384, 512, 416 )
+			animation_data = (4, 480, 416, 512, 448 )
+			animation_data = (4, 480, 448, 512, 480 )
+			animation_data = (4, 480, 480, 512, 512 )
+		}
+	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　28　水滴弾
+	
+	//　黒透過
+	ShotData{	id = 321	rect = (128,400,144,416)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 322	rect = (144,400,160,416)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 323	rect = (160,400,176,416)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 324	rect = (176,400,192,416)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 325	rect = (192,400,208,416)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 326	rect = (208,400,224,416)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 327	rect = (224,400,240,416)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 328	rect = (240,400,256,416)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 329	rect = (128,416,144,432)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 330	rect = (144,416,160,432)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 331	rect = (160,416,176,432)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 332	rect = (176,416,192,432)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 333	rect = (192,416,208,432)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 334	rect = (208,416,224,432)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 335	rect = (224,416,240,432)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 336	rect = (240,416,256,432)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　29　金弾　回転　-8,8
+	
+	ShotData{	id = 337	rect = (128,320,144,336)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	}
+	ShotData{	id = 338	rect = (144,320,160,336)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	}
+	ShotData{	id = 339	rect = (160,320,176,336)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	}
+	ShotData{	id = 340	rect = (176,320,192,336)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	}
+	ShotData{	id = 341	rect = (192,320,208,336)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	}
+	ShotData{	id = 342	rect = (208,320,224,336)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	}
+	ShotData{	id = 343	rect = (224,320,240,336)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	}
+	ShotData{	id = 344	rect = (240,320,256,336)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	angular_velocity = 6	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　30　へにょり用
+	
+	ShotData{	id = 345	rect = (256,64,288,96)	delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA	render = ALPHA	collision = 1;	}
+	ShotData{	id = 346	rect = (288,64,320,96)	delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA	render = ALPHA	collision = 1;	}
+	ShotData{	id = 347	rect = (320,64,352,96)	delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA	render = ALPHA	collision = 1;	}
+	ShotData{	id = 348	rect = (352,64,384,96)	delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA	render = ALPHA	collision = 1;	}
+	ShotData{	id = 349	rect = (384,64,416,96)	delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA	render = ALPHA	collision = 1;	}
+	ShotData{	id = 350	rect = (416,64,448,96)	delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA	render = ALPHA	collision = 1;	}
+	ShotData{	id = 351	rect = (448,64,480,96)	delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA	render = ALPHA	collision = 1;	}
+	ShotData{	id = 352	rect = (480,64,512,96)	delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA	render = ALPHA	collision = 1;	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　31　音符弾
+	ShotData{
+		id = 353
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 0, 576, 32, 608 )
+			animation_data = ( 8, 0, 608, 32, 640 )
+			animation_data = ( 8, 0, 640, 32, 672 )
+			animation_data = ( 8, 0, 672, 32, 704 )
+		}
+	}
+	ShotData{
+		id = 354
+		delay_rect = (32, 992, 64, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 32, 576, 64, 608 )
+			animation_data = ( 8, 32, 608, 64, 640 )
+			animation_data = ( 8, 32, 640, 64, 672 )
+			animation_data = ( 8, 32, 672, 64, 704 )
+		}
+	}
+	ShotData{
+		id = 355
+		delay_rect = (64, 992, 96, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 64, 576, 96, 608 )
+			animation_data = ( 8, 64, 608, 96, 640 )
+			animation_data = ( 8, 64, 640, 96, 672 )
+			animation_data = ( 8, 64, 672, 96, 704 )
+		}
+	}
+	ShotData{
+		id = 356
+		delay_rect = (96, 992, 128, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 96, 576, 128, 608 )
+			animation_data = ( 8, 96, 608, 128, 640 )
+			animation_data = ( 8, 96, 640, 128, 672 )
+			animation_data = ( 8, 96, 672, 128, 704 )
+		}
+	}
+	ShotData{
+		id = 357
+		delay_rect = (128, 992, 160, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 128, 576, 160, 608 )
+			animation_data = ( 8, 128, 608, 160, 640 )
+			animation_data = ( 8, 128, 640, 160, 672 )
+			animation_data = ( 8, 128, 672, 160, 704 )
+		}
+	}
+	ShotData{
+		id = 358
+		delay_rect = (160, 992, 192, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 160, 576, 192, 608 )
+			animation_data = ( 8, 160, 608, 192, 640 )
+			animation_data = ( 8, 160, 640, 192, 672 )
+			animation_data = ( 8, 160, 672, 192, 704 )
+		}
+	}
+	ShotData{
+		id = 359
+		delay_rect = (192, 992, 224, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 576, 224, 608 )
+			animation_data = ( 8, 192, 608, 224, 640 )
+			animation_data = ( 8, 192, 640, 224, 672 )
+			animation_data = ( 8, 192, 672, 224, 704 )
+		}
+	}
+	ShotData{
+		id = 360
+		delay_rect = (224, 992, 256, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 224, 576, 256, 608 )
+			animation_data = ( 8, 224, 608, 256, 640 )
+			animation_data = ( 8, 224, 640, 256, 672 )
+			animation_data = ( 8, 224, 672, 256, 704 )
+		}
+	}
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　32　レーザー
+	ShotData{
+		id = 361
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (2, 272, 578, 288, 590 )
+			animation_data = (2, 272, 594, 288, 606 )
+			animation_data = (2, 272, 610, 288, 622 )
+		}
+	}
+	ShotData{
+		id = 362
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (2, 288, 578, 304, 590 )
+			animation_data = (2, 288, 594, 304, 606 )
+			animation_data = (2, 288, 610, 304, 622 )
+		}
+	}
+	ShotData{
+		id = 363
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (2, 304, 578, 320, 590 )
+			animation_data = (2, 304, 594, 320, 606 )
+			animation_data = (2, 304, 610, 320, 622 )
+		}
+	}
+	ShotData{
+		id = 364
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (2, 320, 578, 336, 590 )
+			animation_data = (2, 320, 594, 336, 606 )
+			animation_data = (2, 320, 610, 336, 622 )
+		}
+	}
+	ShotData{
+		id = 365
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (2, 336, 578, 352, 590 )
+			animation_data = (2, 336, 594, 352, 606 )
+			animation_data = (2, 336, 610, 352, 622 )
+		}
+	}
+	ShotData{
+		id = 366
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (2, 352, 578, 368, 590 )
+			animation_data = (2, 352, 594, 368, 606 )
+			animation_data = (2, 352, 610, 368, 622 )
+		}
+	}
+	ShotData{
+		id = 367
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (2, 368, 578, 384, 590 )
+			animation_data = (2, 368, 594, 384, 606 )
+			animation_data = (2, 368, 610, 384, 622 )
+		}
+	}
+	ShotData{
+		id = 368
+		delay_rect = (0, 992, 32, 1024)	delay_render = ALPHA
+		render = ALPHA
+		collision = 1
+		AnimationData{
+			animation_data = (2, 384, 578, 400, 590 )
+			animation_data = (2, 384, 594, 400, 606 )
+			animation_data = (2, 384, 610, 400, 622 )
+		}
+	}
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　33　手裏剣
+	
+	ShotData{	id = 369	rect = (256,640,320,704)	delay_rect = (0, 992, 32, 1024)	collision = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 370	rect = (320,640,384,704)	delay_rect = (32, 992, 64, 1024)	collision = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 371	rect = (384,640,448,704)	delay_rect = (64, 992, 96, 1024)	collision = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 372	rect = (448,640,512,704)	delay_rect = (96, 992, 128, 1024)	collision = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 373	rect = (256,704,320,768)	delay_rect = (128, 992, 160, 1024)	collision = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 374	rect = (320,704,384,768)	delay_rect = (160, 992, 192, 1024)	collision = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 375	rect = (384,704,448,768)	delay_rect = (192, 992, 224, 1024)	collision = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 376	rect = (448,704,512,768)	delay_rect = (224, 992, 256, 1024)	collision = 8	delay_render = ALPHA	render = ALPHA	}
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　34　手裏剣小
+	
+	ShotData{	id = 377	rect = (256,768,288,800)	delay_rect = (0, 992, 32, 1024)	collision = 3	angular_velocity = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 378	rect = (288,768,320,800)	delay_rect = (32, 992, 64, 1024)	collision = 3	angular_velocity = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 379	rect = (320,768,352,800)	delay_rect = (64, 992, 96, 1024)	collision = 3	angular_velocity = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 380	rect = (352,768,384,800)	delay_rect = (96, 992, 128, 1024)	collision = 3	angular_velocity = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 381	rect = (384,768,416,800)	delay_rect = (128, 992, 160, 1024)	collision = 3	angular_velocity = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 382	rect = (416,768,448,800)	delay_rect = (160, 992, 192, 1024)	collision = 3	angular_velocity = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 383	rect = (448,768,480,800)	delay_rect = (192, 992, 224, 1024)	collision = 3	angular_velocity = 8	delay_render = ALPHA	render = ALPHA	}
+	ShotData{	id = 384	rect = (480,768,512,800)	delay_rect = (224, 992, 256, 1024)	collision = 3	angular_velocity = 8	delay_render = ALPHA	render = ALPHA	}

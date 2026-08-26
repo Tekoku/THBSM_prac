@@ -1,0 +1,172 @@
+// ショット発射ライブラリ
+
+// カラー定数
+let SHOT_RED	 = 0;
+let SHOT_GREEN	 = 1;
+let SHOT_BLUE	 = 2;
+let SHOT_YELLOW	 = 3;
+let SHOT_PURPLE	 = 4;
+let SHOT_AQUA	 = 5;
+let SHOT_ORANGE	 = 6;
+let SHOT_WHITE	 = 7;
+
+
+let BULLET_EFFECT = [7, 0, 3, 5, 2, 6, 4, 1];
+
+
+//弾の画像がそのまま遅延えへくとになるタイプ
+function My_CreateShotA1(x, y, speed, angle, graphic, delay)
+{
+	let obj = CreateShotA1(x, y, 0, angle, graphic, 0);
+	ObjMove_AddPatternA1(obj, delay, speed, NO_CHANGE);
+	My_RaiseShotEffectA(obj, delay);
+	return(obj);
+}
+function My_CreateShotA2(x, y, speed, angle, add_speed, max_speed, graphic, delay)
+{
+	let obj = CreateShotA1(x, y, 0, angle, graphic, 0);
+	ObjMove_AddPatternA2(obj, delay, speed, NO_CHANGE, add_speed, 0, max_speed);
+	My_RaiseShotEffectA(obj, delay);
+	return(obj);
+}
+//でかいショット用、弾が拡大するタイプ
+function My_CreateShotA1Big(x, y, speed, angle, graphic, delay)
+{
+	let obj = CreateShotA1(x, y, 0, angle, graphic, 0);
+	ObjMove_AddPatternA1(obj, delay, speed, NO_CHANGE);
+	My_RaiseShotEffectB(obj, delay);
+	return(obj);
+}
+function My_CreateShotA2Big(x, y, speed, angle, add_speed, max_speed, graphic, delay)
+{
+	let obj = CreateShotA1(x, y, 0, angle, graphic, 0);
+	ObjMove_AddPatternA2(obj, delay, speed, NO_CHANGE, add_speed, 0, max_speed);
+	My_RaiseShotEffectB(obj, delay);
+	return(obj);
+}
+
+//発射エフェクト
+task My_RaiseShotEffectA(obj, delay)
+{
+	ObjShot_SetIntersectionEnable(obj, false);
+	ascent(i in 0 .. delay)
+	{
+		let tmp_s = 1 + (delay-i-1)/delay*3;
+		let tmp_a = (i+1)/delay*128;
+		ObjRender_SetScaleX(obj, tmp_s);
+		ObjRender_SetScaleY(obj, tmp_s);
+		ObjRender_SetAlpha(obj, tmp_a);
+		yield;
+	}
+	if (!Obj_IsDeleted(obj))
+	{
+		ObjShot_SetIntersectionEnable(obj, true);
+		ObjRender_SetAlpha(obj, 255);
+	}
+}
+task My_RaiseShotEffectA2(obj, delay)
+{
+	ObjShot_SetIntersectionEnable(obj, false);
+	ascent(i in 0 .. delay)
+	{
+		let tmp_s = 1 + (delay-i-1)/delay*3;
+		let tmp_a = (i+1)/delay*255;
+		ObjRender_SetScaleX(obj, tmp_s);
+		ObjRender_SetScaleY(obj, tmp_s);
+		ObjRender_SetAlpha(obj, tmp_a);
+		yield;
+	}
+	if (!Obj_IsDeleted(obj))
+	{
+		ObjShot_SetIntersectionEnable(obj, true);
+		ObjRender_SetAlpha(obj, 255);
+	}
+}
+task My_RaiseShotEffectA2Ex(obj, delay, alpha, scale)
+{
+	ObjShot_SetIntersectionEnable(obj, false);
+	ascent(i in 0 .. delay)
+	{
+		let tmp_s = scale + (delay-i-1)/delay*3;
+		let tmp_a = (i+1)/delay*alpha;
+		ObjRender_SetScaleX(obj, tmp_s);
+		ObjRender_SetScaleY(obj, tmp_s);
+		ObjRender_SetAlpha(obj, tmp_a);
+		yield;
+	}
+	if (!Obj_IsDeleted(obj))
+	{
+		ObjShot_SetIntersectionEnable(obj, true);
+		ObjRender_SetAlpha(obj, alpha);
+	}
+}
+//発射エフェクト（拡大するタイプ）
+task My_RaiseShotEffectB(obj, delay)
+{
+	ObjShot_SetIntersectionEnable(obj, false);
+	ascent(i in 0 .. delay)
+	{
+		let tmp_s = (i+1)/delay;
+		ObjRender_SetScaleX(obj, tmp_s);
+		ObjRender_SetScaleY(obj, tmp_s);
+		yield;
+	}
+	if (!Obj_IsDeleted(obj))
+	{
+		ObjShot_SetIntersectionEnable(obj, true);
+	}
+}
+//発射エフェクト（最初から当たり判定あり）
+task My_RaiseShotEffectC(obj, delay)
+{
+	ascent(i in 0 .. delay)
+	{
+		let tmp_s = 1 + (delay-i-1)/delay*2;
+		let tmp_a = (i+1)/delay*255;
+		ObjRender_SetScaleX(obj, tmp_s);
+		ObjRender_SetScaleY(obj, tmp_s);
+		ObjRender_SetAlpha(obj, tmp_a);
+		yield;
+	}
+	if (!Obj_IsDeleted(obj))
+	{
+		ObjRender_SetAlpha(obj, 255);
+	}
+}
+//発射エフェクト（Add描画→Alphaに）
+task My_RaiseShotEffectD_AA(obj, delay)
+{
+	ObjShot_SetIntersectionEnable(obj, false);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+	ascent(i in 0 .. delay)
+	{
+		let tmp = (i+1)/delay;
+		let tmp_s = 3 - tmp*2;
+		let tmp_a = tmp*512;
+		ObjRender_SetScaleX(obj, tmp_s);
+		ObjRender_SetScaleY(obj, tmp_s);
+		ObjRender_SetAlpha(obj, tmp_a);
+		yield;
+	}
+	if (!Obj_IsDeleted(obj))
+	{
+		ObjShot_SetIntersectionEnable(obj, true);
+		ObjRender_SetBlendType(obj, BLEND_ALPHA);
+		Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI);
+	}
+}
+
+//エフェクト用（当たり判定等削除）
+function SetShotDisabled(obj)
+{
+	ObjShot_SetIntersectionEnable(obj, false);
+	ObjShot_SetSpellResist(obj, true);
+	ObjShot_SetItemChange(obj, false);
+}
+function SetShotEnabled(obj)
+{
+	ObjShot_SetIntersectionEnable(obj, true);
+	ObjShot_SetSpellResist(obj, false);
+	ObjShot_SetItemChange(obj, true);
+}

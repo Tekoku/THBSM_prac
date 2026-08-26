@@ -1,0 +1,1088 @@
+	#UserShotData
+	
+	//　テクスチャへのパス
+	shot_image = "./../../img/bullet00.png"
+	delay_color = (255,255,255)
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　01　丸弾
+	
+	//　黒透過
+	ShotData{	id = 601		rect = (0,112,16,128)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 602		rect = (16,112,32,128)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 603		rect = (32,112,48,128)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 604		rect = (48,112,64,128)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 605		rect = (64,112,80,128)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 606		rect = (80,112,96,128)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 607		rect = (96,112,112,128)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 608		rect = (112,112,128,128)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 609		rect = (128,112,144,128)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 610		rect = (144,112,160,128)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 611		rect = (160,112,176,128)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 612		rect = (176,112,192,128)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 613		rect = (192,112,208,128)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 614		rect = (208,112,224,128)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 615		rect = (224,112,240,128)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 616		rect = (240,112,256,128)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　02　中丸弾
+	
+	ShotData{	id = 617		rect = (0,192,32,224)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 618		rect = (32,192,64,224)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 619		rect = (64,192,96,224)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 620		rect = (96,192,128,224)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 621		rect = (128,192,160,224)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 622		rect = (160,192,192,224)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 623		rect = (192,192,224,224)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 624		rect = (224,192,256,224)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　03　大弾
+	
+	ShotData{	id = 625		rect = (0,448,64,512)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 626		rect = (64,448,128,512)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 627		rect = (128,448,192,512)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 628		rect = (192,448,256,512)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 629		rect = (0,512,64,576)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 630		rect = (64,512,128,576)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 631		rect = (128,512,192,576)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 632		rect = (192,512,256,576)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　04　二重丸弾
+	
+	//　黒透過
+	ShotData{	id = 633		rect = (0,128,16,144)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 634		rect = (16,128,32,144)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 635		rect = (32,128,48,144)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 636		rect = (48,128,64,144)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 637		rect = (64,128,80,144)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 638		rect = (80,128,96,144)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 639		rect = (96,128,112,144)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 640		rect = (112,128,128,144)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 641		rect = (128,128,144,144)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 642		rect = (144,128,160,144)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 643		rect = (160,128,176,144)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 644		rect = (176,128,192,144)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 645		rect = (192,128,208,144)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 646		rect = (208,128,224,144)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 647		rect = (224,128,240,144)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 648		rect = (240,128,256,144)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　05　小弾
+	
+	//　黒透過
+	ShotData{	id = 649		rect = (0,320,8,328)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 650		rect = (8,320,16,328)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 651		rect = (16,320,24,328)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 652		rect = (24,320,32,328)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 653		rect = (32,320,40,328)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 654		rect = (40,320,48,328)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 655		rect = (48,320,56,328)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 656		rect = (56,320,64,328)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 657		rect = (64,320,72,328)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 658		rect = (72,320,80,328)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 659		rect = (80,320,88,328)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 660		rect = (88,320,96,328)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 661		rect = (96,320,104,328)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 662		rect = (104,320,112,328)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 663		rect = (112,320,120,328)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 664		rect = (120,320,128,328)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　06　菌弾
+	
+	//　黒透過
+	ShotData{	id = 665		rect = (0,432,16,448)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 666		rect = (16,432,32,448)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 667		rect = (32,432,48,448)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 668		rect = (48,432,64,448)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 669		rect = (64,432,80,448)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 670		rect = (80,432,96,448)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 671		rect = (96,432,112,448)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 672		rect = (112,432,128,448)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 673		rect = (128,432,144,448)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 674		rect = (144,432,160,448)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 675		rect = (160,432,176,448)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 676		rect = (176,432,192,448)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 677		rect = (192,432,208,448)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 678		rect = (208,432,224,448)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 679		rect = (224,432,240,448)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	ShotData{	id = 680		rect = (240,432,256,448)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	angular_velocity = 6	collision = 2	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　07　銃弾
+	
+	//　黒透過
+	ShotData{	id = 681		rect = (0,32,16,48)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 682		rect = (16,32,32,48)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 683		rect = (32,32,48,48)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 684		rect = (48,32,64,48)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 685		rect = (64,32,80,48)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 686		rect = (80,32,96,48)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 687		rect = (96,32,112,48)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 688		rect = (112,32,128,48)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 689		rect = (128,32,144,48)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 690		rect = (144,32,160,48)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 691		rect = (160,32,176,48)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 692		rect = (176,32,192,48)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 693		rect = (192,32,208,48)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 694		rect = (208,32,224,48)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 695		rect = (224,32,240,48)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 696		rect = (240,32,256,48)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　08　米弾
+	
+	//　黒透過
+	ShotData{	id = 697		rect = (0,16,16,32)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 698		rect = (16,16,32,32)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 699		rect = (32,16,48,32)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 700	rect = (48,16,64,32)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 701	rect = (64,16,80,32)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 702	rect = (80,16,96,32)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 703	rect = (96,16,112,32)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 704	rect = (112,16,128,32)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 705	rect = (128,16,144,32)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 706	rect = (144,16,160,32)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 707	rect = (160,16,176,32)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 708	rect = (176,16,192,32)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 709	rect = (192,16,208,32)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 710	rect = (208,16,224,32)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 711	rect = (224,16,240,32)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 712	rect = (240,16,256,32)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　09　星弾
+	
+	//　黒透過
+	ShotData{	id = 713	rect = (0,64,16,80)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 714	rect = (16,64,32,80)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 715	rect = (32,64,48,80)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 716	rect = (48,64,64,80)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 717	rect = (64,64,80,80)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 718	rect = (80,64,96,80)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 719	rect = (96,64,112,80)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 720	rect = (112,64,128,80)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 721	rect = (128,64,144,80)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 722	rect = (144,64,160,80)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 723	rect = (160,64,176,80)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 724	rect = (176,64,192,80)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 725	rect = (192,64,208,80)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 726	rect = (208,64,224,80)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 727	rect = (224,64,240,80)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	ShotData{	id = 728	rect = (240,64,256,80)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	angular_velocity = 4	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　10　クナイ弾
+	
+	//　黒透過
+	ShotData{	id = 729	rect = (0,0,16,16)			delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 730	rect = (16,0,32,16)			delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 731	rect = (32,0,48,16)			delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 732	rect = (48,0,64,16)			delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 733	rect = (64,0,80,16)			delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 734	rect = (80,0,96,16)			delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 735	rect = (96,0,112,16)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 736	rect = (112,0,128,16)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 737	rect = (128,0,144,16)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 738	rect = (144,0,160,16)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 739	rect = (160,0,176,16)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 740	rect = (176,0,192,16)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 741	rect = (192,0,208,16)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 742	rect = (208,0,224,16)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 743	rect = (224,0,240,16)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 744	rect = (240,0,256,16)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　11　細弾
+	
+	//　黒透過
+	ShotData{	id = 745	rect = (0,144,16,160)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 746	rect = (16,144,32,160)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 747	rect = (32,144,48,160)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 748	rect = (48,144,64,160)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 749	rect = (64,144,80,160)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 750	rect = (80,144,96,160)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 751	rect = (96,144,112,160)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 752	rect = (112,144,128,160)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 753	rect = (128,144,144,160)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 754	rect = (144,144,160,160)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 755	rect = (160,144,176,160)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 756	rect = (176,144,192,160)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 757	rect = (192,144,208,160)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 758	rect = (208,144,224,160)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 759	rect = (224,144,240,160)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 760	rect = (240,144,256,160)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　12　札弾
+	
+	//　黒透過
+	ShotData{	id = 761	rect = (0,96,16,112)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 762	rect = (16,96,32,112)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 763	rect = (32,96,48,112)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 764	rect = (48,96,64,112)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 765	rect = (64,96,80,112)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 766	rect = (80,96,96,112)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 767	rect = (96,96,112,112)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 768	rect = (112,96,128,112)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 769	rect = (128,96,144,112)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 770	rect = (144,96,160,112)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 771	rect = (160,96,176,112)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 772	rect = (176,96,192,112)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 773	rect = (192,96,208,112)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 774	rect = (208,96,224,112)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 775	rect = (224,96,240,112)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 776	rect = (240,96,256,112)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　13　ゾウリムシ弾　（永琳奴）
+	
+	//　黒透過
+	ShotData{	id = 777	rect = (0,48,16,64)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 778	rect = (16,48,32,64)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 779	rect = (32,48,48,64)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 780	rect = (48,48,64,64)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 781	rect = (64,48,80,64)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 782	rect = (80,48,96,64)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 783	rect = (96,48,112,64)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 784	rect = (112,48,128,64)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	collision = 2	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 785	rect = (128,48,144,64)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 786	rect = (144,48,160,64)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 787	rect = (160,48,176,64)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 788	rect = (176,48,192,64)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 789	rect = (192,48,208,64)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 790	rect = (208,48,224,64)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 791	rect = (224,48,240,64)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	collision = 2	}
+	ShotData{	id = 792	rect = (240,48,256,64)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	collision = 2	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　14　鱗弾
+	
+	//　黒透過
+	ShotData{	id = 793	rect = (0,80,16,96)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 794	rect = (16,80,32,96)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 795	rect = (32,80,48,96)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 796	rect = (48,80,64,96)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 797	rect = (64,80,80,96)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 798	rect = (80,80,96,96)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 799	rect = (96,80,112,96)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 800	rect = (112,80,128,96)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 801	rect = (128,80,144,96)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 802	rect = (144,80,160,96)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 803	rect = (160,80,176,96)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 804	rect = (176,80,192,96)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 805	rect = (192,80,208,96)		delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 806	rect = (208,80,224,96)		delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 807	rect = (224,80,240,96)		delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 808	rect = (240,80,256,96)		delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　15　大星弾
+	
+	ShotData{	id = 809	rect = (0,160,32,192)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 810	rect = (32,160,64,192)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 811	rect = (64,160,96,192)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 812	rect = (96,160,128,192)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 813	rect = (128,160,160,192)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 814	rect = (160,160,192,192)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 815	rect = (192,160,224,192)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	angular_velocity = -3	collision = 4	}
+	ShotData{	id = 816	rect = (224,160,256,192)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	angular_velocity = -3	collision = 4	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　16　蝶弾
+	
+	ShotData{	id = 817	rect = (0,224,32,256)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 818	rect = (32,224,64,256)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 819	rect = (64,224,96,256)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 820	rect = (96,224,128,256)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 821	rect = (128,224,160,256)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 822	rect = (160,224,192,256)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 823	rect = (192,224,224,256)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 824	rect = (224,224,256,256)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	collision = 4	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　17　ナイフ弾
+	
+	ShotData{	id = 825	rect = (0,256,32,288)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	collision = (3,0,4)	}
+	ShotData{	id = 826	rect = (32,256,64,288)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	collision = (3,0,4)	}
+	ShotData{	id = 827	rect = (64,256,96,288)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	collision = (3,0,4)	}
+	ShotData{	id = 828	rect = (96,256,128,288)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	collision = (3,0,4)	}
+	ShotData{	id = 829	rect = (128,256,160,288)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	collision = (3,0,4)	}
+	ShotData{	id = 830	rect = (160,256,192,288)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	collision = (3,0,4)	}
+	ShotData{	id = 831	rect = (192,256,224,288)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	collision = (3,0,4)	}
+	ShotData{	id = 832	rect = (224,256,256,288)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	collision = (3,0,4)	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　18　グミ弾
+	
+	ShotData{	id = 833	rect = (0,288,32,320)		delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 834	rect = (32,288,64,320)		delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 835	rect = (64,288,96,320)		delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 836	rect = (96,288,128,320)		delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 837	rect = (128,288,160,320)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 838	rect = (160,288,192,320)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 839	rect = (192,288,224,320)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	collision = 4	}
+	ShotData{	id = 840	rect = (224,288,256,320)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	collision = 4	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　19　ハート弾
+	
+	ShotData{	id = 841	rect = (256,0,288,32)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 842	rect = (288,0,320,32)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 843	rect = (320,0,352,32)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 844	rect = (352,0,384,32)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 845	rect = (384,0,416,32)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 846	rect = (416,0,448,32)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 847	rect = (448,0,480,32)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 848	rect = (480,0,512,32)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　20　矢弾
+	
+	ShotData{	id = 849	rect = (256,32,288,64)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	collision = (2,0,8)	}
+	ShotData{	id = 850	rect = (288,32,320,64)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	collision = (2,0,8)	}
+	ShotData{	id = 851	rect = (320,32,352,64)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	collision = (2,0,8)	}
+	ShotData{	id = 852	rect = (352,32,384,64)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	collision = (2,0,8)	}
+	ShotData{	id = 853	rect = (384,32,416,64)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	collision = (2,0,8)	}
+	ShotData{	id = 854	rect = (416,32,448,64)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	collision = (2,0,8)	}
+	ShotData{	id = 855	rect = (448,32,480,64)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	collision = (2,0,8)	}
+	ShotData{	id = 856	rect = (480,32,512,64)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	collision = (2,0,8)	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　21　神霊弾の元
+	
+	ShotData{	id = 857	rect = (256,96,288,128)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	collision = 6	}
+	ShotData{	id = 858	rect = (288,96,320,128)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	collision = 6	}
+	ShotData{	id = 859	rect = (352,96,384,128)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	collision = 6	}
+	ShotData{	id = 860	rect = (320,96,352,128)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	collision = 6	}
+	ShotData{	id = 861	rect = (384,96,416,128)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	collision = 6	}
+	ShotData{	id = 862	rect = (416,96,448,128)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	collision = 6	}
+	ShotData{	id = 863	rect = (448,96,480,128)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	collision = 6	}
+	ShotData{	id = 864	rect = (480,96,512,128)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	collision = 6	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　22　神霊弾
+	
+	ShotData{	id = 865	rect = (256,128,320,192)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	collision = 15	}
+	ShotData{	id = 866	rect = (320,128,384,192)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	collision = 15	}
+	ShotData{	id = 867	rect = (384,128,448,192)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	collision = 15	}
+	ShotData{	id = 868	rect = (448,128,512,192)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	collision = 15	}
+	ShotData{	id = 869	rect = (256,192,320,256)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	collision = 15	}
+	ShotData{	id = 870	rect = (320,192,384,256)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	collision = 15	}
+	ShotData{	id = 871	rect = (384,192,448,256)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	collision = 15	}
+	ShotData{	id = 872	rect = (448,192,512,256)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	collision = 15	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　23　サニーレーザーの先っちょ
+	
+	ShotData{	id = 873	rect = (256,512,288,544)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 874	rect = (288,512,320,544)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 875	rect = (320,512,352,544)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 876	rect = (352,512,384,544)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 877	rect = (384,512,416,544)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 878	rect = (416,512,448,544)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 879	rect = (448,512,480,544)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 880	rect = (480,512,512,544)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	
+	//　階調反転
+	ShotData{	id = 881	rect = (256,544,288,576)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 882	rect = (288,544,320,576)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 883	rect = (320,544,352,576)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 884	rect = (352,544,384,576)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 885	rect = (384,544,416,576)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 886	rect = (416,544,448,576)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 887	rect = (448,544,480,576)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	ShotData{	id = 888	rect = (480,544,512,576)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	angular_velocity = 128	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　24　ふぐ刺し
+	ShotData{
+		id = 889
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (3, 0, 338, 32, 368 )
+			animation_data = (3, 0, 370, 32, 400 )
+		}
+	}
+	ShotData{
+		id = 890
+		delay_rect = (32, 992, 64, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (3, 32, 338, 64, 368 )
+			animation_data = (3, 32, 370, 64, 400 )
+		}
+	}
+	ShotData{
+		id = 891
+		delay_rect = (64, 992, 96, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (3, 64, 338, 96, 368 )
+			animation_data = (3, 64, 370, 96, 400 )
+		}
+	}
+	ShotData{
+		id = 892
+		delay_rect = (96, 992, 128, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (3, 96, 338, 128, 368 )
+			animation_data = (3, 96, 370, 128, 400 )
+		}
+	}
+	ShotData{
+		id = 893
+		delay_rect = (128, 992, 160, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (3, 128, 338, 160, 368 )
+			animation_data = (3, 128, 370, 160, 400 )
+		}
+	}
+	ShotData{
+		id = 894
+		delay_rect = (160, 992, 192, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (3, 160, 338, 192, 368 )
+			animation_data = (3, 160, 370, 192, 400 )
+		}
+	}
+	ShotData{
+		id = 895
+		delay_rect = (192, 992, 224, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (3, 192, 338, 224, 368 )
+			animation_data = (3, 192, 370, 224, 400 )
+		}
+	}
+	ShotData{
+		id = 896
+		delay_rect = (224, 992, 256, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (3, 224, 338, 256, 368 )
+			animation_data = (3, 224, 370, 256, 400 )
+		}
+	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　25　縦長弾
+	ShotData{
+		id = 897
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (2, 0, 400, 16, 416 )
+			animation_data = (2, 0, 416, 16, 432 )
+		}
+	}
+	ShotData{
+		id = 898
+		delay_rect = (32, 992, 64, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (2, 16, 400, 32, 416 )
+			animation_data = (2, 16, 416, 32, 432 )
+		}
+	}
+	ShotData{
+		id = 899
+		delay_rect = (64, 992, 96, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (2, 32, 400, 48, 416 )
+			animation_data = (2, 32, 416, 48, 432 )
+		}
+	}
+	ShotData{
+		id = 900
+		delay_rect = (96, 992, 128, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (2, 48, 400, 64, 416 )
+			animation_data = (2, 48, 416, 64, 432 )
+		}
+	}
+	ShotData{
+		id = 901
+		delay_rect = (128, 992, 160, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (2, 64, 400, 80, 416 )
+			animation_data = (2, 64, 416, 80, 432 )
+		}
+	}
+	ShotData{
+		id = 902
+		delay_rect = (160, 992, 192, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (2, 80, 400, 96, 416 )
+			animation_data = (2, 80, 416, 96, 432 )
+		}
+	}
+	ShotData{
+		id = 903
+		delay_rect = (192, 992, 224, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (2, 96, 400, 112, 416 )
+			animation_data = (2, 96, 416, 112, 432 )
+		}
+	}
+	ShotData{
+		id = 904
+		delay_rect = (224, 992, 256, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (2, 112, 400, 128, 416 )
+			animation_data = (2, 112, 416, 128, 432 )
+		}
+	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　26　デススマのやつ
+	ShotData{
+		id = 905
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (3, 256, 256, 288, 288 )
+			animation_data = (3, 256, 288, 288, 320 )
+			animation_data = (3, 256, 320, 288, 352 )
+			animation_data = (3, 256, 352, 288, 384 )
+		}
+	}
+	ShotData{
+		id = 906
+		delay_rect = (32, 992, 64, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (3, 288, 256, 320, 288 )
+			animation_data = (3, 288, 288, 320, 320 )
+			animation_data = (3, 288, 320, 320, 352 )
+			animation_data = (3, 288, 352, 320, 384 )
+		}
+	}
+	ShotData{
+		id = 907
+		delay_rect = (64, 992, 96, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (3, 320, 256, 352, 288 )
+			animation_data = (3, 320, 288, 352, 320 )
+			animation_data = (3, 320, 320, 352, 352 )
+			animation_data = (3, 320, 352, 352, 384 )
+		}
+	}
+	ShotData{
+		id = 908
+		delay_rect = (96, 992, 128, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (3, 352, 256, 384, 288 )
+			animation_data = (3, 352, 288, 384, 320 )
+			animation_data = (3, 352, 320, 384, 352 )
+			animation_data = (3, 352, 352, 384, 384 )
+		}
+	}
+	ShotData{
+		id = 909
+		delay_rect = (128, 992, 160, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (3, 384, 256, 416, 288 )
+			animation_data = (3, 384, 288, 416, 320 )
+			animation_data = (3, 384, 320, 416, 352 )
+			animation_data = (3, 384, 352, 416, 384 )
+		}
+	}
+	ShotData{
+		id = 910
+		delay_rect = (160, 992, 192, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (3, 416, 256, 448, 288 )
+			animation_data = (3, 416, 288, 448, 320 )
+			animation_data = (3, 416, 320, 448, 352 )
+			animation_data = (3, 416, 352, 448, 384 )
+		}
+	}
+	ShotData{
+		id = 911
+		delay_rect = (192, 992, 224, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (3, 448, 256, 480, 288 )
+			animation_data = (3, 448, 288, 480, 320 )
+			animation_data = (3, 448, 320, 480, 352 )
+			animation_data = (3, 448, 352, 480, 384 )
+		}
+	}
+	ShotData{
+		id = 912
+		delay_rect = (224, 992, 256, 1024)
+		render = ADD_ARGB
+		collision = 3
+		AnimationData{
+			animation_data = (3, 480, 256, 512, 288 )
+			animation_data = (3, 480, 288, 512, 320 )
+			animation_data = (3, 480, 320, 512, 352 )
+			animation_data = (3, 480, 352, 512, 384 )
+		}
+	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　27　炎弾
+	ShotData{
+		id = 913
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 4
+		AnimationData{
+			animation_data = (4, 256, 384, 288, 416 )
+			animation_data = (4, 256, 416, 288, 448 )
+			animation_data = (4, 256, 448, 288, 480 )
+			animation_data = (4, 256, 480, 288, 512 )
+		}
+	}
+	ShotData{
+		id = 914
+		delay_rect = (32, 992, 64, 1024)
+		render = ADD_ARGB
+		collision = 4
+		AnimationData{
+			animation_data = (4, 288, 384, 320, 416 )
+			animation_data = (4, 288, 416, 320, 448 )
+			animation_data = (4, 288, 448, 320, 480 )
+			animation_data = (4, 288, 480, 320, 512 )
+		}
+	}
+	ShotData{
+		id = 915
+		delay_rect = (64, 992, 96, 1024)
+		render = ADD_ARGB
+		collision = 4
+		AnimationData{
+			animation_data = (4, 320, 384, 352, 416 )
+			animation_data = (4, 320, 416, 352, 448 )
+			animation_data = (4, 320, 448, 352, 480 )
+			animation_data = (4, 320, 480, 352, 512 )
+		}
+	}
+	ShotData{
+		id = 916
+		delay_rect = (96, 992, 128, 1024)
+		render = ADD_ARGB
+		collision = 4
+		AnimationData{
+			animation_data = (4, 352, 384, 384, 416 )
+			animation_data = (4, 352, 416, 384, 448 )
+			animation_data = (4, 352, 448, 384, 480 )
+			animation_data = (4, 352, 480, 384, 512 )
+		}
+	}
+	ShotData{
+		id = 917
+		delay_rect = (128, 992, 160, 1024)
+		render = ADD_ARGB
+		collision = 4
+		AnimationData{
+			animation_data = (4, 384, 384, 416, 416 )
+			animation_data = (4, 384, 416, 416, 448 )
+			animation_data = (4, 384, 448, 416, 480 )
+			animation_data = (4, 384, 480, 416, 512 )
+		}
+	}
+	ShotData{
+		id = 918
+		delay_rect = (160, 992, 192, 1024)
+		render = ADD_ARGB
+		collision = 4
+		AnimationData{
+			animation_data = (4, 416, 384, 448, 416 )
+			animation_data = (4, 416, 416, 448, 448 )
+			animation_data = (4, 416, 448, 448, 480 )
+			animation_data = (4, 416, 480, 448, 512 )
+		}
+	}
+	ShotData{
+		id = 919
+		delay_rect = (192, 992, 224, 1024)
+		render = ADD_ARGB
+		collision = 4
+		AnimationData{
+			animation_data = (4, 448, 384, 480, 416 )
+			animation_data = (4, 448, 416, 480, 448 )
+			animation_data = (4, 448, 448, 480, 480 )
+			animation_data = (4, 448, 480, 480, 512 )
+		}
+	}
+	ShotData{
+		id = 920
+		delay_rect = (224, 992, 256, 1024)
+		render = ADD_ARGB
+		collision = 4
+		AnimationData{
+			animation_data = (4, 480, 384, 512, 416 )
+			animation_data = (4, 480, 416, 512, 448 )
+			animation_data = (4, 480, 448, 512, 480 )
+			animation_data = (4, 480, 480, 512, 512 )
+		}
+	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　28　水滴弾
+	
+	//　黒透過
+	ShotData{	id = 921	rect = (128,400,144,416)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 922	rect = (144,400,160,416)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 923	rect = (160,400,176,416)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 924	rect = (176,400,192,416)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 925	rect = (192,400,208,416)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 926	rect = (208,400,224,416)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 927	rect = (224,400,240,416)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 928	rect = (240,400,256,416)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//　黒透過ナシ
+	ShotData{	id = 929	rect = (128,416,144,432)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 930	rect = (144,416,160,432)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 931	rect = (160,416,176,432)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 932	rect = (176,416,192,432)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 933	rect = (192,416,208,432)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 934	rect = (208,416,224,432)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 935	rect = (224,416,240,432)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	}
+	ShotData{	id = 936	rect = (240,416,256,432)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　29　金弾　回転　-8,8
+	
+	ShotData{	id = 937	rect = (128,320,144,336)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	angular_velocity = 6	}
+	ShotData{	id = 938	rect = (144,320,160,336)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	angular_velocity = 6	}
+	ShotData{	id = 939	rect = (160,320,176,336)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	angular_velocity = 6	}
+	ShotData{	id = 940	rect = (176,320,192,336)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	angular_velocity = 6	}
+	ShotData{	id = 941	rect = (192,320,208,336)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	angular_velocity = 6	}
+	ShotData{	id = 942	rect = (208,320,224,336)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	angular_velocity = 6	}
+	ShotData{	id = 943	rect = (224,320,240,336)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	angular_velocity = 6	}
+	ShotData{	id = 944	rect = (240,320,256,336)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	angular_velocity = 6	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　30　へにょり用
+	
+	ShotData{	id = 945	rect = (256,64,288,96)	delay_rect = (0, 992, 32, 1024)	render = ADD_ARGB	collision = 1;	}
+	ShotData{	id = 946	rect = (288,64,320,96)	delay_rect = (32, 992, 64, 1024)	render = ADD_ARGB	collision = 1;	}
+	ShotData{	id = 947	rect = (320,64,352,96)	delay_rect = (64, 992, 96, 1024)	render = ADD_ARGB	collision = 1;	}
+	ShotData{	id = 948	rect = (352,64,384,96)	delay_rect = (96, 992, 128, 1024)	render = ADD_ARGB	collision = 1;	}
+	ShotData{	id = 949	rect = (384,64,416,96)	delay_rect = (128, 992, 160, 1024)	render = ADD_ARGB	collision = 1;	}
+	ShotData{	id = 950	rect = (416,64,448,96)	delay_rect = (160, 992, 192, 1024)	render = ADD_ARGB	collision = 1;	}
+	ShotData{	id = 951	rect = (448,64,480,96)	delay_rect = (192, 992, 224, 1024)	render = ADD_ARGB	collision = 1;	}
+	ShotData{	id = 952	rect = (480,64,512,96)	delay_rect = (224, 992, 256, 1024)	render = ADD_ARGB	collision = 1;	}
+	
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　31　音符弾
+	ShotData{
+		id = 953
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 0, 576, 32, 608 )
+			animation_data = ( 8, 0, 608, 32, 640 )
+			animation_data = ( 8, 0, 640, 32, 672 )
+			animation_data = ( 8, 0, 672, 32, 704 )
+		}
+	}
+	ShotData{
+		id = 954
+		delay_rect = (32, 992, 64, 1024)
+		render = ADD_ARGB
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 32, 576, 64, 608 )
+			animation_data = ( 8, 32, 608, 64, 640 )
+			animation_data = ( 8, 32, 640, 64, 672 )
+			animation_data = ( 8, 32, 672, 64, 704 )
+		}
+	}
+	ShotData{
+		id = 955
+		delay_rect = (64, 992, 96, 1024)
+		render = ADD_ARGB
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 64, 576, 96, 608 )
+			animation_data = ( 8, 64, 608, 96, 640 )
+			animation_data = ( 8, 64, 640, 96, 672 )
+			animation_data = ( 8, 64, 672, 96, 704 )
+		}
+	}
+	ShotData{
+		id = 956
+		delay_rect = (96, 992, 128, 1024)
+		render = ADD_ARGB
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 96, 576, 128, 608 )
+			animation_data = ( 8, 96, 608, 128, 640 )
+			animation_data = ( 8, 96, 640, 128, 672 )
+			animation_data = ( 8, 96, 672, 128, 704 )
+		}
+	}
+	ShotData{
+		id = 957
+		delay_rect = (128, 992, 160, 1024)
+		render = ADD_ARGB
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 128, 576, 160, 608 )
+			animation_data = ( 8, 128, 608, 160, 640 )
+			animation_data = ( 8, 128, 640, 160, 672 )
+			animation_data = ( 8, 128, 672, 160, 704 )
+		}
+	}
+	ShotData{
+		id = 958
+		delay_rect = (160, 992, 192, 1024)
+		render = ADD_ARGB
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 160, 576, 192, 608 )
+			animation_data = ( 8, 160, 608, 192, 640 )
+			animation_data = ( 8, 160, 640, 192, 672 )
+			animation_data = ( 8, 160, 672, 192, 704 )
+		}
+	}
+	ShotData{
+		id = 959
+		delay_rect = (192, 992, 224, 1024)
+		render = ADD_ARGB
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 192, 576, 224, 608 )
+			animation_data = ( 8, 192, 608, 224, 640 )
+			animation_data = ( 8, 192, 640, 224, 672 )
+			animation_data = ( 8, 192, 672, 224, 704 )
+		}
+	}
+	ShotData{
+		id = 960
+		delay_rect = (224, 992, 256, 1024)
+		render = ADD_ARGB
+		collision = (2,0,-10)
+		fixed_angle = true
+		AnimationData{
+			animation_data = ( 8, 224, 576, 256, 608 )
+			animation_data = ( 8, 224, 608, 256, 640 )
+			animation_data = ( 8, 224, 640, 256, 672 )
+			animation_data = ( 8, 224, 672, 256, 704 )
+		}
+	}
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　32　レーザー
+	ShotData{
+		id = 961
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (2, 272, 578, 288, 590 )
+			animation_data = (2, 272, 594, 288, 606 )
+			animation_data = (2, 272, 610, 288, 622 )
+		}
+	}
+	ShotData{
+		id = 962
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (2, 288, 578, 304, 590 )
+			animation_data = (2, 288, 594, 304, 606 )
+			animation_data = (2, 288, 610, 304, 622 )
+		}
+	}
+	ShotData{
+		id = 963
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (2, 304, 578, 320, 590 )
+			animation_data = (2, 304, 594, 320, 606 )
+			animation_data = (2, 304, 610, 320, 622 )
+		}
+	}
+	ShotData{
+		id = 964
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (2, 320, 578, 336, 590 )
+			animation_data = (2, 320, 594, 336, 606 )
+			animation_data = (2, 320, 610, 336, 622 )
+		}
+	}
+	ShotData{
+		id = 965
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (2, 336, 578, 352, 590 )
+			animation_data = (2, 336, 594, 352, 606 )
+			animation_data = (2, 336, 610, 352, 622 )
+		}
+	}
+	ShotData{
+		id = 966
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (2, 352, 578, 368, 590 )
+			animation_data = (2, 352, 594, 368, 606 )
+			animation_data = (2, 352, 610, 368, 622 )
+		}
+	}
+	ShotData{
+		id = 967
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (2, 368, 578, 384, 590 )
+			animation_data = (2, 368, 594, 384, 606 )
+			animation_data = (2, 368, 610, 384, 622 )
+		}
+	}
+	ShotData{
+		id = 968
+		delay_rect = (0, 992, 32, 1024)
+		render = ADD_ARGB
+		collision = 1
+		AnimationData{
+			animation_data = (2, 384, 578, 400, 590 )
+			animation_data = (2, 384, 594, 400, 606 )
+			animation_data = (2, 384, 610, 400, 622 )
+		}
+	}
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　33　手裏剣
+	
+	ShotData{	id = 969	rect = (256,640,320,704)	render = ADD_ARGB	delay_rect = (0, 992, 32, 1024)	collision = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 970	rect = (320,640,384,704)	render = ADD_ARGB	delay_rect = (32, 992, 64, 1024)	collision = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 971	rect = (384,640,448,704)	render = ADD_ARGB	delay_rect = (64, 992, 96, 1024)	collision = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 972	rect = (448,640,512,704)	render = ADD_ARGB	delay_rect = (96, 992, 128, 1024)	collision = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 973	rect = (256,704,320,768)	render = ADD_ARGB	delay_rect = (128, 992, 160, 1024)	collision = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 974	rect = (320,704,384,768)	render = ADD_ARGB	delay_rect = (160, 992, 192, 1024)	collision = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 975	rect = (384,704,448,768)	render = ADD_ARGB	delay_rect = (192, 992, 224, 1024)	collision = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 976	rect = (448,704,512,768)	render = ADD_ARGB	delay_rect = (224, 992, 256, 1024)	collision = 8	delay_render = ADD_ARGB	}
+
+	//--------------------------------------------------------------------------------------------------------------
+	//--------------------------------------------------------------------------------------------------------------
+	//　34　手裏剣小
+	
+	ShotData{	id = 977	rect = (256,768,288,800)	render = ADD_ARGB	delay_rect = (0, 992, 32, 1024)	collision = 3	angular_velocity = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 978	rect = (288,768,320,800)	render = ADD_ARGB	delay_rect = (32, 992, 64, 1024)	collision = 3	angular_velocity = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 979	rect = (320,768,352,800)	render = ADD_ARGB	delay_rect = (64, 992, 96, 1024)	collision = 3	angular_velocity = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 980	rect = (352,768,384,800)	render = ADD_ARGB	delay_rect = (96, 992, 128, 1024)	collision = 3	angular_velocity = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 981	rect = (384,768,416,800)	render = ADD_ARGB	delay_rect = (128, 992, 160, 1024)	collision = 3	angular_velocity = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 982	rect = (416,768,448,800)	render = ADD_ARGB	delay_rect = (160, 992, 192, 1024)	collision = 3	angular_velocity = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 983	rect = (448,768,480,800)	render = ADD_ARGB	delay_rect = (192, 992, 224, 1024)	collision = 3	angular_velocity = 8	delay_render = ADD_ARGB	}
+	ShotData{	id = 984	rect = (480,768,512,800)	render = ADD_ARGB	delay_rect = (224, 992, 256, 1024)	collision = 3	angular_velocity = 8	delay_render = ADD_ARGB	}

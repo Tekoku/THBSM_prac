@@ -1,0 +1,35 @@
+//アイテムID
+let MY_ITEM_POINT	= 1;
+let MY_ITEM_WISH	= 2;
+let MY_ITEM_WISH_EX	= 12;
+let MY_ITEM_POINT_S	= 3;
+let MY_ITEM_LIFE_S	= 4;
+let MY_ITEM_SPELL_S	= 5;
+let MY_ITEM_LIFE	= 6;
+let MY_ITEM_SPELL	= 7;
+
+
+//アイテム配置
+function SetItem(itemX, itemY, itemType)
+{
+	let idScript = GetAreaCommonData(CAREA_SYSTEM, "ScriptItem", -1);
+	NotifyEvent(idScript, ev_CallItem, [itemX, itemY, itemType]);
+}
+
+//アイテム配置
+task SetItemEx(itemX, itemY, itemSpeed, itemAngle, itemType)
+{
+	let idScript = GetAreaCommonData(CAREA_SYSTEM, "ScriptItem", -1);
+	NotifyEvent(idScript, ev_CallItemEx, [itemX, itemY, itemSpeed, itemAngle, itemType]);
+}
+
+//弾消しエフェクト
+function DeleteBulletEffect(objShot)
+{
+	if (!Obj_IsDeleted(objShot))
+	{
+		let idScript = GetAreaCommonData(CAREA_SYSTEM, "ScriptItem", -1);
+		NotifyEvent(idScript, ev_BulletEffect, objShot);
+		Obj_Delete(objShot);
+	}
+}

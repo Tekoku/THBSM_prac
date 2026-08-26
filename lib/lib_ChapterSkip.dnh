@@ -1,0 +1,429 @@
+// Chapter skip core (ported from th_hsob practice tool by bilibili @qwerbmb)
+
+let chapter_max = [10, 10, 14, 13, 15, 18];
+let chapter_boss = [6, 6, 8, 7, 9, 7];
+let chapter_name = [[], [], [], [], [], []];
+chapter_name[0] = ["stage1-1", "stage1-2", "1midboss nonspell", "stage1-3", "stage1-4", "1boss nonspell 1", "1boss spell 1", "1boss nonspell 2", "1boss spell 2", "1boss spell 3"];
+chapter_name[1] = ["stage2-1", "stage2-2", "2midboss nonspell", "2midboss spell", "stage2-3", "2boss nonspell 1", "2boss spell 1", "2boss nonspell 2", "2boss spell 2", "2boss spell 3"];
+chapter_name[2] = ["stage3-1", "stage3-2", "stage3-3", "3midboss nonspell", "3midboss spell", "stage3-4", "stage3-5", "3boss nonspell 1", "3boss spell 1", "3boss nonspell 2", "3boss spell 2", "3boss nonspell 3", "3boss spell 3", "3boss spell 4"];
+chapter_name[3] = ["stage4-1", "stage4-2", "stage4-3", "4midboss nonspell", "4midboss spell", "stage4-4", "4boss nonspell 1", "4boss spell 1", "4boss nonspell 2", "4boss spell 2", "4boss nonspell 3", "4boss spell 3", "4boss spell 4"];
+chapter_name[4] = ["stage5-1", "stage5-2", "stage5-3", "stage5-4", "5midboss nonspell", "5midboss spell", "stage5-5", "stage5-6", "5boss nonspell 1", "5boss spell 1", "5boss spell 2", "5boss nonspell 2", "5boss spell 3", "5boss nonspell 3", "5boss spell 4"];
+chapter_name[5] = ["stage6-1", "stage6-2", "stage6-3", "stage6-4", "6midboss nonspell", "6midboss spell", "6boss nonspell 1", "6boss spell 1", "6boss nonspell 2", "6boss spell 2", "6boss nonspell 3", "6boss spell 3", "6boss nonspell 4", "6boss spell 4", "6boss nonspell 5", "6boss spell 5", "6boss spell 6", "6boss spell 7"];
+
+function GetStage(){
+    let st = GetAreaCommonData(CAREA_STAGE, "StageIndex", 1);
+    return st;
+}
+
+function GetStartChapter(stage){
+    if(GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_SPELL){
+        return 1;
+    }
+    if(IsReplay()){
+        return GetReplayChapter();
+    }
+    SetPracticed();
+    let ch = GetAreaCommonData(CAREA_SAVE, "CHAPTER_SKIP", 1);
+    if(!IsReplay()){
+        SetReplayChapter(ch);
+    }
+    return ch;
+}
+
+function SetStartChapter(stc){
+    SetAreaCommonData(CAREA_SAVE, "CHAPTER_SKIP", stc);
+}
+
+function IsChapterSkip(stage){
+    return GetStartChapter(stage) > 1;
+}
+
+function SetDivLoad(set){
+    SetAreaCommonData(CAREA_SAVE, "DIV_LOAD", set);
+}
+function GetDivLoad(){
+    return GetAreaCommonData(CAREA_SAVE, "DIV_LOAD", true);
+}
+function GetDivLoadEnabled(stage){
+    return GetAreaCommonData(CAREA_TITLE, "DIV_LOAD_PRE", false);
+}
+function SetDivLoadEnabledPre(stage){
+    let ans = false;
+    if(stage > 6 || stage < 1){
+        ans = false;
+    }
+    else{
+        let d = GetStartChapter(stage);
+        stage = stage - 1;
+        ans = (GetDivLoad() && GetScriptState(stage) > d && d < chapter_max[stage] && d >= chapter_boss[stage]);
+    }
+    SetAreaCommonData(CAREA_TITLE, "DIV_LOAD_PRE", ans);
+}
+
+function SetRawdel(s){
+    SetAreaCommonData(CAREA_TITLE, "RAWDEL", s);
+}
+function GetRawdel(){
+    let cstage = GetStage();
+    if(!GetDivLoadEnabled(cstage)){
+        return false;
+    }
+    return GetAreaCommonData(CAREA_TITLE, "RAWDEL", false);
+}
+
+function SetScriptState(stage, spell){
+    stage = stage - 1;
+    let stable = GetAllScriptState();
+    stable[stage] = min(stable[stage], spell);
+    SetAreaCommonData(CAREA_TITLE, "SCRIPT_STATE", stable);
+}
+function GetAllScriptState(){
+    return GetAreaCommonData(CAREA_TITLE, "SCRIPT_STATE", chapter_max);
+}
+function GetScriptState(stage){
+    let stable = GetAllScriptState();
+    return stable[stage];
+}
+
+function SetPracticed(){
+    SetAreaCommonData(CAREA_TITLE, "PRACTICED", true);
+}
+function GetPracticed(){
+    return GetAreaCommonData(CAREA_TITLE, "PRACTICED", false);
+}
+
+function GetReplayChapter(){
+    return GetAreaCommonData(CAREA_REPLAY, "StartChapter", 1);
+}
+function SetReplayChapter(st){
+    SetAreaCommonData(CAREA_REPLAY, "StartChapter", st);
+}
+
+function GetPracLife(){
+    return GetAreaCommonData(CAREA_SAVE, "Prac_Player", 8);
+}
+function SetPracLife(n){
+    SetAreaCommonData(CAREA_SAVE, "Prac_Player", min(8, max(0, n)));
+}
+function GetPracSpell(){
+    return GetAreaCommonData(CAREA_SAVE, "Prac_Spell", 2);
+}
+function SetPracSpell(n){
+    SetAreaCommonData(CAREA_SAVE, "Prac_Spell", min(8, max(0, n)));
+}
+// FULL: start boss from its opening (with pre-battle talk)
+function GetPracFull(){
+    if(IsReplay()){
+        return GetAreaCommonData(CAREA_REPLAY, "StartFull", 0) == 1;
+    }
+    let f = GetAreaCommonData(CAREA_SAVE, "PRAC_FULL", 0);
+    SetAreaCommonData(CAREA_REPLAY, "StartFull", f);
+    return f == 1;
+}
+function SetPracFull(f){
+    SetAreaCommonData(CAREA_SAVE, "PRAC_FULL", [0, 1][f]);
+}
+// LSC part select (stage6 spell7): 1-4
+function GetPracPhase(){
+    if(IsReplay()){
+        return GetAreaCommonData(CAREA_REPLAY, "StartPhase", 1);
+    }
+    let p = GetAreaCommonData(CAREA_SAVE, "PRAC_PHASE", 1);
+    p = max(1, min(4, p));
+    SetAreaCommonData(CAREA_REPLAY, "StartPhase", p);
+    return p;
+}
+function SetPracPhase(p){
+    SetAreaCommonData(CAREA_SAVE, "PRAC_PHASE", max(1, min(4, p)));
+}
+
+let chapter_group_name = [[], [], [], [], [], []];
+let chapter_group_val = [[], [], [], [], [], []];
+chapter_group_name[0] = ["chap1","chap2","midboss","chap3","chap4","BOSS"];
+chapter_group_name[1] = ["chap1","chap2","midboss","chap3","BOSS"];
+chapter_group_name[2] = ["chap1","chap2","chap3","midboss","chap4","chap5","BOSS"];
+chapter_group_name[3] = ["chap1","chap2","chap3","midboss","chap4","BOSS"];
+chapter_group_name[4] = ["chap1","chap2","chap3","chap4","midboss","chap5","chap6","BOSS"];
+chapter_group_name[5] = ["chap1","chap2","chap3","chap4","midboss","BOSS"];
+chapter_group_val[0] = [1, 2, -1, 4, 5, -2];
+chapter_group_val[1] = [1, 2, -1, 5, -2];
+chapter_group_val[2] = [1, 2, 3, -1, 6, 7, -2];
+chapter_group_val[3] = [1, 2, 3, -1, 6, -2];
+chapter_group_val[4] = [1, 2, 3, 4, -1, 7, 8, -2];
+chapter_group_val[5] = [1, 2, 3, 4, -1, -2];
+// boss-group chapter lists (phase row maps onto these)
+let mboss_chaps = [[3],[3,4],[4,5],[4,5],[5,6],[5,6]];
+let boss_chaps = [[6,7,8,9,10],[6,7,8,9,10],[8,9,10,11,12,13,14],[7,8,9,10,11,12,13],[9,10,11,12,13,14,15],[7,8,9,10,11,12,13,14,15,16,17,18]];
+
+// locate [groupIdx, subIdx] for a stored chapter (subIdx: 0=FULL, k+1=group chapter k)
+function ChapterFindPos(stage, dest){
+    let pos = [0, 0];
+    ascent(gi in 0 .. length(chapter_group_val[stage])){
+        let gv = chapter_group_val[stage][gi];
+        if(gv > 0){
+            if(gv == dest){ pos = [gi, 0]; }
+        }
+        else{
+            let chaps;
+            if(gv == -1){ chaps = mboss_chaps[stage]; } else { chaps = boss_chaps[stage]; }
+            ascent(k in 0 .. length(chaps)){
+                if(chaps[k] == dest){
+                    pos = [gi, k+1];
+                    if(k == 0 && GetPracFull()){ pos = [gi, 0]; }
+                }
+            }
+        }
+    }
+    return pos;
+}
+
+function ChangeChapter(stage){
+    if(stage < 0 || stage > 5){
+        return 1;
+    }
+    let current = GetStartChapter(stage);
+    current = min(current, chapter_max[stage]);
+    current = max(1, current);
+    SetStartChapter(current);
+    let life = GetPracLife();
+    let bomb = GetPracSpell();
+    let objt = ObjText_Create();
+    Obj_SetRenderPriorityI(objt, 79);
+    ObjText_SetFontType(objt, "MS Gothic");
+    ObjText_SetFontSize(objt, 16);
+    ObjText_SetFontBold(objt, true);
+    ObjText_SetFontBorderType(objt, BORDER_SHADOW);
+    ObjText_SetFontBorderWidth(objt, 1);
+    ObjText_SetFontBorderColor(objt, 16, 16, 16);
+    ObjRender_SetPosition(objt, 220, 180, 0);
+    loop{
+        let shift = (GetVirtualKeyState(VK_SLOWMOVE) == KEY_HOLD);
+        let str = "Chapter:" ~ IntToString(current) ~ "[r]" ~ chapter_name[stage][current - 1];
+        str = str ~ "[r]Life:" ~ IntToString(life) ~ "  Bomb:" ~ IntToString(bomb);
+        if(current >= chapter_boss[stage]){
+            if(GetDivLoad()){
+                str = str ~ "[r]fastload enabled";
+            }
+            else{
+                str = str ~ "[r]fastload disabled";
+            }
+        }
+        str = str ~ "[r][r]Left/Right: chapter";
+        str = str ~ "[r]Hold Slow + Left/Right: life";
+        str = str ~ "[r]Hold Slow + Up/Down: bomb";
+        str = str ~ "[r]C: boss / chapter1   V: fastload";
+
+        if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH){
+            if(shift){
+                life = min(8, life + 1);
+                SetPracLife(life);
+            }
+            else{
+                current = current + 1;
+                if(current > chapter_max[stage]){
+                    current = 1;
+                }
+            }
+        }
+        if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH){
+            if(shift){
+                life = max(0, life - 1);
+                SetPracLife(life);
+            }
+            else{
+                current = current - 1;
+                if(current < 1){
+                    current = chapter_max[stage];
+                }
+            }
+        }
+        if(GetVirtualKeyState(VK_UP) == KEY_PUSH){
+            if(shift){
+                bomb = min(8, bomb + 1);
+                SetPracSpell(bomb);
+            }
+        }
+        if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH){
+            if(shift){
+                bomb = max(0, bomb - 1);
+                SetPracSpell(bomb);
+            }
+        }
+        SetStartChapter(current);
+        if(GetVirtualKeyState(VK_USER2) == KEY_PUSH){
+            SetDivLoad(!GetDivLoad());
+        }
+        if(GetVirtualKeyState(VK_OK) == KEY_PUSH){
+            Obj_Delete(objt);
+            return current;
+        }
+        if(GetVirtualKeyState(VK_CANCEL) == KEY_PUSH){
+            Obj_Delete(objt);
+            return -1;
+        }
+        if(GetVirtualKeyState(VK_USER1) == KEY_PUSH){
+            if(current >= chapter_boss[stage]){
+                current = 1;
+            }
+            else{
+                current = chapter_boss[stage];
+            }
+            SetStartChapter(current);
+        }
+        ObjText_SetText(objt, str);
+        wait(1);
+    }
+}
+
+// chapter type tags: 0=road(none), 1=nonspell, 2=spell
+let chapter_type = [[], [], [], [], [], []];
+chapter_type[0] = [0,0,1,0,0,1,2,1,2,2];
+chapter_type[1] = [0,0,1,2,0,1,2,1,2,2];
+chapter_type[2] = [0,0,0,1,2,0,0,1,2,1,2,1,2,2];
+chapter_type[3] = [0,0,0,1,2,0,1,2,1,2,1,2,2];
+chapter_type[4] = [0,0,0,0,1,2,0,0,1,2,2,1,2,1,2];
+chapter_type[5] = [0,0,0,0,1,2,1,2,1,2,1,2,1,2,1,2,2,2];
+
+// effective chapter count per difficulty (1stg spell3 is H+, 3stg spell4 is N+)
+function GetChapterMaxEx(stage, rank){
+    if(stage == 0 && rank < D_HARD){ return 9; }
+    if(stage == 2 && rank < D_NORM){ return 13; }
+    return chapter_max[stage];
+}
+
+// integrated practice menu: stage / chapter(chapN,midboss,BOSS) / phase(FULL,NormalN,SpellcardN) / bomb
+// Up/Down: move focus row, Left/Right: adjust focused row
+// FULL = start boss from its opening talk; NormalN/SpellcardN = skip talk
+// returns [stage, chapter] or [-1] on cancel
+function PracticeChapterMenu(rank, selStage){
+    let stage = max(0, min(5, selStage));
+    let cmax = GetChapterMaxEx(stage, rank);
+    let bomb = GetPracSpell();
+    let phase = GetPracPhase();
+    let rankName = ["Easy", "Normal", "Hard", "Lunatic"][max(0, min(3, rank))];
+    let dest0 = max(1, min(GetStartChapter(stage), cmax));
+    let pos = ChapterFindPos(stage, dest0);
+    let groupIdx = pos[0];
+    let subIdx = pos[1];
+    let focus = 1;
+    let objt = ObjText_Create();
+    Obj_SetRenderPriorityI(objt, 79);
+    ObjText_SetFontType(objt, "MS Gothic");
+    ObjText_SetFontSize(objt, 16);
+    ObjText_SetFontBold(objt, true);
+    ObjText_SetFontBorderType(objt, BORDER_SHADOW);
+    ObjText_SetFontBorderWidth(objt, 1);
+    ObjText_SetFontBorderColor(objt, 16, 16, 16);
+    ObjRender_SetPosition(objt, 64, 110, 0);
+    loop{
+        let gv = chapter_group_val[stage][groupIdx];
+        let fchaps = [];
+        if(gv < 0){
+            let chaps;
+            if(gv == -1){ chaps = mboss_chaps[stage]; } else { chaps = boss_chaps[stage]; }
+            ascent(k in 0 .. length(chaps)){ if(chaps[k] <= cmax){ fchaps = fchaps ~ [chaps[k]]; } }
+            if(subIdx > length(fchaps)){ subIdx = length(fchaps); }
+        }
+        let opts = [];
+        if(gv < 0){
+            opts = ["FULL"];
+            let ncnt = 0;
+            let scnt = 0;
+            ascent(k in 0 .. length(fchaps)){
+                let ct = chapter_type[stage][fchaps[k]-1];
+                if(ct == 1){ ncnt++; opts = opts ~ ["Normal" ~ IntToString(ncnt)]; }
+                if(ct == 2){ scnt++; opts = opts ~ ["Spellcard" ~ IntToString(scnt)]; }
+            }
+        }
+        let dest;
+        let full = 0;
+        if(gv > 0){ dest = gv; }
+        else{
+            if(subIdx == 0){ dest = fchaps[0]; full = 1; }
+            else{ dest = fchaps[subIdx-1]; }
+        }
+        // LSC part row: only for stage6 spell7 (chapter 18)
+        let showPart = (stage == 5 && dest == 18);
+        let focusMax = [3, 4][showPart];
+        if(focus > focusMax){ focus = focusMax; }
+
+        let str = "   Practice   Difficulty: " ~ rankName ~ "[r]";
+        str = str ~ "   --------------------------------[r]";
+        str = str ~ ["   ", " > "][focus == 0] ~ "Stage   : < " ~ IntToString(stage+1) ~ " >[r]";
+        str = str ~ ["   ", " > "][focus == 1] ~ "Chapter : < " ~ chapter_group_name[stage][groupIdx] ~ " >[r]";
+        let pstr = "";
+        if(gv < 0){ pstr = "< " ~ opts[subIdx] ~ " >"; }
+        str = str ~ ["   ", " > "][focus == 2] ~ "Phase   : " ~ pstr ~ "[r]";
+        if(showPart){ str = str ~ ["   ", " > "][focus == 3] ~ "Part    : < P" ~ IntToString(phase) ~ " >[r]"; }
+        str = str ~ ["   ", " > "][focus == focusMax] ~ "Bomb    : < " ~ IntToString(bomb) ~ " >[r]";
+        str = str ~ "   --------------------------------[r]";
+        if(dest >= chapter_boss[stage]){
+            str = str ~ "   fastload: " ~ ["off", "on"][GetDivLoad()] ~ " (V)[r]";
+        }
+        str = str ~ "[r]   Up/Down: select   Left/Right: change[r]";
+        str = str ~ "   C: boss/top   V: fastload   Z: ok   X: back";
+
+
+        if(GetVirtualKeyState(VK_UP) == KEY_PUSH){ focus--; if(focus < 0){ focus = focusMax; } }
+        if(GetVirtualKeyState(VK_DOWN) == KEY_PUSH){ focus++; if(focus > focusMax){ focus = 0; } }
+        if(GetVirtualKeyState(VK_RIGHT) == KEY_PUSH){
+            if(focus == 0){
+                stage++; if(stage > 5){ stage = 0; }
+                cmax = GetChapterMaxEx(stage, rank);
+                let d0 = max(1, min(GetStartChapter(stage), cmax));
+                let p0 = ChapterFindPos(stage, d0);
+                groupIdx = p0[0]; subIdx = p0[1];
+            }
+            if(focus == 1){
+                groupIdx++; if(groupIdx >= length(chapter_group_val[stage])){ groupIdx = 0; }
+                if(chapter_group_val[stage][groupIdx] < 0){ subIdx = 1; } else { subIdx = 0; }
+            }
+            if(focus == 2 && gv < 0){ subIdx++; if(subIdx > length(fchaps)){ subIdx = 0; } }
+            if(focus == 3){
+                if(showPart){ phase++; if(phase > 4){ phase = 1; } SetPracPhase(phase); }
+                else{ bomb = min(8, bomb+1); SetPracSpell(bomb); }
+            }
+            if(focus == 4){ bomb = min(8, bomb+1); SetPracSpell(bomb); }
+        }
+        if(GetVirtualKeyState(VK_LEFT) == KEY_PUSH){
+            if(focus == 0){
+                stage--; if(stage < 0){ stage = 5; }
+                cmax = GetChapterMaxEx(stage, rank);
+                let d0 = max(1, min(GetStartChapter(stage), cmax));
+                let p0 = ChapterFindPos(stage, d0);
+                groupIdx = p0[0]; subIdx = p0[1];
+            }
+            if(focus == 1){
+                groupIdx--; if(groupIdx < 0){ groupIdx = length(chapter_group_val[stage])-1; }
+                if(chapter_group_val[stage][groupIdx] < 0){ subIdx = 1; } else { subIdx = 0; }
+            }
+            if(focus == 2 && gv < 0){ subIdx--; if(subIdx < 0){ subIdx = length(fchaps); } }
+            if(focus == 3){
+                if(showPart){ phase--; if(phase < 1){ phase = 4; } SetPracPhase(phase); }
+                else{ bomb = max(0, bomb-1); SetPracSpell(bomb); }
+            }
+            if(focus == 4){ bomb = max(0, bomb-1); SetPracSpell(bomb); }
+        }
+        SetStartChapter(dest);
+        SetPracFull(full);
+        if(GetVirtualKeyState(VK_USER1) == KEY_PUSH){
+            if(gv < 0){ groupIdx = 0; subIdx = 0; }
+            else{
+                ascent(gi in 0 .. length(chapter_group_val[stage])){
+                    if(chapter_group_val[stage][gi] == -2){ groupIdx = gi; subIdx = 1; }
+                }
+            }
+        }
+        if(GetVirtualKeyState(VK_USER2) == KEY_PUSH){ SetDivLoad(!GetDivLoad()); }
+        if(GetVirtualKeyState(VK_OK) == KEY_PUSH){
+            Obj_Delete(objt);
+            return [stage, dest];
+        }
+        if(GetVirtualKeyState(VK_CANCEL) == KEY_PUSH){
+            Obj_Delete(objt);
+            return [-1];
+        }
+        ObjText_SetText(objt, str);
+        wait(1);
+    }
+}

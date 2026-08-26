@@ -1,0 +1,98 @@
+task EffectZako_Explode(x, y, angle, eff_color, count, size)
+{
+	if (IsDrawEffect() < 2) { return; }
+
+	let tmp_c = GetEffectColor(eff_color);
+	let cr = tmp_c[0];
+	let cg = tmp_c[1];
+	let cb = tmp_c[2];
+	
+	let e_len = 48 * count^0.5;
+	ascent(i in 0 .. count)
+	{
+		let tmp = 1-cos(i/count*90);
+		let er = tmp*e_len;
+		let ea = angle+180 + randEffect(-30,30);
+		let ex = x + er*cos(ea);
+		let ey = y + er*sin(ea);
+		_EffectZako_Explode2(ex, ey, ea, 20, size, cr, cg, cb);
+		wait(5);
+	}
+}
+
+task _EffectZako_Explode(x, y, angle, timer, size, cr, cg, cb)
+{
+	let ex = x;
+	let ey = y;
+	let obj = CreateParticleEffect([ex, ey], size/5, 1);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjRender_SetColor(obj, cr, cg, cb);
+
+	let vx = sin(angle); let vy = cos(angle)-0.25; let add_vy = 0;
+	let vs = size*randEffect(0.1, 1); let add_vs = vs/timer/2;
+	let rx = randEffect(-15, 15); let rx_add = randEffect(-2, 2);
+	let ry = randEffect(-15, 15); let ry_add = randEffect(-2, 2);
+	let rz = randEffect(0, 360); let rz_add = randEffect(-4, 4);
+	let scale = 1; let alpha = 192;
+	
+	ascent(i in 0 .. timer)
+	{
+		ObjRender_SetPosition(obj, ex, ey, 0);
+		ObjRender_SetAngleXYZ(obj, rx, ry, rz);
+		ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+		ObjRender_SetAlpha(obj, alpha);
+		ex += vx * vs; ey += vy * vs + add_vy;
+		add_vy += size/90;
+		vs += add_vs; scale += 1/timer; alpha -= 192/timer;
+		rx += rx_add; ry += ry_add; rz += rz_add;
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task _EffectZako_Explode2(x, y, angle, timer, size, cr, cg, cb)
+{
+	let ex = x;
+	let ey = y;
+	let obj = CreateParticleEffect([ex, ey], size/2, 4);
+	ObjRender_SetColor(obj, cr, cg, cb);
+
+	let vx = sin(angle); let vy = cos(angle); let add_vy = 0;
+	let vs = size*randEffect(0.1, 1);
+	let rx = randEffect(-15, 15); let rx_add = randEffect(-2, 2);
+	let ry = randEffect(-15, 15); let ry_add = randEffect(-2, 2);
+	let rz = randEffect(0, 360); let rz_add = randEffect(-4, 4);
+	
+	ascent(i in 0 .. timer)
+	{
+		let tmp = (i+1)/timer;
+		let scale = tmp^0.5;
+		let alpha = (1-tmp)*210;
+		ObjRender_SetPosition(obj, ex, ey, 0);
+		ObjRender_SetAngleXYZ(obj, rx, ry, rz);
+		ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+		ObjRender_SetAlpha(obj, alpha);
+	//	ex += vx * vs; ey += vy * vs;
+		rx += rx_add; ry += ry_add; rz += rz_add;
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+/*
+task EffectZako_Explode(x, y, eff_color, timer, size)
+{
+	if (IsDrawEffect() < 2) { return; }
+	
+	let tmp_c = GetEffectColorL(eff_color);
+	let cr = tmp_c[0] + 32;
+	let cg = tmp_c[1] + 32;
+	let cb = tmp_c[2] + 32;
+	let count = min(60, round((timer/25)^2));
+	loop(count)
+	{
+		_EffectZako_Explode(x, y, randEffect(0,360), timer, size, cr, cg, cb);
+		yield;
+	}
+}
+*/

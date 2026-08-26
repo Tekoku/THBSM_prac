@@ -1,0 +1,368 @@
+// ---------------- ステージごとのロード・アンロード（主に背景画像）
+
+// ステージ開始時のロード
+task LoadStageAllTexture(stageID)
+{
+	let tmpPath = _StageAllTexture(stageID);
+	ascent(i in 0 .. length(tmpPath))
+	{
+		LoadTextureInLoadThread(tmpPath[i]);
+		yield;
+	}
+}
+
+// 使わない画像は廃棄
+function UnoadStageAllTexture(stageID)
+{
+	let tmpPath = _StageAllTexture(stageID);
+	ascent(i in 0 .. length(tmpPath))
+	{
+		RemoveTexture(tmpPath[i]);
+	}
+}
+
+// ステージで使用する全てのテクスチャを返す
+function _StageAllTexture(stageID)
+{
+	let tmpPath = [];
+	alternative(stageID)
+	case(1)
+	{
+		// タイトル文字→すぐに消えるし事前ロードしなくてもいい？
+//		tmpPath = tmpPath ~ LoadingImageFile_StgTitle(stageID);
+		// 背景画像
+//		tmpPath = tmpPath ~ LoadingImageFile_StgWorld(stageID);
+		// スペカ背景画像
+//		tmpPath = tmpPath ~ LoadingImageFile_SpellBg(BOSS_ID_SETUJO);
+//		tmpPath = tmpPath ~ LoadingImageFile_SpellBg(BOSS_ID_KOUKAI);
+		// キャラ画像→アンロードされるとヤバい系のもあるのでやめておく？
+	}
+	return(tmpPath);
+}
+
+
+// タイトル文字を返す
+// 他のステージ固有エフェクトを含めてもOK
+function LoadingImageFile_StgTitle(stageID)
+{
+	alternative(stageID)
+	case(1)
+	{
+		// ステージ1
+		return([
+			imgDir ~ "world/stg1img/stgtitle01a.png",
+		]);
+	}
+	case(2)
+	{
+		// ステージ2
+		return([
+			imgDir ~ "world/stg2img/stgtitle02a.png",
+		]);
+	}
+	case(3)
+	{
+		// ステージ3
+		return([
+			imgDir ~ "world/stg3img/stgtitle03a.png",
+		]);
+	}
+	case(4)
+	{
+		// ステージ4
+		return([
+			imgDir ~ "world/stg4img/stgtitle04a.png",
+		]);
+	}
+	case(5)
+	{
+		// ステージ5
+		return([
+			imgDir ~ "world/stg5img/stgtitle05a.png",
+		]);
+	}
+	case(6)
+	{
+		// ステージ6
+		return([
+			imgDir ~ "world/stg6img/stgtitle06a.png",
+		]);
+	}
+	others
+	{
+		return([]);
+	}
+}
+
+// 背景画像を返す
+function LoadingImageFile_StgWorld(stageID)
+{
+	alternative(stageID)
+	case(1)
+	{
+		// ステージ１
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/dummy.png",
+				imgDir ~ "world/stg1img/stgimg01_01a.png",
+				imgDir ~ "world/stg1img/stgimg01_01b.png",
+				imgDir ~ "world/stg1img/stgimg01_02a.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			// 簡易背景
+			return([
+				imgDir ~ "world/stg1img/stgimg01_lite.png",
+			]);
+		}
+	}
+	case(2)
+	{
+		// ステージ2
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/dummy.png",
+				imgDir ~ "world/stg2img/stgimg02_01a.png",
+				imgDir ~ "world/stg2img/stgimg02_02a.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			// 簡易背景
+			return([
+				imgDir ~ "world/stg2img/stgimg02_lite.png",
+			]);
+		}
+	}
+	case(3)
+	{
+		// ステージ3
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/dummy.png",
+				imgDir ~ "world/stg3img/stgimg03_01a.png",
+				imgDir ~ "world/stg3img/stgimg03_01b.png",
+				imgDir ~ "world/stg3img/stgimg03_02a.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			// 簡易背景
+			return([
+				imgDir ~ "world/stg3img/stgimg03_lite.png",
+			]);
+		}
+	}
+	case(4)
+	{
+		// ステージ4
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/dummy.png",
+				imgDir ~ "world/stg4img/stgimg04_01a.png",
+				imgDir ~ "world/stg4img/stgimg04_01b.png",
+				imgDir ~ "world/stg4img/stgimg04_02a.png",
+				imgDir ~ "world/stg4img/stgimg04_02b.png",
+				imgDir ~ "world/stg4img/stgimg04_03a.png",
+				imgDir ~ "world/stg4img/stgimg04_02c.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			// 簡易背景
+			return([
+				imgDir ~ "world/stg4img/stgimg04_lite.png",
+			]);
+		}
+	}
+	case(5)
+	{
+		// ステージ5
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/dummy.png",
+				imgDir ~ "world/stg5img/stgimg05_01.mqo",
+				imgDir ~ "world/stg5img/stgimg05_02.png",
+				imgDir ~ "world/stg5img/stgimg05_03.png",
+				imgDir ~ "world/stg5img/stgimg05_04.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			// 簡易背景
+			return([
+				imgDir ~ "world/stg5img/stgimg05_lite.png",
+				imgDir ~ "world/stg5img/stgimg05b_lite.png",
+			]);
+		}
+	}
+	case(6)
+	{
+		// ステージ6
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/dummy.png",
+				imgDir ~ "world/stg6img/stgimg06_00.mqo",
+				imgDir ~ "world/stg6img/stgimg06_00mask.mqo",
+				imgDir ~ "world/stg6img/stgimg06_05.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			// 簡易背景
+			return([
+				imgDir ~ "world/stg6img/stgimg06_lite.png",
+				imgDir ~ "world/stg6img/stgimg06b_lite.png",
+			]);
+		}
+	}
+	return([]);
+}
+
+// スペカ背景画像を返す
+function LoadingImageFile_SpellBg(bossID)
+{
+	alternative(bossID)
+	case(BOSS_ID_FABRITIS, BOSS_ID_IPHONEA)
+	{
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/stg1img/BG01a_a.png",
+				imgDir ~ "world/stg1img/BG01a_b.png",
+				imgDir ~ "world/stg1img/BG01a_c.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			return([
+				imgDir ~ "world/stg1img/BG01a_lite.png",
+			]);
+		}
+	}
+	case(BOSS_ID_TOBIKO)
+	{
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/stg2img/BG02a_a.png",
+				imgDir ~ "world/stg2img/BG02a_b.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			return([
+				imgDir ~ "world/stg2img/BG02a_lite.png",
+			]);
+		}
+	}
+	case(BOSS_ID_SHELIA)
+	{
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/stg3img/enm03bg01a.png",
+				imgDir ~ "world/stg3img/enm03bg01b.png",
+				imgDir ~ "world/stg3img/enm03bg01c.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			return([
+				imgDir ~ "world/stg3img/BG03a_lite.png",
+			]);
+		}
+	}
+	case(BOSS_ID_MOKOU)
+	{
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/stg4img/BG04a_a.png",
+				imgDir ~ "world/stg4img/BG04a_b.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			return([
+				imgDir ~ "world/stg4img/BG04a_lite.png",
+			]);
+		}
+	}
+	case(BOSS_ID_ICHIYOU)
+	{
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/stg4img/BG04b_a.png",
+				imgDir ~ "world/stg4img/BG04b_b.png",
+				imgDir ~ "world/stg4img/BG04b_c.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			return([
+				imgDir ~ "world/stg4img/BG04b_lite.png",
+			]);
+		}
+	}
+	case(BOSS_ID_NEZU)
+	{
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/stg5img/BG05b_a.png",
+				imgDir ~ "world/stg5img/BG05b_b.png",
+				imgDir ~ "world/stg5img/BG05b_c.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			return([
+				imgDir ~ "world/stg5img/BG05b_lite.png",
+			]);
+		}
+	}
+	case(BOSS_ID_MISHANDRA)
+	{
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/stg6img/BG06c_a.png",
+				imgDir ~ "world/stg6img/BG06b_a.png",
+				imgDir ~ "world/stg6img/BG06b_b.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			return([
+				imgDir ~ "world/stg6img/BG06c_lite.png",
+			]);
+		}
+	}
+	case(BOSS_ID_SANADA)
+	{
+		if (IsDrawBackground() >= 2)
+		{
+			return([
+				imgDir ~ "world/stg7img/BG07c_a.png",
+				imgDir ~ "world/stg7img/BG07b_a.png",
+				imgDir ~ "world/stg7img/BG07b_b.png",
+			]);
+		}
+		else if (IsDrawBackground() >= 1)
+		{
+			return([
+				imgDir ~ "world/stg6img/BG07b_lite.png",
+			]);
+		}
+	}
+	return([]);
+}

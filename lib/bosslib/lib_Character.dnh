@@ -1,0 +1,359 @@
+// 画像の種別
+let I_CUTIN = 0;
+let I_NORMAL = 1;
+let I_SMILE = 2;
+let I_SMILE2 = 3;
+let I_SMILE3 = 4;
+let I_ANGER = 5;
+let I_ANGER_SMILE = 6;
+let I_UPSET = 7;
+let I_UPSET_SMILE = 8;
+let I_DOYA = 9;
+let I_NOTICE = 10;
+let I_SURPRISE = 11;
+let I_WORRY = 12;
+let I_WORRY2 = 13;
+let I_QUESTION = 14;
+let I_CUTIN2 = 15;
+let I_NORMAL2 = 16;
+let I_NORMAL3 = 17;
+let I_BORO1 = 101;
+let I_BORO2 = 102;
+let I_BORO3 = 103;
+
+// ---------------------- 各キャラの定数を取得するライブラリ
+
+// ボスのドット絵画像ファイル
+function Boss_GetBossImage(obj)
+{
+	alternative(GetBossID(obj))
+	case(BOSS_ID_FABRITIS)	{ return(imgCharaFabritis[0]); }
+	case(BOSS_ID_IPHONEA)	{ return(imgCharaIphonea[0]); }
+	case(BOSS_ID_TOBIKO)	{ return(imgCharaTobiko[0]); }
+	case(BOSS_ID_TOBIKO_H)	{ return(imgCharaTobiko[10]); }
+	case(BOSS_ID_SHELIA)	{ return(imgCharaShelia[0]); }
+	case(BOSS_ID_MOKOU)	{ return(imgCharaMokou[0]); }
+	case(BOSS_ID_ICHIYOU)	{ return(imgCharaIchiyou[0]); }
+	case(BOSS_ID_ICHIYOU_H)	{ return(imgCharaIchiyou[12]); }
+	case(BOSS_ID_NEZU)	{ return(imgCharaNezu[0]); }
+	case(BOSS_ID_NEZU_R)	{ return(imgCharaNezu[23]); }
+	case(BOSS_ID_NEZU_M)	{ return(imgCharaNezu[24]); }
+	case(BOSS_ID_NEZU_S)	{ return(imgCharaNezu[25]); }
+	case(BOSS_ID_MISHANDRA)	{ return(imgCharaMishandra[0]); }
+	case(BOSS_ID_SANADA)	{ return(imgCharaSanada[0]); }
+	others { return(imgCharaFabritis[0]); }	//仮画像
+}
+
+// スペカ名の画像ファイル
+function Boss_GetSpellCardImage(obj)
+{
+	alternative(GetBossID(obj))
+	case(BOSS_ID_FABRITIS, BOSS_ID_IPHONEA)	{ return(imgCharaFabritis[1]); }
+	case(BOSS_ID_TOBIKO)	{ return(imgCharaTobiko[1]); }
+	case(BOSS_ID_SHELIA)	{ return(imgCharaShelia[1]); }
+	case(BOSS_ID_MOKOU)	{ return(imgCharaMokou[1]); }
+	case(BOSS_ID_ICHIYOU)	{ return(imgCharaIchiyou[1]); }
+	case(BOSS_ID_NEZU, BOSS_ID_NEZU_R, BOSS_ID_NEZU_M, BOSS_ID_NEZU_S)	{ return(imgCharaNezu[1]); }
+	case(BOSS_ID_MISHANDRA)	{ return(imgCharaMishandra[1]); }
+	case(BOSS_ID_SANADA)	{ return(imgCharaSanada[1]); }
+	others { return(imgCharaFabritis[1]); }
+}
+
+// ボスネームの画像ファイル
+function Boss_GetBossNameImage(obj)
+{
+	alternative(GetBossID(obj))
+	case(BOSS_ID_FABRITIS, BOSS_ID_FABRITIS)	{ return(imgCharaFabritis[2]); }
+	case(BOSS_ID_TOBIKO)	{ return(imgCharaTobiko[2]); }
+	case(BOSS_ID_SHELIA)	{ return(imgCharaShelia[2]); }
+	case(BOSS_ID_MOKOU)	{ return(imgCharaMokou[2]); }
+	case(BOSS_ID_ICHIYOU)	{ return(imgCharaIchiyou[2]); }
+	case(BOSS_ID_NEZU, BOSS_ID_NEZU_R, BOSS_ID_NEZU_M, BOSS_ID_NEZU_S)	{ return(imgCharaNezu[2]); }
+	case(BOSS_ID_MISHANDRA)	{ return(imgCharaMishandra[2]); }
+	case(BOSS_ID_SANADA)	{ return(imgCharaSanada[2]); }
+	others { return(""); }	//仮画像
+}
+
+// ボス画像ファイルを画像種別ID指定で取得
+function GetBossTexture(obj, imgType)
+{
+	let tmpPath;
+	alternative(GetBossID(obj))
+	case(BOSS_ID_FABRITIS)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaFabritis[3]); }
+		case(I_WORRY) { return(imgCharaFabritis[4]); }
+		case(I_NOTICE) { return(imgCharaFabritis[5]); }
+		case(I_SMILE) { return(imgCharaFabritis[6]); }
+		case(I_ANGER) { return(imgCharaFabritis[7]); }
+		case(I_DOYA) { return(imgCharaFabritis[8]); }
+		case(I_BORO1) { return(imgCharaFabritis[9]); }
+		case(I_BORO2) { return(imgCharaFabritis[10]); }
+		case(I_CUTIN2) { return(imgCharaFabritis[11]); }
+	}
+	case(BOSS_ID_IPHONEA)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaIphonea[3]); }
+		case(I_WORRY) { return(imgCharaIphonea[4]); }
+		case(I_SMILE) { return(imgCharaIphonea[5]); }
+		case(I_SMILE2) { return(imgCharaIphonea[6]); }
+		case(I_BORO1) { return(imgCharaIphonea[7]); }
+		case(I_BORO2) { return(imgCharaIphonea[8]); }
+		case(I_CUTIN2) { return(imgCharaFabritis[11]); }
+	}
+	case(BOSS_ID_TOBIKO)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaTobiko[3]); }
+		case(I_NOTICE) { return(imgCharaTobiko[4]); }
+		case(I_SMILE) { return(imgCharaTobiko[5]); }
+		case(I_QUESTION) { return(imgCharaTobiko[6]); }
+		case(I_DOYA) { return(imgCharaTobiko[7]); }
+		case(I_BORO1) { return(imgCharaTobiko[8]); }
+		case(I_BORO2) { return(imgCharaTobiko[9]); }
+	}
+	case(BOSS_ID_SHELIA)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_SMILE) { return(imgCharaShelia[3]); }
+		case(I_NOTICE) { return(imgCharaShelia[4]); }
+		case(I_UPSET) { return(imgCharaShelia[5]); }
+		case(I_ANGER) { return(imgCharaShelia[6]); }
+		case(I_WORRY) { return(imgCharaShelia[7]); }
+		case(I_NORMAL) { return(imgCharaShelia[8]); }
+		case(I_BORO1) { return(imgCharaShelia[9]); }
+		case(I_BORO2) { return(imgCharaShelia[10]); }
+	}
+	case(BOSS_ID_MOKOU)
+	{
+		alternative(imgType)
+		case(I_NORMAL) { return(imgCharaMokou[3]); }
+		case(I_NOTICE) { return(imgCharaMokou[4]); }
+		case(I_SMILE) { return(imgCharaMokou[5]); }
+		case(I_CUTIN, I_DOYA) { return(imgCharaMokou[6]); }
+		case(I_UPSET) { return(imgCharaMokou[7]); }
+	}
+	case(BOSS_ID_ICHIYOU)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaIchiyou[3]); }
+		case(I_SMILE) { return(imgCharaIchiyou[4]); }
+		case(I_SMILE2) { return(imgCharaIchiyou[5]); }
+		case(I_UPSET) { return(imgCharaIchiyou[6]); }
+		case(I_DOYA) { return(imgCharaIchiyou[7]); }
+		case(I_SMILE3) { return(imgCharaIchiyou[8]); }
+		case(I_WORRY) { return(imgCharaIchiyou[9]); }
+		case(I_BORO1) { return(imgCharaIchiyou[10]); }
+		case(I_BORO2) { return(imgCharaIchiyou[11]); }
+	}
+	case(BOSS_ID_NEZU)
+	{
+		alternative(imgType)
+		case(I_NORMAL) { return(imgCharaNezu[3]); }
+		case(I_SMILE) { return(imgCharaNezu[4]); }
+		case(I_UPSET) { return(imgCharaNezu[5]); }
+		case(I_WORRY) { return(imgCharaNezu[6]); }
+		case(I_SMILE2) { return(imgCharaNezu[7]); }
+		case(I_NOTICE) { return(imgCharaNezu[8]); }
+		case(I_BORO1) { return(imgCharaNezu[9]); }
+		case(I_BORO2) { return(imgCharaNezu[10]); }
+		case(I_CUTIN) { return(imgCharaNezu[26]); }
+	}
+	case(BOSS_ID_NEZU_R)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaNezu[11]); }
+		case(I_UPSET) { return(imgCharaNezu[12]); }
+		case(I_SMILE) { return(imgCharaNezu[13]); }
+		case(I_SMILE2) { return(imgCharaNezu[14]); }
+	}
+	case(BOSS_ID_NEZU_M)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaNezu[16]); }
+		case(I_ANGER) { return(imgCharaNezu[15]); }
+		case(I_UPSET) { return(imgCharaNezu[17]); }
+		case(I_SMILE) { return(imgCharaNezu[18]); }
+	}
+	case(BOSS_ID_NEZU_S)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaNezu[19]); }
+		case(I_NOTICE) { return(imgCharaNezu[20]); }
+		case(I_UPSET) { return(imgCharaNezu[21]); }
+		case(I_WORRY) { return(imgCharaNezu[22]); }
+	}
+	case(BOSS_ID_MISHANDRA)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaMishandra[3]); }
+		case(I_NORMAL2) { return(imgCharaMishandra[4]); }
+		case(I_UPSET) { return(imgCharaMishandra[5]); }
+		case(I_NORMAL3) { return(imgCharaMishandra[6]); }
+		case(I_WORRY) { return(imgCharaMishandra[7]); }
+		case(I_NOTICE) { return(imgCharaMishandra[8]); }
+		case(I_SMILE) { return(imgCharaMishandra[9]); }
+		case(I_SMILE2) { return(imgCharaMishandra[10]); }
+	}
+	case(BOSS_ID_SANADA)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaSanada[3]); }
+		case(I_NORMAL2) { return(imgCharaSanada[4]); }
+		case(I_DOYA) { return(imgCharaSanada[5]); }
+		case(I_SMILE) { return(imgCharaSanada[6]); }
+		case(I_WORRY) { return(imgCharaSanada[7]); }
+		case(I_SMILE2) { return(imgCharaSanada[8]); }
+		case(I_WORRY) { return(imgCharaSanada[9]); }
+		case(I_UPSET) { return(imgCharaSanada[10]); }
+		case(I_BORO1) { return(imgCharaSanada[11]); }
+		case(I_BORO2) { return(imgCharaSanada[12]); }
+		case(I_BORO3) { return(imgCharaSanada[13]); }
+	}
+	case(BOSS_ID_REIMU)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaReimu[3]); }
+		case(I_ANGER) { return(imgCharaReimu[4]); }
+		case(I_DOYA) { return(imgCharaReimu[5]); }
+		case(I_SMILE) { return(imgCharaReimu[6]); }
+		case(I_WORRY) { return(imgCharaReimu[7]); }
+		case(I_NOTICE) { return(imgCharaReimu[8]); }
+		case(I_UPSET) { return(imgCharaReimu[9]); }
+		case(I_UPSET_SMILE) { return(imgCharaReimu[10]); }
+		case(I_QUESTION) { return(imgCharaReimu[11]); }
+		case(I_ANGER_SMILE) { return(imgCharaReimu[12]); }
+	}
+	case(BOSS_ID_MARISA)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaMarisa[3]); }
+		case(I_UPSET) { return(imgCharaMarisa[4]); }
+		case(I_NOTICE) { return(imgCharaMarisa[5]); }
+		case(I_SMILE) { return(imgCharaMarisa[6]); }
+		case(I_WORRY) { return(imgCharaMarisa[7]); }
+		case(I_DOYA) { return(imgCharaMarisa[8]); }
+		case(I_SURPRISE) { return(imgCharaMarisa[9]); }
+		case(I_ANGER) { return(imgCharaMarisa[10]); }
+		case(I_WORRY2) { return(imgCharaMarisa[11]); }
+	}
+	case(BOSS_ID_SANAE)
+	{
+		alternative(imgType)
+		case(I_CUTIN, I_NORMAL) { return(imgCharaSanae[3]); }
+		case(I_SMILE) { return(imgCharaSanae[4]); }
+		case(I_SMILE2) { return(imgCharaSanae[5]); }
+		case(I_DOYA) { return(imgCharaSanae[6]); }
+		case(I_UPSET) { return(imgCharaSanae[7]); }
+		case(I_WORRY) { return(imgCharaSanae[8]); }
+		case(I_SMILE3) { return(imgCharaSanae[9]); }
+		case(I_ANGER_SMILE) { return(imgCharaSanae[10]); }
+		case(I_SURPRISE) { return(imgCharaSanae[11]); }
+		case(I_ANGER) { return(imgCharaSanae[12]); }
+	}
+	return("");
+}
+
+// ボスのチャージえへくと
+task BossCharge(objTarget)
+{
+	alternative(GetBossID(objTarget))
+	case(BOSS_ID_FABRITIS)
+	{
+		EffectChargeSetB(objTarget, EFF_PURPLE, 75);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_IPHONEA)
+	{
+		EffectChargeSetB(objTarget, EFF_BLUE, 75);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_TOBIKO)
+	{
+		EffectChargeSetB(objTarget, EFF_YELLOW, 75);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_SHELIA)
+	{
+		EffectChargeSetB(objTarget, EFF_SKY, 75);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_MOKOU)
+	{
+		EffectChargeSetB(objTarget, EFF_RED, 75);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_ICHIYOU)
+	{
+		EffectChargeSetB(objTarget, EFF_YELLOW, 75);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_NEZU, BOSS_ID_NEZU_R, BOSS_ID_NEZU_M, BOSS_ID_NEZU_S)
+	{
+		EffectChargeSetB(objTarget, EFF_PURPLE, 75);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_MISHANDRA)
+	{
+		EffectChargeSetB(objTarget, EFF_BLUE, 75);
+		CallSound(sndPower2);
+	}
+	case(BOSS_ID_SANADA)
+	{
+		EffectChargeSetB(objTarget, EFF_RED, 75);
+		CallSound(sndPower2);
+	}
+	others
+	{
+		EffectChargeSetB(objTarget, EFF_PURPLE, 75);
+		CallSound(sndPower2);
+	}
+}
+
+
+// ボスのオーラカラー
+function Boss_InitAura(obj, isBoss)
+{
+	let colBack;
+	let colAura;
+	alternative(GetBossID(obj))
+	others
+	{
+		colBack = [0, 0, 255];
+		colAura = [0, 128, 255];
+	}
+
+	/*
+	// ゆがみえへくと→廃止（OMOI!）
+	if (IsDrawEffect() >= 4) {
+		BossEffect_YugamiAura(isBoss,
+				colBack[0], colBack[1], colBack[2]);	//背後のカラー
+	}
+	*/
+	if (IsDrawEffect() >= 1) {
+		BossEffect_Aura01(obj,
+				colAura[0], colAura[1], colAura[2]);	//オーラカラー
+	}
+}
+
+// ボスのIDから名前表示のインデックスを取得→system/lib/lib_boss.dnhへ移動
+/*
+function Boss_GetBossNameID(obj)
+{
+	alternative(GetBossID(obj))
+	case(BOSS_ID_FABRITIS, BOSS_ID_IPHONEA) { return(0); }
+	case(BOSS_ID_TOBIKO) { return(3); }
+	case(BOSS_ID_SHELIA) { return(4); }
+	case(BOSS_ID_MOKOU) { return(5); }
+	case(BOSS_ID_ICHIYOU) { return(6); }
+	case(BOSS_ID_NEZU) { return(10); }
+	case(BOSS_ID_NEZU_R) { return(7); }
+	case(BOSS_ID_NEZU_M) { return(8); }
+	case(BOSS_ID_NEZU_S) { return(9); }
+	case(BOSS_ID_MISHANDRA) { return(11); }
+	case(BOSS_ID_SANADA) { return(12); }
+	others { return(-1); }
+}
+*/

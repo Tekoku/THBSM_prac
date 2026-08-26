@@ -1,0 +1,164 @@
+// 敵オーラ
+function BossEffect_Aura01(objBoss, cr, cg, cb) {
+
+	// 多重呼び出し禁止
+	if (Obj_GetValueD(objBoss, "AURA_FLAG", false)) { return; }
+	Obj_SetValue(objBoss, "AURA_FLAG", true);
+	BossEffect_Aura01_A(objBoss, cr, cg, cb);
+}
+
+task BossEffect_Aura01_A(objBoss, cr, cg, cb)
+{
+	wait(4);
+	
+	let rcr = 255-cr;
+	let rcg = 255-cg;
+	let rcb = 255-cb;
+	let scale = 2.5;
+	
+	let t = 0;
+	while(!Obj_IsDeleted(objBoss))
+	{
+		if (Obj_GetValueD(objBoss, "MagicCircle", true))
+		{
+			let angle = t*130+randEffect(-60,60);
+			if (t%2 == 0)
+			{
+				BossEffect_Aura01_A_Single(objBoss, cr, cg, cb, 255, angle, BLEND_ADD_ARGB, scale, 30);
+			} else {
+				BossEffect_Aura01_A_Single(objBoss, rcr, rcg, rcb, 96, angle, BLEND_SUBTRACT, scale, 30);
+			}
+			t++;
+		}
+		wait(4);
+	}
+}
+
+task BossEffect_Aura01_A_Single(objBoss, cr, cg, cb, alpha, angle, blend_type, max_scale, timer)
+{
+	//初期設定
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, imgSystemAura);
+	Obj_SetRenderPriorityI(obj, priorityAura);
+	ObjRender_SetBlendType(obj, blend_type);
+	ObjSprite2D_SetSourceRect(obj, 0, 0, 128, 128);
+	ObjSprite2D_SetDestCenter(obj);
+	ObjRender_SetColor(obj, cr, cg, cb);
+
+	let scale = max_scale;
+	descent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(objBoss)) { break; }
+		let tmp = (t+1)/timer;
+		let tmp_s = max_scale * tmp^0.5;
+		ObjRender_SetScaleXYZ(obj, tmp_s, tmp_s, 1);
+		ObjRender_SetPosition(obj, ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 0);
+		ObjRender_SetAlpha(obj, (1-tmp)*alpha);
+		ObjRender_SetAngleZ(obj, angle);
+		angle += 2;
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+// オーラ＋歪みエフェクト
+// SamplePS03.txt
+// オーラカラーは共通（めんどいので一旦妥協）
+task BossEffect_AuraBack(isBoss, R, G, B)
+{
+	// （全敵一括でエフェクト表示するのでボス本体のみ実行）
+	// 敵ごとにカラーを変えるよう仕様変更したい場合はhlslの方も弄る必要あり
+	if (!isBoss) { return; }
+	
+	//レンダリングターゲットに使用するテクスチャ
+	let renderTexture = GetReservedRenderTargetName(0);
+
+	let frame = 0; //フレーム
+	let baseEffectRadius = 192; //基準エフェクト半径
+	let outerFluct = 32; //エフェクト半径の最大変化量
+	let effectRadius = 0; //エフェクト半径
+
+
+	let priEffectMin = 20; //エフェクトをかける最小優先度
+	let priEffectMax = 28; //エフェクトをかける最大優先度
+
+	//背景のみエフェクトの対象とする
+	//エフェクトの描画でまかなえるため、
+	//優先度20～28の通常描画を無効にする。
+	SetInvalidRenderPriorityA1(priEffectMin, priEffectMax);
+
+	let frameWidth = GetStgFrameWidth();
+	let frameHeight = GetStgFrameHeight();
+	let frameLeft = GetStgFrameLeft();
+	let frameRight = frameLeft + frameWidth;
+	let frameTop = GetStgFrameTop();
+	let frameBottom = frameTop + frameHeight;
+
+	//--------------------------------
+	//ゆがみオブジェクト
+	let objWave = ObjPrim_Create(OBJ_SPRITE_2D); //2Dスプライトオブジェクト生成
+	ObjPrim_SetTexture(objWave, renderTexture); //テクスチャを設定
+	ObjSprite2D_SetSourceRect(objWave, frameLeft, frameTop, frameRight, frameBottom);
+	ObjSprite2D_SetDestRect(objWave, 0, 0, frameWidth, frameHeight);
+	Obj_SetRenderPriorityI(objWave, priEffectMax + 1);
+
+	//ダミーテクスチャ（ないと描画がおかしくなる、必要！）
+	let objBlack = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjSprite2D_SetDestRect(objBlack, 0, 0, GetScreenWidth, GetScreenHeight);
+	ObjRender_SetColor(objBlack, 0, 0, 0);
+	ObjRender_SetBlendType(objBlack, BLEND_ADD_RGB);
+	Obj_SetRenderPriorityI(objBlack, priEffectMax);
+
+	//ゆがみオブジェクトにシェーダを設定
+//	ObjShader_SetShaderF(objWave, hlslBossWave);
+	ObjShader_SetTechnique(objWave, "TecWave");
+	//--------------------------------
+	//シェーダにパラメータを設定
+	ObjShader_SetFloatArray(objWave, "waveColor_", [R/255, G/255, B/255, 1]);
+	ascent(i in 0 .. length(objAllEnemys))
+	{
+		if (i < 2)
+		{
+			BossEffect_AuraBack_SetParameter(objWave, objAllEnemys[i], ["enemyPos_", "enemyPos2_"][i]);
+		}
+	}
+	
+	while(eAlive)
+	{
+		//エフェクト半径
+		effectRadius = baseEffectRadius + outerFluct * sin(frame*4);
+		if (frame < 30) { effectRadius *= sin((frame+1)*3); }
+
+		//--------------------------------
+		//優先度20～28(背景)をエフェクト用のテクスチャに描画
+		//シェーダ解除
+		RenderToTextureA1(renderTexture, priEffectMin, priEffectMax, true);
+
+		//--------------------------------
+		//シェーダにパラメータを設定
+		ObjShader_SetFloat(objWave, "frame_", frame);
+		ObjShader_SetFloat(objWave, "waveRadius_", effectRadius);
+//		ObjShader_SetFloatArray(objWave, "enemyPos_",
+//			[ObjMove_GetX(Enemy) + frameLeft, ObjMove_GetY(Enemy) + frameTop]);
+
+		frame++;
+		yield;
+	}
+
+	//エフェクト用オブジェクト削除
+	Obj_Delete(objWave);
+	Obj_Delete(objBlack);
+	ClearInvalidRenderPriority();
+}
+
+task BossEffect_AuraBack_SetParameter(objWave, Enemy, area_name)
+{
+	while(!Obj_IsDeleted(Enemy))
+	{
+		ObjShader_SetFloatArray(objWave, area_name,
+			[ObjMove_GetX(Enemy) + GetStgFrameLeft(), ObjMove_GetY(Enemy) + GetStgFrameTop()]);
+		yield;
+	}
+	// 倒したら非表示に
+	ObjShader_SetFloatArray(objWave, area_name, [0, 0]);
+}

@@ -1,0 +1,21 @@
+#include "./bullet/MainLib.dnh"
+#include "./bullet/ShotType01.dnh"
+#include "./bullet/Laser01.dnh"
+#include "./bullet/NuclearShot.dnh"
+#include "./bullet/Suriken.dnh"
+
+#include "./bullet/lib_bullet.dnh"
+#include "./bullet/lib_bullet_ADD.dnh"
+#include "./bullet/lib_bullet_thunder.dnh"
+
+/*--------ショットデータ--------*/
+let pathShotData	= GetCurrentScriptDirectory() ~ "bullet/lib_bullet_data.dnh";
+let pathShotDataADD	= GetCurrentScriptDirectory() ~ "bullet/lib_bullet_data_ADD.dnh";
+let pathShotDataThunder	= GetCurrentScriptDirectory() ~ "bullet/lib_bullet_data_thunder.dnh";
+
+function LoadAllShotData()
+{
+	LoadEnemyShotData(pathShotData);
+	LoadEnemyShotData(pathShotDataADD);
+	LoadEnemyShotData(pathShotDataThunder);
+}

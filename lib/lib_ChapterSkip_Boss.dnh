@@ -1,0 +1,51 @@
+// Boss-scene helpers. Title/stage cannot see ObjEnemyBossScene_Add.
+// Include only from lib_Boss.dnh (plural scripts).
+
+function ChapterSkip_AddOne(obj, step, dir, file, extraBefore, extraAfter){
+    if(length(extraBefore) > 0){
+        ObjEnemyBossScene_Add(obj, step, dir ~ extraBefore);
+    }
+    ObjEnemyBossScene_Add(obj, step, dir ~ file);
+    if(length(extraAfter) > 0){
+        ObjEnemyBossScene_Add(obj, step, dir ~ extraAfter);
+    }
+}
+
+function ChapterSkip_GetExtra(arr, i){
+    if(i < 0 || i >= length(arr)){ return ""; }
+    return arr[i];
+}
+
+function ChapterSkip_AddFrom(obj, dest, firstCh, sht, files, dir){
+    ChapterSkip_AddFromEx(obj, dest, firstCh, sht, files, dir, [], []);
+}
+
+function ChapterSkip_AddFromEx(obj, dest, firstCh, sht, files, dir, extraBefore, extraAfter){
+    let nd = max(dest, firstCh);
+    let start = nd - firstCh;
+    if(start < 0){ start = 0; }
+    if(start >= length(files)){ return; }
+    let base = sht[start];
+    ascent(i in start .. length(files)){
+        ChapterSkip_AddOne(obj, sht[i] - base, dir, files[i], ChapterSkip_GetExtra(extraBefore, i), ChapterSkip_GetExtra(extraAfter, i));
+    }
+}
+
+function ChapterSkip_AddDiv(objMain, objDiv, dest, firstCh, sht, files, dir, stage){
+    ChapterSkip_AddDivEx(objMain, objDiv, dest, firstCh, sht, files, dir, stage, [], []);
+}
+
+function ChapterSkip_AddDivEx(objMain, objDiv, dest, firstCh, sht, files, dir, stage, extraBefore, extraAfter){
+    let start = dest - firstCh;
+    ascent(i in 0 .. length(files)){
+        if(i == start){
+            ChapterSkip_AddOne(objDiv, 0, dir, files[i], ChapterSkip_GetExtra(extraBefore, i), ChapterSkip_GetExtra(extraAfter, i));
+            ObjEnemyBossScene_LoadInThread(objDiv);
+            SetScriptState(stage, dest);
+        }
+        else if(i > start){
+            let base2 = sht[start + 1];
+            ChapterSkip_AddOne(objMain, sht[i] - base2, dir, files[i], ChapterSkip_GetExtra(extraBefore, i), ChapterSkip_GetExtra(extraAfter, i));
+        }
+    }
+}

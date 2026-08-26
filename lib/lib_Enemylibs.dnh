@@ -1,0 +1,888 @@
+//雑魚・ボス共通の処理
+#include"./zakolib/lib_ZakoDraw.dnh"
+#include"./zakolib/lib_ZakoMotion.dnh"
+
+
+// -------------------- 描画レイヤー
+let priorityZako	= 40;
+
+// -------------------- 妖精種類定数
+let FAIRY_VERYSMALL		= 0;	//最小
+let FAIRY_VERYSMALL_FLUFF	= 1;	//最小（綿毛）
+let FAIRY_SMALL			= 2;	//小
+let FAIRY_SMALL_CAP		= 3;	//小（帽子）
+let FAIRY_MIDDLE		= 4;	//中
+let FAIRY_MIDDLE_RIBBON		= 5;	//中（リボン）
+let FAIRY_LARGE			= 6;	//大
+let FAIRY_LARGE_FLOWER		= 7;	//大（向日葵）
+
+// -------------------- 敵のサイズ（判定・撃破エフェクトに影響）
+let ENEMY_FREE			= 0;	//当たり判定設定なし（別個で設定する必要あり）
+let ENEMY_3L			= 1;	//準中ボス
+let ENEMY_LL			= 2;	//特大
+let ENEMY_L			= 3;	//大
+let ENEMY_M			= 4;	//中
+let ENEMY_S			= 5;	//小
+let ENEMY_SS			= 6;	//最小
+let ENEMY_3L_T			= 7;	//準中ボス（体当たり判定なし）
+let ENEMY_LL_T			= 8;	//特大（体当たり判定なし）
+let ENEMY_L_T			= 9;	//大（体当たり判定なし）
+let ENEMY_M_T			= 10;	//中（体当たり判定なし）
+let ENEMY_S_T			= 11;	//小（体当たり判定なし）
+let ENEMY_SS_T			= 12;	//最小（体当たり判定なし）
+
+// -------------------- 敵の判定サイズ [shot, player]
+let ENEMY_INTERSECTION = [
+	[-1, -1],	//当たり判定設定なし
+	[64, 24],	//準中ボス
+	[40, 24],	//特大
+	[32, 14],	//大
+	[24,  8],	//中
+	[16,  6],	//小
+	[10,  3],	//ミニ
+	[64, 24],	//準中ボス
+	[40, 24],	//特大
+	[32, 14],	//大
+	[24,  8],	//中
+	[16,  6],	//小
+	[10,  3],	//ミニ
+];
+
+
+// -------------------- 爆発えへくとサイズ
+let ENEMY_EXPLO_EFFECT = [
+	[-1, -1],	//当たり判定設定なし
+	[16,  5],	//準中ボス
+	[16,3.5],	//特大
+	[16,  3],	//大
+	[12,2.5],	//中
+	[ 8,  3],	//小
+	[ 8,  3],	//ミニ
+	[16,  5],	//準中ボス
+	[16,3.5],	//特大
+	[16,  3],	//大
+	[12,2.5],	//中
+	[ 8,  2],	//小
+	[ 8,  2],	//ミニ
+];
+
+// -------------------- 敵撃破カウント数（アイテム回収ラインに影響）
+let ENEMY_KILL_COUNT = [
+	0,	//当たり判定設定なし
+	30,	//準中ボス
+	15,	//特大
+	15,	//大
+	3,	//中
+	1,	//小
+	1,	//ミニ
+	30,	//準中ボス
+	15,	//特大
+	15,	//大
+	3,	//中
+	1,	//小
+	1,	//ミニ
+];
+
+// -------------------- アイテムドロップ [接近範囲,撃ち込みドロップ数,撃破時追加ドロップ数]
+let ENEMY_EXTRA_ITEM = [
+	[-1, -1, -1],	//当たり判定設定なし
+	[96, 30,  0],	//準中ボス
+	[96, 15,  1],	//特大
+	[96, 15,  1],	//大
+	[96,  5,  1],	//中
+	[84,  0,  1],	//小
+	[84,  0,  1],	//ミニ
+	[96, 30,  0],	//準中ボス
+	[96, 15,  1],	//特大
+	[96, 15,  1],	//大
+	[96,  5,  1],	//中
+	[84,  0,  1],	//小
+	[84,  0,  1],	//ミニ
+];
+
+
+//配置ひな形
+function MakeEnemy(emnX, emnY, emnLife, enmSize)
+{
+	return(_MakeEnemy(emnX, emnY, emnLife, enmSize, true));
+}
+function MakeEnemyFamilier(emnX, emnY, emnLife, enmSize)
+{
+	return(_MakeEnemy(emnX, emnY, emnLife, enmSize, false));
+}
+function _MakeEnemy(emnX, emnY, emnLife, enmSize, enmEntry)
+{
+	let obj = ObjEnemy_Create(OBJ_ENEMY);
+	ObjEnemy_SetLife(obj, emnLife);
+	ObjEnemy_SetDamageRate(obj, 100, 100);
+	ObjMove_SetPosition(obj, emnX, emnY);
+	Obj_SetValue(obj, "KILLED", false);
+	Obj_SetValue(obj, "E_SIZE", enmSize);
+	SetEnemyVisible(obj, true);
+	ObjEnemy_Regist(obj);
+
+	if (ENEMY_EXTRA_ITEM[enmSize][1] > 0) { TShootingWishItem(obj, ENEMY_EXTRA_ITEM[enmSize][1], ENEMY_EXTRA_ITEM[enmSize][0]); }
+	TAddPoint(obj);	//撃ち込み点
+	if (enmEntry) { EntryEnemyCount(obj, ENEMY_KILL_COUNT[enmSize]); }	//敵カウント用
+	
+	return (obj);
+}
+
+//体力チェックと判定設置
+function WaitForKilled(obj, emnToShot, emnToPlayer)
+{
+	while(!Obj_GetValueD(obj, "KILLED", false) &&
+		ObjEnemy_GetInfo(obj, INFO_LIFE) > 0)
+	{
+		//当たり判定登録
+		if (GetEnemyVisible(obj))
+		{
+			if (emnToShot) { ObjEnemy_SetIntersectionCircleToShot(obj, ObjMove_GetX(obj), ObjMove_GetY(obj), emnToShot); }
+			if (emnToPlayer) { ObjEnemy_SetIntersectionCircleToPlayer(obj, ObjMove_GetX(obj), ObjMove_GetY(obj), emnToPlayer); }
+		}
+		yield;
+	}
+	//動きを停止
+	ObjMove_SetSpeed(obj, 0);
+	ObjMove_SetAcceleration(obj, 0);
+	Obj_SetValue(obj, "ANIME_STOP", 1);
+}
+
+// 雑魚撃破・消滅処理
+task ZakoFinalize(objEnemy, eff_color)
+{
+	let eX = ObjMove_GetX(objEnemy);
+	let eY = ObjMove_GetY(objEnemy);
+	let eA = GetAngleToPlayer(objEnemy);
+	let enmSize = Obj_GetValueD(objEnemy, "E_SIZE", 0);
+
+	let kill_type = CheckKillType(objEnemy);
+	if (kill_type == 2)
+	{
+		// 撃破数カウント用
+		KilledEnemyCount(objEnemy, ENEMY_KILL_COUNT[enmSize]);
+		
+		// アイテム配置
+		DropItems(objEnemy);
+		
+		// 追加アイテム配置
+		if (((eX-GetPlayerX)^2+(eY-GetPlayerY)^2)^0.5 < ENEMY_EXTRA_ITEM[enmSize][0])
+			{ DropExtraItems(objEnemy, ENEMY_EXTRA_ITEM[enmSize][2]); }
+	}
+	// 撃破えへくと
+	if (kill_type > 0)
+	{
+		EffectZako_Explode(eX, eY, eA+randEffect(-15,15), eff_color, ENEMY_EXPLO_EFFECT[enmSize][0], ENEMY_EXPLO_EFFECT[enmSize][1]);
+		CallSound(sndVanish);
+	}
+	Obj_Delete(objEnemy);
+}
+
+
+// -------------------------- フラグ類
+//当たり判定の有無フラグをセット
+function SetEnemyVisible(obj, val) { Obj_SetValue(obj, "VISIBLE", val); }
+function GetEnemyVisible(obj) { return(Obj_GetValueD(obj, "VISIBLE", false)); }
+function EraseEnemy(obj) { return(Obj_SetValue(obj, "KILLED", true)); }
+
+//弾撃てる？
+function CanShotBullet(obj)
+{
+	return(!Obj_IsDeleted(obj) && !Obj_GetValueD(obj, "ANIME_STOP", 0));
+}
+
+//撃破タイプ
+function CheckKillType(obj)
+{
+	let tmp = 0;
+	if (ObjEnemy_GetInfo(obj, INFO_LIFE) <= 0)	//撃破された
+	{
+		if (Obj_GetValueD(obj, "KILLED", false))	//人魂消滅などで撃破した
+			{ tmp = 1; }
+		else
+			{ tmp = 2; }
+	}
+	else { tmp = 0; }
+	return(tmp);
+}
+
+// 撃ち返しフラグ
+function CheckUchikaeshi(obj, r)
+{
+	return((ObjMove_GetX(obj)-GetPlayerX)^2 + (ObjMove_GetY(obj)-GetPlayerY)^2 > r^2);
+}
+
+// -------------------------- 監視用関数
+//画面内に入るまで判定なし
+task HideWhileDispIn(obj)
+{
+	Obj_SetValue(obj, "VISIBLE", 0);
+	let t = 0;
+	while(!Obj_IsDeleted(obj) && t < 120 &&
+		(0 > ObjMove_GetX(obj) || GetStgFrameWidth < ObjMove_GetX(obj) ||
+		0 > ObjMove_GetY(obj) || GetStgFrameHeight < ObjMove_GetY(obj))) { t++; yield; }
+	if (!Obj_IsDeleted(obj))
+	{
+		Obj_SetValue(obj, "VISIBLE", 1);
+	}
+}
+
+//画面外退出待ち
+task Enemy_WaitForDispOUT(obj, eSize, delay)
+{
+	wait(delay);
+	while(!Obj_IsDeleted(obj) &&
+		-eSize <= ObjMove_GetX(obj) && GetStgFrameWidth+eSize >= ObjMove_GetX(obj) &&
+		-eSize <= ObjMove_GetY(obj) && GetStgFrameHeight+eSize >= ObjMove_GetY(obj)) { yield; }
+	if (!Obj_IsDeleted(obj)) { EraseEnemy(obj); }
+}
+
+// 瀕死時のブブブ音
+task TDamageSound(obj, lifeRate)
+{
+	let before_life = ObjEnemy_GetInfo(obj, INFO_LIFE);
+	let damage_life = before_life*lifeRate;
+	while(!Obj_IsDeleted(obj))
+	{
+		let now_life = ObjEnemy_GetInfo(obj, INFO_LIFE);
+		if (now_life < before_life && now_life < damage_life)
+		{
+			CallSound(sndNoiseUP);
+		}
+		before_life = now_life;
+		yield;
+	}
+}
+
+//消滅フラグ立てるマン
+task TCheckDispINOut(obj, size)
+{
+	while(!Obj_IsDeleted(obj))
+	{
+		if (CheckDispIN(obj, size))
+		{
+			Enemy_WaitForDispOUT(obj, size, 60);
+			break;
+		}
+		yield;
+	}
+}
+
+//打ち込み点
+task TAddPoint(obj)
+{
+	let hRate = 1/1000;
+	let before_ad = trunc(GetMaxScore()*ObjEnemy_GetInfo(obj, INFO_LIFE)*hRate);
+	while(!Obj_IsDeleted(obj) && !Obj_GetValueD(obj, "ANIME_STOP", 0))
+	{
+		let ad = trunc(GetMaxScore()*ObjEnemy_GetInfo(obj, INFO_LIFE)*hRate);
+		if (before_ad > ad)
+		{
+			AddScore((before_ad-ad)*10);
+			before_ad = ad;
+		}
+		yield;
+	}
+}
+
+//親の監視
+task TCheckKillParent(obj, parent)
+{
+	while(CanShotBullet(obj))
+	{
+		if (!Obj_IsDeleted(parent) && ObjEnemy_GetInfo(parent, INFO_LIFE) <= 0 && !Obj_GetValueD(parent, "KILLED", false))
+		{
+			ObjEnemy_AddLife(obj, -ObjEnemy_GetInfo(obj, INFO_LIFE)-1);
+			Obj_SetValue(obj, "KILLED_PARENT", 1);
+			break;
+		}
+		yield;
+	}
+}
+
+// -------------------------- 移動関係
+// 加速→減速移動
+task ObjMove_SetDestAtWeightSpeedUp(obj, x, y, weight, speed, add_speed, max_speed)
+{
+	while(!Obj_IsDeleted(obj))
+	{
+		ObjMove_SetDestAtWeight(obj, x, y, weight, speed);
+		speed = min(max_speed, speed+add_speed);
+		yield;
+		if (ObjMove_GetSpeed(obj) <= 0) { return; }
+	}
+}
+
+//指定箇所へ移動（加速→減速）
+task MoveTo(obj, to_x, to_y, timer)
+{
+	let tm = trunc(timer/3);
+	let tm2 = timer - tm*2;
+
+	let max_t = tm2 + (tm+1);
+	if (tm <= 0) { max_t--; }
+
+	let tmp_x = ObjMove_GetX(obj);
+	let tmp_y = ObjMove_GetY(obj);
+	let vx = (to_x-ObjMove_GetX(obj))/max_t;
+	let vy = (to_y-ObjMove_GetY(obj))/max_t;
+
+	ascent(i in 0 .. tm)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		tmp_x += vx*(i+1)/tm; tmp_y += vy*(i+1)/tm;
+		ObjMove_SetDestAtFrame(obj, tmp_x, tmp_y, 1);
+		yield;
+	}
+	loop(tm2)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		tmp_x += vx; tmp_y += vy;
+		ObjMove_SetDestAtFrame(obj, tmp_x, tmp_y, 1);
+		yield;
+	}
+	descent(i in 0 .. tm)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		tmp_x += vx*(i+1)/tm; tmp_y += vy*(i+1)/tm;
+		ObjMove_SetDestAtFrame(obj, tmp_x, tmp_y, 1);
+		yield;
+	}
+}
+
+//指定箇所へ移動（減速）
+task MoveToSlowdown(obj, to_x, to_y, timer)
+{
+	let max_t = (timer+1)/2;
+	let tmp_x = ObjMove_GetX(obj);
+	let tmp_y = ObjMove_GetY(obj);
+	let vx = (to_x-ObjMove_GetX(obj))/max_t;
+	let vy = (to_y-ObjMove_GetY(obj))/max_t;
+
+	descent(i in 0 .. timer)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		tmp_x += vx*(i+1)/timer; tmp_y += vy*(i+1)/timer;
+		ObjMove_SetDestAtFrame(obj, tmp_x, tmp_y, 1);
+		yield;
+	}
+}
+
+//指定箇所へ移動（いっぱい減速）
+task MoveToSlowdown2(obj, to_x, to_y, timer)
+{
+	let from_x = ObjMove_GetX(obj);
+	let from_y = ObjMove_GetY(obj);
+
+	ascent(i in 0 .. timer)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		let tmp = sin(((i+1)/timer)*90);
+		let x = from_x*(1-tmp) + to_x*tmp;
+		let y = from_y*(1-tmp) + to_y*tmp;
+		ObjMove_SetDestAtFrame(obj, x, y, 1);
+		yield;
+	}
+}
+
+//【弾幕風ph3向け・v0.12m関数ライブラリ(α版)】
+task SetMovePositionHermite( let obj, let x2 , let y2 , let VR1 , let VT1 , let VR2 , let VT2 , let frame )
+{
+	let t = 0 ;
+	
+	let x1 = ObjMove_GetX(obj) ;
+	let y1 = ObjMove_GetY(obj) ;
+	let vx1 = VR1 * cos( VT1 ) ;
+	let vy1 = VR1 * sin( VT1 ) ;
+	let vx2 = VR2 * cos( VT2 ) ;
+	let vy2 = VR2 * sin( VT2 ) ;
+	
+	ascent(timer in 0 .. frame)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		let MoveX =	( 2 * x1 +     vx1 - 2 * x2 +   vx2 ) * t^3+
+				(-3 * x1 - 2 * vx1 + 3 * x2 -   vx2 ) * t^2+
+				( vx1 ) * t^1 + ( 1 * x1 );
+		let MoveY =	( 2 * y1 +     vy1 - 2 * y2 +   vy2 ) * t^3+
+				(-3 * y1 - 2 * vy1 + 3 * y2 -   vy2 ) * t^2+
+				( vy1 ) * t^1 + ( 1 * y1 );
+		ObjMove_SetDestAtFrame( obj , MoveX , MoveY , 1 );
+		t = timer / frame ;
+		yield;
+	}
+	ObjMove_SetDestAtFrame( obj , x2 , y2 , 1 );
+}
+
+//ホーミング移動
+task MoveHorming(obj, horming_power, timer)
+{
+	let t = 0;
+	while(!Obj_IsDeleted(obj) && t < timer)
+	{
+		ObjMove_SetAngle(obj, GetHormingAngle(ObjMove_GetX(obj), ObjMove_GetY(obj),
+			ObjMove_GetAngle(obj), horming_power * (timer-t)/timer));
+		t++;
+		yield;
+	}
+}
+function GetHormingAngle(x, y, angle, horming_power)
+{
+	let to_angle = atan2(GetPlayerY-y, GetPlayerX-x);
+	let tmp = (angle-to_angle+720)%360;
+	if (tmp > 180) { tmp -= 360; }
+	if (tmp < -horming_power) { return(angle+horming_power); }
+	else if (tmp > horming_power) { return(angle-horming_power); }
+	else { return(to_angle); }
+}
+function GetHormingAngleEx(x, y, angle, horming_power, to_obj)
+{
+	let to_angle = atan2(ObjMove_GetY(to_obj)-y, ObjMove_GetX(to_obj)-x);
+	let tmp = (angle-to_angle+720)%360;
+	if (tmp > 180) { tmp -= 360; }
+	if (tmp < -horming_power) { return(angle+horming_power); }
+	else if (tmp > horming_power) { return(angle-horming_power); }
+	else { return(to_angle); }
+}
+
+//画面端っこの座標を取得
+//画面外の座標が原点だった場合は知らない！
+function GetVergePosition(x, y, angle)
+{
+	let sina = sin(angle);
+	let cosa = cos(angle);
+	if (sina == 0) {
+		if (cosa > 0) { return([GetStgFrameWidth, y]); }
+		else { return([0, y]) }
+	} else if (sina > 0)
+	{
+		if (cosa == 0) { return([x, GetStgFrameHeight]); }
+		else if (cosa > 0) {
+			let r1 = (GetStgFrameWidth-x) / cosa;
+			let r2 = (GetStgFrameHeight-y) / sina;
+			if (r1 < r2) { return([GetStgFrameWidth, y+r1*sina]); }
+			else { return([x+r2*cosa, GetStgFrameHeight]); }
+		}
+		else {
+			let r1 = -x / cosa;
+			let r2 = (GetStgFrameHeight-y) / sina;
+			if (r1 < r2) { return([0, y+r1*sina]); }
+			else { return([x+r2*cosa, GetStgFrameHeight]); }
+		}
+	} else {
+		if (cosa == 0) { return([x, 0]); }
+		else if (cosa < 0) {
+			let r1 = -x / cosa;
+			let r2 = -y / sina;
+			if (r1 < r2) { return([0, y+r1*sina]); }
+			else { return([x+r2*cosa, 0]); }
+		}
+		else {
+			let r1 = (GetStgFrameWidth-x) / cosa;
+			let r2 = -y / sina;
+			if (r1 < r2) { return([GetStgFrameWidth, y+r1*sina]); }
+			else { return([x+r2*cosa, 0]); }
+		}
+	}
+}
+
+
+// -------------------------- 弾一括削除
+//弾削除エフェクトのみ
+task DeleteShotAll_Effect(x, y)
+{
+	_DeleteShotAll_Effect(x, y, true);
+}
+task DeleteShotAll_EffectEx(x, y, delete_type)
+{
+	_DeleteShotAll_Effect(x, y, delete_type);
+}
+task _DeleteShotAll_Effect(x, y, delete_type)
+{
+	let isResDelete = delete_type;
+	let delType = [TYPE_SHOT, TYPE_ALL][isResDelete];
+	//画面端から一番遠い点を取得
+	let max_r = x^2 + y^2;
+	max_r = max(max_r, (GetStgFrameWidth-x)^2 + y^2);
+	max_r = max(max_r, x^2 + (GetStgFrameHeight-y)^2);
+	max_r = max(max_r, (GetStgFrameWidth-x)^2 + (GetStgFrameHeight-y)^2);
+	max_r = max_r^0.5 + 64;
+	
+	let r = 0;
+	DeleteShotAll(delType, TYPE_FADE);	//先に判定を消す
+	while (r < max_r)
+	{
+		r += 16;
+		let objShots = GetShotIdInCircleA2(x, y, r, TARGET_ENEMY);
+		ascent(i in 0 .. length(objShots))
+		{
+			if (isResDelete || !ObjShot_IsSpellResist(objShots[i]))
+			{
+				DeleteBulletEffect(objShots[i]);
+			}
+		}
+		yield;
+	}
+	DeleteShotAll(delType, TYPE_IMMEDIATE);	//画面外の弾も削除
+}
+
+//徐々に弾削除
+task DeleteShotAll_Delay(x, y)
+{
+	//画面端から一番遠い点を取得
+	let max_r = x^2 + y^2;
+	max_r = max(max_r, (GetStgFrameWidth-x)^2 + y^2);
+	max_r = max(max_r, x^2 + (GetStgFrameHeight-y)^2);
+	max_r = max(max_r, (GetStgFrameWidth-x)^2 + (GetStgFrameHeight-y)^2);
+	max_r = max_r^0.5 + 64;
+	
+	let r = 0;
+	DeleteShotAll(TYPE_ALL, TYPE_FADE);	//先に判定を消す
+	while (r < max_r)
+	{
+		r += 16;
+		DeleteShotInCircle(TYPE_ALL, TYPE_ITEM, x, y, r);
+		yield;
+	}
+	DeleteShotAll(TYPE_ALL, TYPE_IMMEDIATE);	//画面外の弾も削除
+}
+
+//範囲内の弾削除
+task DeleteShot_Effect(x, y, r, delete_type)
+{
+	let isResDelete = (delete_type != "TYPE_SHOT");
+	let objShots = GetShotIdInCircleA2(x, y, r, TARGET_ENEMY);
+	ascent(i in 0 .. length(objShots))
+	{
+		if (isResDelete || !ObjShot_IsSpellResist(objShots[i]))
+		{
+			DeleteBulletEffect(objShots[i]);
+		}
+	}
+}
+
+
+//敵出現数カウント
+task EntryEnemyCount(objEnemy, count)
+{
+	SetAreaCommonData(CAREA_STAGE, "ChapterShootDownMax",
+		GetAreaCommonData(CAREA_STAGE, "ChapterShootDownMax", 0)+count);
+	Obj_SetValue(objEnemy, "EntryCount", 1);
+}
+//撃破数カウント
+task KilledEnemyCount(objEnemy, count)
+{
+	if (Obj_GetValueD(objEnemy, "EntryCount", 0))
+	{
+		SetAreaCommonData(CAREA_STAGE, "ChapterShootDownCount",
+			GetAreaCommonData(CAREA_STAGE, "ChapterShootDownCount", 0)+count);
+		
+		// 敵撃破通知
+		NoticeEnemyKilled(count);
+	}
+}
+
+// アイテム配置
+task DropItems(objEnemy)
+{
+	let eX = ObjMove_GetX(objEnemy);
+	let eY = ObjMove_GetY(objEnemy);
+
+	let item_count = Obj_GetValueD(objEnemy, "ItemCount", 0);
+	let item_r = (4 + item_count^0.5)/ 4;
+
+	let item_star = Obj_GetValueD(objEnemy, "StarItemCount", 0);
+	let item_star_r = item_star^0.5 / 4;
+	if (item_star > 0) { item_r += item_star_r; }
+	
+	ascent(i in 0 .. item_count)
+	{
+		let ia = -90 + (i+rand(-0.5,0.5))/item_count*360;
+		let is = rand(0.25, 1) * item_r;
+		SetItemEx(eX, eY, is, ia, MY_ITEM_POINT);
+	}
+	ascent(i in 0 .. item_star)
+	{
+		let ia = 90 + i/item_star*360;
+		let is = item_star_r;
+		SetItemEx(eX, eY, is, ia, MY_ITEM_WISH);
+	}
+}
+task DropExtraItems(objEnemy, count)
+{
+	let eX = ObjMove_GetX(objEnemy);
+	let eY = ObjMove_GetY(objEnemy);
+
+	ascent(i in 0 .. count)
+	{
+		let ia = rand(0, 360);
+		let is = 3;
+		SetItemEx(eX, eY, is, ia, MY_ITEM_WISH_EX);
+		CallSound(sndShot5);
+		wait(3);
+	}
+}
+task SetDropItemCount(objEnemy, item_count, item_star)
+{
+	Obj_SetValue(objEnemy, "ItemCount", item_count);
+	Obj_SetValue(objEnemy, "StarItemCount", item_star);
+}
+
+
+// てきを　ぜんいん　ころす
+function KillAllEnemy()
+{
+	let tmp_obj = GetAllEnemyID();
+	ascent(i in 0 .. length(tmp_obj))
+	{
+		Obj_SetValue(tmp_obj[i], "KILLED", 1);	//アイテムドロップフラグOFF
+		ObjEnemy_SetLife(tmp_obj[i], 0);
+	}
+}
+
+// 敵撃破通知
+function NoticeEnemyKilled(count)
+{
+	NotifyEventAll(ev_EnemyKilled, count);
+}
+
+// 星アイテムの撃ち込みドロップ (敵obj, 最大数, ドロップ範囲)
+task TShootingWishItem(obj, max_count, r)
+{
+	//初期設定
+	let objEffect = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objEffect, priorityZako-2);
+	ObjPrim_SetTexture(objEffect, imgEffectMZodiac);
+	ObjSprite2D_SetSourceRect(objEffect, 0, 0, 128, 129);
+	ObjSprite2D_SetDestCenter(objEffect);
+	ObjRender_SetBlendType(objEffect, BLEND_SUBTRACT);
+	ObjRender_SetScaleXYZ(objEffect, r/64, r/64, 1);
+	//初期設定
+	Obj_SetValue(obj, "LINK_ER", 999);
+
+	let maxLife = ObjEnemy_GetInfo(obj, INFO_LIFE);
+	let befLife = maxLife;
+	
+	let t = 0;
+	let alpha = 0;
+	let dItem = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		let eR = ((GetPlayerY-ObjMove_GetY(obj))^2+(GetPlayerX-ObjMove_GetX(obj))^2)^0.5;
+		let eR_rate = min(eR/r, Obj_GetValueD(obj, "LINK_ER", 999));
+		let link_type = Obj_GetValueD(obj, "LINK_LIFE", 0);
+
+		if (link_type <= 1)
+		{
+			let nowLife = ObjEnemy_GetInfo(obj, INFO_LIFE);
+			if (nowLife <= 0) { break; }
+			if (nowLife < befLife)
+			{
+				let decLife = befLife - nowLife;
+				if (eR_rate <= 1) { dItem += max_count*decLife/maxLife; }
+				else if (eR_rate <= 1.5) { dItem += max_count*decLife/maxLife/2; }
+				else if (eR_rate <= 2) { dItem += max_count*decLife/maxLife/4; }
+				else if (eR_rate <= 3) { dItem += max_count*decLife/maxLife/8; }
+				befLife = nowLife;
+			}
+			if (dItem >= 0.5)
+			{
+				dItem -= 1;
+				SetItemEx(ObjMove_GetX(obj), ObjMove_GetY(obj), 3, rand(0,360), MY_ITEM_WISH_EX);
+				CallSound(sndShot5);
+			}
+			// リセット
+			Obj_SetValue(obj, "LINK_ER", 999);
+		}
+		else if (link_type == 2)
+		{
+			// 近接判定を本体と連動（アイテムドロップはしない）
+			if (GetEnemyVisible(obj))
+			{
+				let parent = Obj_GetValueD(obj, "LINK_PARENT", -1);	// 本体のID
+				Obj_SetValue(parent, "LINK_ER", min(eR_rate, Obj_GetValueD(parent, "LINK_ER", 0)));
+			}
+		}
+		
+		if (eR < r+32 && GetEnemyVisible(obj)) { alpha = min(48, alpha+3); }
+		else { alpha = max(0, alpha-6); }
+		ObjRender_SetPosition(objEffect, ObjMove_GetX(obj), ObjMove_GetY(obj), 0);
+		ObjRender_SetAlpha(objEffect, alpha);
+		ObjRender_SetAngleZ(objEffect, t);
+		t++;
+		yield;
+	}
+	Obj_Delete(objEffect);
+}
+
+//アイテム配置（ボスや強敵用）
+task Boss_SetItem(obj, itemCount)
+{
+	let eX = ObjMove_GetX(obj);
+	let eY = ObjMove_GetY(obj);
+	_Boss_SetItem(eX, eY, itemCount);
+}
+task _Boss_SetItem(eX, eY, itemCount)
+{
+	// アイテム配置
+	ascent(i in 0 .. itemCount)
+	{
+		let ia = -90 + (i+rand(-0.5,0.5))/itemCount*3600;
+		let is = i^0.5 * 0.66 + rand(-0.1, 0.1);
+		SetItemEx(eX, eY, is, ia, MY_ITEM_POINT);
+		if (i%5 == 3) { yield; }
+	}
+}
+
+//特殊アイテム配置
+task Boss_SetSpecialItem(obj, itemSpecial)
+{
+	let eX = ObjMove_GetX(obj);
+	let eY = ObjMove_GetY(obj);
+	_Boss_SetSpecialItem(eX, eY, itemSpecial);
+}
+task _Boss_SetSpecialItem(eX, eY, itemSpecial)
+{
+	let itemCount = length(itemSpecial);
+	let eR = ((itemCount-1)^0.5) * 32;
+
+	wait(30);
+	// アイテム配置
+	ascent(i in 0 .. itemCount)
+	{
+		let ia = 90 + (i+0.5)/itemCount*360;
+		SetItem(eX+eR*cos(ia), eY+eR*sin(ia), itemSpecial[i]);
+		wait(15);
+	}
+}
+
+
+// 星形にアイテム配置
+task Boss_SetStarItem(eX, eY, count)
+{
+	ascent(i in 0 .. 5)
+	{
+		let from_x = cos(-90+(i+0.5)*72)*2;
+		let from_y = sin(-90+(i+0.5)*72)*2;
+		let to_x1 = cos(-90+(i+1)*72)*5;
+		let to_y1 = sin(-90+(i+1)*72)*5;
+		let to_x2 = cos(-90+(i+0)*72)*5;
+		let to_y2 = sin(-90+(i+0)*72)*5;
+		Boss_SetStarItem_sub([eX,eY], [from_x,from_y], [to_x1,to_y1], count, true);
+		Boss_SetStarItem_sub([eX,eY], [from_x,from_y], [to_x2,to_y2], count, false);
+	}
+	
+	task Boss_SetStarItem_sub(pos, from_pos, to_pos, count, flgSetEdge)
+	{
+		let size = (count/5)^0.5;
+		ascent(i in 0 .. count)
+		{
+			if (flgSetEdge || (i != 0 && i != count-1))
+			{
+				let tmp = i/(count-1);
+				let ix = from_pos[0]*(1-tmp) + to_pos[0]*tmp;
+				let iy = from_pos[1]*(1-tmp) + to_pos[1]*tmp;
+				let is = (ix^2+iy^2)^0.5 * size;
+				let ia = atan2(iy, ix);
+				SetItemEx(pos[0], pos[1], is, ia, MY_ITEM_WISH_EX);
+			}
+			wait(2);
+		}
+	}
+}
+
+
+// 曲名表示
+task PlayMusicWithName( int_play_num, bool_fade_out, int_delay )
+{
+	PlayMusic( int_play_num, bool_fade_out, int_delay );
+	if (GetPlayMode() == GAME_MAIN || GetPlayMode() == GAME_PRACTICE || GetPlayMode() == GAME_PRACTICE || GetPlayMode() == GAME_SPELL)
+	{
+		wait(int_delay);
+		SetMusicName(int_play_num);
+	}
+}
+task SetMusicName(musicID)
+{
+	let baseX = 160;
+	let baseY = 450;
+	
+	//初期設定
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj, 99);
+	ObjPrim_SetTexture(obj, imgSystemMusic);
+	ObjSprite2D_SetSourceRect(obj, 0, musicID*32, 512, (musicID+1)*32);
+	ObjSprite2D_SetDestCenter(obj);
+
+	ascent(t in 0 .. 30)
+	{
+		let tmp = sin((t+1)/30*90);
+		ObjRender_SetPosition(obj, baseX+(1-tmp)*256, baseY, 0);
+		ObjRender_SetAlpha(obj, tmp*255);
+		yield;
+	}
+	wait(240);
+	descent(t in 0 .. 30)
+	{
+		let tmp = sin((t+1)/45*90);
+		ObjRender_SetAlpha(obj, tmp*255);
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+// 使い魔と体力連動（ボス側）
+task CheckLinkLife_Boss(objEnemy)
+{
+	Obj_SetValue(objEnemy, "LINK_LIFE", 1);	// 体力リンク設定（近接アイテム出現判定に関連）
+	Obj_SetValue(objEnemy, "LINK_COUNT", 0);
+	Obj_SetValue(objEnemy, "LINK_DMG", 0);
+	
+	let before_life = ObjEnemy_GetInfo(objEnemy, INFO_LIFE);
+	let before_linkdmg = 0;
+	while(!Obj_IsDeleted(objEnemy))
+	{
+		let now_life = ObjEnemy_GetInfo(objEnemy, INFO_LIFE);
+		let d = Obj_GetValueD(objEnemy, "LINK_DMG", 0);
+		let dmg = now_life-before_life + before_linkdmg;
+		if (dmg > 0.5)	// 本体へのダメージが一定以上ならリンクダメージ半減
+		{
+			d /= 2;
+		}
+		if (d > 0)
+		{
+			d *= ObjEnemy_GetInfo(objEnemy, INFO_DAMAGE_RATE_SHOT)/100;
+			ObjEnemy_AddLife(objEnemy, -d);
+		}
+		// 毎frameリセット
+		Obj_SetValue(objEnemy, "LINK_COUNT", 0);
+		Obj_SetValue(objEnemy, "LINK_DMG", 0);
+		before_linkdmg = d;
+		yield;
+	}
+}
+
+// 使い魔と体力連動（使い魔側）
+task CheckLinkLife_Familier(objEnemy, objFamilier, damage_rate)
+{
+	Obj_SetValue(objFamilier, "LINK_LIFE", 2);	// 体力リンク設定（近接アイテム出現判定に関連）
+	Obj_SetValue(objFamilier, "LINK_PARENT", objEnemy);
+
+	let tmp_life = ObjEnemy_GetInfo(objFamilier, INFO_LIFE);
+	
+	while(!Obj_IsDeleted(objFamilier) && !Obj_IsDeleted(objEnemy))
+	{
+		let new_life = max(0, ObjEnemy_GetInfo(objFamilier, INFO_LIFE));
+		let dmg = tmp_life - new_life;
+		if (dmg > 0)
+		{
+			let c = Obj_GetValueD(objEnemy, "LINK_COUNT", 0);
+			let d = Obj_GetValueD(objEnemy, "LINK_DMG", 0);
+			c++;
+			d += damage_rate * dmg/(c^2);
+			Obj_SetValue(objEnemy, "LINK_COUNT", c);
+			Obj_SetValue(objEnemy, "LINK_DMG", d);
+		}
+		tmp_life = new_life;
+		yield;
+	}
+}

@@ -1,0 +1,32 @@
+// ---------------------------
+//  チャプター関連
+// ---------------------------
+
+let CHAPTER_ROAD = 0;
+let CHAPTER_BOSS = 1;
+let CHAOTER_SPELL = 2;
+
+task ChapterStart()
+{
+	NotifyEventAll(ev_ChapterStart, 0);
+}
+
+task ChapterFinish()
+{
+	KillAllEnemy();
+	DeleteShotAll_Effect(CenX, 0);
+
+	NotifyEventAll(ev_ChapterFinish, 0);
+	SetChapterState(CHAPTER_ROAD);	// 状態リセット
+}
+
+task ChapterFinishBoss(delay)
+{
+	NotifyEventAll(ev_ChapterFinish, delay);
+	SetChapterState(CHAPTER_ROAD);	// 状態リセット
+}
+
+task SetChapterState(ctype)
+{
+	SetAreaCommonData(CAREA_STAGE, "ChapterType", ctype);
+}

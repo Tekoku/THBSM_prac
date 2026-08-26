@@ -1,0 +1,321 @@
+// 移動モーションの処理
+
+//雑魚登場、退出モーション
+let MOTION_NONE = 0;		//なにもしない
+let MOTION_STRAIGHT = 1;	//直線移動
+let MOTION_ROLL = 2;		//回転移動
+let MOTION_CURVE = 3;		//カーブ移動
+let MOTION_RAISE = 4;		//ひねり上がる感じ
+let MOTION_TOP = 5;		//上から背景へ
+let MOTION_EX = 6;		//Ex用、画面奥から
+
+// -------------------- 登場処理 ------------- //
+
+//画面後ろから登場
+task ZakoEnter(objEnemy, iniAngle, timer, motionType)
+{
+	let iniX = ObjMove_GetX(objEnemy);
+	let iniY = ObjMove_GetY(objEnemy);
+	
+	alternative(motionType)
+	case(MOTION_CURVE)
+	{
+		//カーブ移動
+		let rdir = [1, -1][iniX < CenX];
+		let xdir = [1, 0][(iniX < MinX) || (iniX > MaxX)];
+		let ex = iniX + 128*cos(iniAngle);
+		let ey = iniY + 128*sin(iniAngle);
+		let ea = iniAngle;
+		if (xdir) { ex -= rdir*128; ea -= rdir*45; }
+		else { ex -= rdir*80; ey -= 80; ea -= rdir*90; }
+		
+		ObjMove_SetPosition(objEnemy, ex, ey);
+		SetMovePositionHermite(objEnemy, iniX, iniY, 400, ea, 0, 0, timer);
+	}
+	case(MOTION_RAISE)
+	{
+		//ひねり上がる感じ
+		let ex = iniX;
+		let ey = iniY - 64;
+		
+		ObjMove_SetPosition(objEnemy, ex, ey);
+		SetMovePositionHermite(objEnemy, iniX, iniY, 400, 270, 200, 270, timer);
+	}
+	case(MOTION_TOP)
+	{
+		//カーブ移動
+		let rdir = [1, -1][iniX < CenX];
+		let ydir = [0,  1][iniY < MinY];
+		let ex = iniX + 128*cos(iniAngle);
+		let ey = iniY + 128*sin(iniAngle);
+		let ea = iniAngle;
+		if (ydir) { ey -= 128; ea += rdir*45; }
+		else { ey -= 256; ea -= rdir*45; }
+		
+		ObjMove_SetPosition(objEnemy, ex, ey);
+		SetMovePositionHermite(objEnemy, iniX, iniY, 500, 90, 500, ea+180, timer);
+	}
+	case(MOTION_EX)
+	{
+		//Extra用
+		ObjMove_SetPosition(objEnemy, CenX, CenY);
+		SetMovePositionHermite(objEnemy, iniX, iniY, 0, 0, 0, 0, timer);
+	}
+	ZakoEnterEffect_WorldBack(objEnemy, timer);	//敵のグラ変化
+}
+
+//画面後ろから登場（陰陽玉）
+task ZakoEnter_Onmyou(objEnemy, iniAngle, timer, motionType)
+{
+	let iniX = ObjMove_GetX(objEnemy);
+	let iniY = ObjMove_GetY(objEnemy);
+	
+	ZakoEnterEffect_Onmyou(objEnemy, timer);	//敵のグラ変化
+	
+	alternative(motionType)
+	case(MOTION_STRAIGHT)
+	{
+		//減速移動
+		let ex = iniX + 150*cos(iniAngle);
+		let ey = iniY + 150*sin(iniAngle);
+		ObjMove_SetPosition(objEnemy, ex, ey);
+		MoveToSlowdown(objEnemy, iniX, iniY, max(timer/2, timer-15));
+	}
+	case(MOTION_ROLL)
+	{
+		//ぐるりんぽん
+		let ex = iniX;
+		let ey = iniY;
+		let ea = iniAngle;
+		
+		ObjMove_SetPosition(objEnemy, ex, ey);
+		ascent(t in 0 .. timer)
+		{
+			let r = (1-(t+1)/timer) * 96;
+			ObjMove_SetPosition(objEnemy, ex+r*cos(ea), ey+r*sin(ea));
+			ea += 3;
+			yield;
+		}
+	}
+	case(MOTION_RAISE)
+	{
+		//ひねり上がる感じ
+		let ex = iniX;
+		let ey = iniY - 64;
+		
+		ObjMove_SetPosition(objEnemy, ex, ey);
+		SetMovePositionHermite(objEnemy, iniX, iniY, 400, 270, 200, 270, timer);
+	}
+	case(MOTION_TOP)
+	{
+		//上から背景へ
+		let ex = iniX;
+		let ey = iniY - 256;
+		
+		ObjMove_SetPosition(objEnemy, ex, ey);
+		SetMovePositionHermite(objEnemy, iniX, iniY, 400, 90, 0, 0, timer);
+	}
+}
+
+//画面後ろから登場（毛玉）
+task ZakoEnter_Kedama(objEnemy, iniAngle, timer, motionType)
+{
+	let iniX = ObjMove_GetX(objEnemy);
+	let iniY = ObjMove_GetY(objEnemy);
+	
+	ZakoEnterEffect_Kedama(objEnemy, timer);	//敵のグラ変化
+	
+	alternative(motionType)
+	case(MOTION_ROLL)
+	{
+		//ぐるりんぽん
+		let ex = CenX;
+		let ey = CenY;
+		let ba = atan2(iniY-CenY,iniX-CenX);
+		
+		ObjMove_SetPosition(objEnemy, ex, ey);
+		ascent(t in 0 .. timer)
+		{
+			let tmp = (t+1)/timer;
+			let r = 50 + tmp^2 * 260;
+			let ea = ba + 360*(1-tmp)^2;
+			ObjMove_SetPosition(objEnemy, ex+r*cos(ea), ey+r*sin(ea));
+			yield;
+		}
+		ObjMove_SetPosition(objEnemy, iniX, iniY);
+	}
+	case(MOTION_EX)
+	{
+		//ぐるりんぽん
+		let ex = iniX;
+		let ey = iniY;
+		let ea = iniAngle;
+		
+		ObjMove_SetPosition(objEnemy, ex, ey);
+		ascent(t in 0 .. timer)
+		{
+			let r = (1-(t+1)/timer) * 128;
+			ObjMove_SetPosition(objEnemy, ex+r*cos(ea), ey+r*sin(ea));
+			ea += 3;
+			yield;
+		}
+	}
+}
+
+// -------------------- 退出処理 ------------- //
+
+//一定時間後にゆっくり画面外へ
+task ZakoMove_TimerHide(objEnemy, timer)
+{
+	wait(timer);
+	if (CanShotBullet(objEnemy))
+	{
+		Enemy_WaitForDispOUT(objEnemy, 32, 0);	//退出待ち
+		ObjMove_SetAngle(objEnemy, -90);
+		ObjMove_SetSpeed(objEnemy, 0);
+		ObjMove_SetAcceleration(objEnemy, 0.05);
+		ObjMove_SetMaxSpeed(objEnemy, 2);
+	}
+}
+//一定時間後に自機狙い
+task ZakoMove_TimerToPlayer(objEnemy, timer)
+{
+	wait(timer);
+	if (CanShotBullet(objEnemy))
+	{
+		Enemy_WaitForDispOUT(objEnemy, 32, 0);	//退出待ち
+		ObjMove_SetAngle(objEnemy, GetAngleToPlayer(objEnemy));
+		ObjMove_SetSpeed(objEnemy, 0);
+		ObjMove_SetAcceleration(objEnemy, 0.05);
+		ObjMove_SetMaxSpeed(objEnemy, 2);
+	}
+}
+task ZakoMove_TimerToPlayerEx(objEnemy, timer, speed)
+{
+	wait(timer);
+	if (CanShotBullet(objEnemy))
+	{
+		Enemy_WaitForDispOUT(objEnemy, 32, 0);	//退出待ち
+		ObjMove_SetAngle(objEnemy, GetAngleToPlayer(objEnemy));
+		ObjMove_SetSpeed(objEnemy, 0);
+		ObjMove_SetAcceleration(objEnemy, speed/120);
+		ObjMove_SetMaxSpeed(objEnemy, speed);
+	}
+}
+//加速直線運動
+task ZakoMove_LineSpeedUp(objEnemy, iniSpeed, iniAngle)
+{
+	ObjMove_SetAngle(objEnemy, iniAngle);
+	ObjMove_SetSpeed(objEnemy, iniSpeed);
+	ObjMove_SetAcceleration(objEnemy, iniSpeed/60);
+	ObjMove_SetMaxSpeed(objEnemy, iniSpeed*3);
+	Enemy_WaitForDispOUT(objEnemy, 32, 60);	//退出待ち
+}
+//加速直線運動
+task ZakoMove_Line(objEnemy, iniSpeed, iniAngle)
+{
+	ObjMove_SetAngle(objEnemy, iniAngle);
+	ObjMove_SetSpeed(objEnemy, iniSpeed);
+	Enemy_WaitForDispOUT(objEnemy, 32, 60);	//退出待ち
+}
+//ちょいと出て自機狙い風味
+task ZakoMove_TyoiToPlayer(objEnemy, iniSpeed, iniAngle)
+{
+	ObjMove_SetAngle(objEnemy, iniAngle);
+	ObjMove_SetSpeed(objEnemy, iniSpeed);
+	ObjMove_SetAcceleration(objEnemy, -iniSpeed/90);
+	ObjMove_SetMaxSpeed(objEnemy, 0);
+	wait(120);
+	if (!Obj_IsDeleted(objEnemy))
+	{
+		ObjMove_SetAngle(objEnemy, GetAngleToPlayer(objEnemy)+rand(-15,15));
+		ObjMove_SetSpeed(objEnemy, 0);
+		ObjMove_SetAcceleration(objEnemy, 1.5/180);
+		ObjMove_SetMaxSpeed(objEnemy, 1.5);
+		Enemy_WaitForDispOUT(objEnemy, 32, 0);	//退出待ち
+	}
+}
+//画面後ろへ登場
+task ZakoMove_Away(objEnemy, iniAngle, timer, motionType)
+{
+	if (Obj_IsDeleted(objEnemy)) { return; }
+	
+	let iniX = ObjMove_GetX(objEnemy);
+	let iniY = ObjMove_GetY(objEnemy);
+	
+	alternative(motionType)
+	case(MOTION_RAISE)
+	{
+		//ひねり上がる感じ
+		let ex = iniX;
+		let ey = iniY - 64;
+		
+		SetMovePositionHermite(objEnemy, ex, ey, 200, 90, 400, 90, timer);
+	}
+	ZakoAwayEffect_WorldBack(objEnemy, timer);	//敵のグラ変化
+}
+
+//画面後ろへ退場（陰陽玉）
+task ZakoMove_AwayOnmyou(objEnemy, iniAngle, timer, motionType)
+{
+	if (Obj_IsDeleted(objEnemy)) { return; }
+	
+	let iniX = ObjMove_GetX(objEnemy);
+	let iniY = ObjMove_GetY(objEnemy);
+
+	alternative(motionType)
+	case(MOTION_STRAIGHT)
+	{
+		//直線
+		let iniSpeed = 4;
+		wait(15);
+		ObjMove_SetAngle(objEnemy, iniAngle);
+		ObjMove_SetSpeed(objEnemy, 0);
+		ObjMove_SetAcceleration(objEnemy, iniSpeed/60);
+		ObjMove_SetMaxSpeed(objEnemy, iniSpeed);
+	}
+	case(MOTION_RAISE)
+	{
+		//ひねり上がる感じ
+		let ex = iniX;
+		let ey = iniY - 64;
+		
+		SetMovePositionHermite(objEnemy, ex, ey, 200, 90, 400, 90, timer);
+	}
+	case(MOTION_TOP)
+	{
+		//上から背景へ
+		let ex = iniX;
+		let ey = iniY - 256;
+		
+		SetMovePositionHermite(objEnemy, ex, ey, 0, 0, 400, 90, timer);
+	}
+	ZakoAwayEffect_Onmyou(objEnemy, timer);	//敵のグラ変化
+
+}
+
+// 一定時間滑らかにカーブ
+task ZakoMove_CurveTimer(objEnemy, timer, add_angle)
+{
+	ascent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(objEnemy)) { break; }
+		let tmp = sin(t/(timer-1)*180)*add_angle;
+		ObjMove_SetAngle(objEnemy, ObjMove_GetAngle(objEnemy)+tmp);
+		yield;
+	}
+}
+// 一定時間滑らかにカーブ（速度もチェンジ）
+task ZakoMove_CurveTimer02(objEnemy, timer, add_angle)
+{
+	let speed = ObjMove_GetSpeed(objEnemy);
+	ascent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(objEnemy)) { break; }
+		let tmp = sin(t/(timer-1)*180);
+		ObjMove_SetAngle(objEnemy, ObjMove_GetAngle(objEnemy)+tmp*add_angle);
+		ObjMove_SetSpeed(objEnemy, (1-tmp*0.5)*speed);
+		yield;
+	}
+	ObjMove_SetSpeed(objEnemy, speed);
+}

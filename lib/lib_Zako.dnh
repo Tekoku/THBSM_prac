@@ -1,0 +1,52 @@
+#include "./lib_Common.dnh"
+#include "./lib_Bullet.dnh"
+#include "./lib_Enemylibs.dnh"
+#include "./lib_Effect.dnh"
+#include "./lib_Item.dnh"
+#include "./lib_Sound.dnh"
+
+#include "./zakolib/lib_ZakoDraw.dnh"
+#include "./zakolib/lib_ZakoMotion.dnh"
+
+let eAlive = true;
+
+///体力チェックと判定設置（雑魚用、判定サイズ自動取得）
+function WaitForKilledZako(obj)
+{
+	let enmSize = Obj_GetValueD(obj, "E_SIZE", 0);
+	let enmToShot = ENEMY_INTERSECTION[enmSize][0];
+	let enmToPlayer = ENEMY_INTERSECTION[enmSize][1];
+	
+	while(!Obj_GetValueD(obj, "KILLED", false) &&
+		ObjEnemy_GetInfo(obj, INFO_LIFE) > 0)
+	{
+		//当たり判定登録
+		//画面内にいる時のみ判定あり
+		if (GetEnemyVisible(obj) &&
+			MinX <= ObjMove_GetX(obj) && MaxX >= ObjMove_GetX(obj) &&
+			MinY <= ObjMove_GetY(obj) && MaxY >= ObjMove_GetY(obj) )
+		{
+			if (enmToShot) { ObjEnemy_SetIntersectionCircleToShot(obj, ObjMove_GetX(obj), ObjMove_GetY(obj), enmToShot); }
+			if (enmToPlayer) { ObjEnemy_SetIntersectionCircleToPlayer(obj, ObjMove_GetX(obj), ObjMove_GetY(obj), enmToPlayer); }
+		}
+		yield;
+	}
+	//動きを停止
+	ObjMove_SetSpeed(obj, 0);
+	ObjMove_SetAcceleration(obj, 0);
+	Obj_SetValue(obj, "ANIME_STOP", 1);
+}
+
+//敵の出現角度取得
+function ScreenVerticalAngle(x, y)
+{
+	let hw = GetStgFrameWidth/GetStgFrameHeight;
+	let tmp_a = (atan2((GetStgFrameHeight/2-y)*hw, GetStgFrameWidth/2-x)+360)%360;
+	return(trunc(tmp_a/90+0.5)*90);
+}
+
+function ScreenVerticalCenter(x, y)
+{
+	return([1, -1][atan((GetStgFrameHeight/2-y)/(GetStgFrameWidth/2-x)) > 0]);
+}
+
