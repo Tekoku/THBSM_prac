@@ -1,0 +1,131 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["5面　道中会話"]
+#Text["5面　道中会話"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Nezu.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_NEZU_S);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(60);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_NEZU_S, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinBoss1, I_UPSET);
+	ChangeTalkTexture(cutinPlayer1, I_DOYA);
+	SetImageFoward(cutinBoss1, true);
+	BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNextTimer(60));
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "ちっ、見た目ほど馬鹿ではなかったか");
+			AwayBoss();
+			wait(75);
+		}
+		case(1)
+		{
+			SetImageVisible(cutinBoss1, false);
+			
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "見た目を語るなら尻尾を隠せ");
+			wait(75);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task AwayBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+	
+	// 煙えへくと（拡散）
+	wait(90);
+	SetNezuSmoke(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 2, false);
+	wait(30);
+	HideBoss(objEnemy, 30);
+	CallSound(sndBoon);
+	wait(105);
+	while(!FINISH_TALK) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}
+
+task HideBoss(objBase, timer)
+{
+	let objImg = GetBossImageID(objBase);
+
+	Obj_SetVisible(objImg, true);
+	descent(i in 0 .. timer)
+	{
+		let tmp = (i+1)/timer*255;
+		ObjRender_SetAlpha(objImg, tmp);
+		yield;
+	}
+	Obj_SetVisible(objImg, false);
+}

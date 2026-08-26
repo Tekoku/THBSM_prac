@@ -1,0 +1,113 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["5面　道中会話"]
+#Text["5面　道中会話"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_NEZU_R);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_NEZU_R);
+	ObjMove_SetPosition(objEnemy, CenX-64, -128);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+	EnterBoss();
+
+	wait(60);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_NEZU_R, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SANAE, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+	SetImageFoward(cutinBoss1, true);
+	BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNextTimer(60));
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "星のエネルギーは神社で全て頂くわ。[r]貴方はもう用済み、ここで永遠の一回休みよ");
+			wait(90);
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SURPRISE);
+			SetTalkEx(cutinPlayer1, "霊夢さんが黒幕ですって！？");
+			wait(60);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	ObjMove_SetPosition(objEnemy, CenX+64, -128);
+	SetAction(objEnemy, ACT_MOVE, 90);
+	SetMovePositionHermite(objEnemy, CenX, 105, 1500, 180-45, 0, -30, 120);
+}

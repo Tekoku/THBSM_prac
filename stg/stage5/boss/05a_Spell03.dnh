@@ -1,0 +1,362 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["風神の風袋"]
+#Text["風神の風袋"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Nezu.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3300);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(45);		}
+	BossEvent();
+}
+
+@Initialize {
+	if (IsInfinityMode()) { bossDropItemSpecial = [MY_ITEM_SPELL]; }
+	else { bossDropItemSpecial = [MY_ITEM_LIFE]; }
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_NEZU_S);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(43), [4,4,5,5][Difficult], 
+			GetCurrentScriptDirectory()~"05a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	wait(60);
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+	
+	let shoot_count = [1, 1, 2, 2][Difficult];
+	let shoot_min = [1, 1, 1, 2][Difficult];
+	let shoot_max = [1, 1, 3, 5][Difficult];
+	let wt = [300, 240, 240, 240][Difficult];
+	
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		SetRollFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), rand(0,360), muki, shoot_count);
+		CallSound(sndBoon);
+		wait(120);
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 140, 48);
+		wait(wt-120+(shoot_count-1)*45);
+		
+		muki = -muki;
+		shoot_count = rand_int(shoot_min, shoot_max);
+	}
+}
+
+task SetRollFamilier(x, y, angle, muki, shoot_count)
+{
+	let way = [7, 9, 9, 12][Difficult];
+	let speed = 1.5;
+	let add_angle = 1.25 * muki;
+	let timer = [360, 360, 360, 360][Difficult];
+	let shot_type = [0, 1][muki<0];
+	
+	let objBase = CreateShotA1(x, y, 0, 0, BGW_BALL_S_RED, 0);
+	Obj_SetValue(objBase, "ANGLE", angle);
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	
+	ascent(i in 0 .. way)
+	{
+		SetFamilier01(x, y, speed, i*360/way, muki, i, timer);
+	}
+	wait(120);
+	if (!eAlive) { return; }
+	WindCharge(x, y, timer-120, 5, shot_type, shoot_count);
+}
+
+
+// 使い魔
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let item_count = 0;
+	let item_star = 0;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 200, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	NezuOption_SetDamageRate(objFamilier);	// ダメージ軽減率自機別設定
+	SetDropItemCount(objFamilier, item_count, item_star);
+	SetEnemyVisible(objFamilier, false);
+	DrawHitodama(objFamilier, eColor);
+	TCheckDispINOut(objFamilier, 16);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TShot();
+		
+		let add_r = iniSpeed;
+		let add_a = 0.5*iniMuki;
+		
+		let r = 0;
+		let angle = iniAngle;
+		let t = 0;
+		while (CanShotBullet(objFamilier))
+		{
+			if (t == 15)
+			{
+				SetEnemyVisible(objFamilier, true);
+			}
+			
+			if (t < 90)
+			{
+				let tmp = (t+1)/90;
+				r += add_r*(1-tmp)*1.5;
+				angle += add_a*(2-tmp)*2;
+			}
+			else if (t < 210)
+			{
+				let tmp = (t-90)/120;
+				r += add_r*tmp;
+				angle += add_a*(2-1*tmp);
+			}
+			else
+			{
+				r += add_r;
+				angle += add_a;
+			}
+
+			ObjMove_SetPosition(objFamilier, iniX+cos(angle)*r, iniY+sin(angle)*r);
+			t++;
+			yield;
+		}
+	}
+	
+	
+	task TShot()
+	{
+		wait(75);
+		
+		let speed = 10;
+		let way = 3;
+		let wt = 5;
+		let way_angle = 15;
+
+		let graphic = [BGB_RICE_S_BLUE, BGB_RICE_S_GREEN][iniMuki>0];
+		
+		let t = 0;
+		let st = 0;
+		while(CanShotBullet(objFamilier) && t < 360)
+		{
+			let fs = 1 + min(4, st/10);
+			let base_angle = atan2(iniY-ObjMove_GetY(objFamilier), iniX-ObjMove_GetX(objFamilier));
+			ascent(i in 0 .. way)
+			{
+				let sa = base_angle + (i-(way-1)/2)*way_angle;
+				WindShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed, sa, graphic, 0, iniX, iniY);
+			}
+			CallSound(sndShot2);
+
+			st++;
+			t += wt;
+			wait(wt);
+		}
+	}
+	
+	task WindShot(x, y, speed, angle, graphic, delay, to_x, to_y)
+	{
+		let obj = CreateShotA2(x, y, 0, angle, speed/180, speed, graphic, delay);
+		let r = ((ObjMove_GetY(obj)-to_y)^2+(ObjMove_GetX(obj)-to_x)^2)^0.5;
+		wait(delay);
+
+		let t = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			r -= ObjMove_GetSpeed(obj);
+			if (r <= ObjMove_GetSpeed(obj))
+			{
+				ObjMove_SetAcceleration(obj, -speed/60);
+				ObjMove_SetMaxSpeed(obj, 0);
+				ObjShot_FadeDelete(obj);
+				break;
+			}
+			t++;
+			yield;
+		}
+	}
+}
+
+// 竜巻えへくと
+task WindCharge(x, y, timer, size, type, shoot_count)
+{
+	let shot_speed = [1.5, 2, 2, 2.5][Difficult];
+	let graphic = [BGB_SCALE_GREEN, BGB_SCALE_BLUE][type%2];
+	let shot_wt = [7, 5, 5, 4][Difficult];
+	let last_way = [7, 7, 7, 7][Difficult];
+	
+	let objBase = CreateShotA1(x, y, 0, 90, BGW_BALL_S_RED, 0);
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	
+	let t = 0;
+	let st = 0;
+	// 連射フェーズ
+	while(!Obj_IsDeleted(objBase) && t < timer)
+	{
+		if (t > 60 && t%shot_wt == 0)
+		{
+			if (st%5 < 3)
+			{
+				let tmp_size = 0.5 + t/timer*0.5;
+				ShotgunS03(x, y, shot_speed, rand(0,360), graphic, 15, tmp_size);
+			}
+			st++;
+		}
+		if (t%3 == 0)
+		{
+			let tmp_size = size*t/timer;
+			WindCharge_effect(x, y, rand(0,360), 30, tmp_size, trunc(t/3)%2);
+		}
+		t++;
+		yield;
+	}
+	
+	// 最後のショット連打フェーズ
+	WindShoot();
+	
+	while(!Obj_IsDeleted(objBase) && t < timer+60+shoot_count*30)
+	{
+		if (t%3 == 0)
+		{
+			let tmp_size = size;
+			WindCharge_effect(x, y, rand(0,360), 30, tmp_size, trunc(t/3)%2);
+		}
+		t++;
+		yield;
+	}
+	wait(120+shoot_count*15);
+	Obj_Delete(objBase);
+
+	// 最後のショット
+	task WindShoot()
+	{
+		ascent(i in 0 .. shoot_count)
+		{
+			if (Obj_IsDeleted(objBase)) { return; }
+			_WindShoot(i);
+			wait(30);
+		}
+	}
+	task _WindShoot(shoot_num)
+	{
+		EffectConcentrationLine(objBase, EFF_WHITE, 60, 8);
+		CallSound(sndPower1);
+		wait(60+15*shoot_num);
+
+		let ba = GetAngleToPlayer(objBase);
+		ascent(i in 0 .. last_way)
+		{
+			if (Obj_IsDeleted(objBase)) { break; }
+			let ss = shot_speed*1.25 * (1-i/last_way*0.5);
+			let tmp = i/last_way;
+			let wrate = 1-tmp;
+			ShotgunS03(x, y, ss, ba+tmp*180, graphic, 15, wrate);
+			if (i > 0)
+			{
+				ShotgunS03(x, y, ss, ba-tmp*180, graphic, 15, wrate);
+			}
+			wait(5);
+		}
+	}
+}
+
+task WindCharge_effect(x, y, angle, timer, size, etype)
+{
+	let objEffect = CreateParticleEffect([x, y], size, 5);
+	Obj_SetRenderPriorityI(objEffect, GetShotRenderPriorityI+1);
+	ObjRender_SetBlendType(objEffect, [BLEND_ADD_ARGB, BLEND_SUBTRACT][etype%2]);
+	ObjRender_SetColor(objEffect, 192, 255, 224);
+	let alpha = [1024, 384][etype%2];
+
+	ascent(i in 0 .. timer)
+	{
+		let tmp = (i+1)/timer;
+		ObjRender_SetScaleXYZ(objEffect, 1-tmp, 1-tmp, 1);
+		ObjRender_SetAlpha(objEffect, tmp*alpha);
+		ObjRender_SetAngleZ(objEffect, angle);
+		angle += 5;
+		yield;
+	}
+	Obj_Delete(objEffect);
+}
+
+task ShotgunS03(x, y, speed, angle, graphic, delay, way_rate)
+{
+	let base_way = [5, 5, 5, 5][Difficult];
+	let way_angle = 5;
+	
+	let way = round(base_way*way_rate);
+	let way_min = min(way-2, round(way*0.33));
+	if (way < 3) { return; }
+	CallSound(sndShot1);
+	
+	ascent(tmp_way in way_min .. way+1)
+	{
+		let ss = speed * (1 + 0.1*(way-tmp_way));
+		ascent(i in 0 .. tmp_way)
+		{
+			let sa = angle + (i-(tmp_way-1)/2)*way_angle;
+			let obj = CreateShotA2(x, y, 0, sa, ss/60, ss, graphic, 0);
+			My_RaiseShotEffectA(obj, delay);
+		}
+	}
+}
+
+/*
+	task WindShot(x, y, speed, angle, graphic, delay, fs)
+	{
+		angle = (angle+180+360*100)%360-180;
+		let obj = CreateShotA2(x, y, fs, angle, -fs/60, 0, graphic, delay);
+		ObjMove_AddPatternA2(obj, 60, 0, NO_CHANGE, speed/180, 0, speed);
+		wait(delay+30);
+		
+		let r = ((ObjMove_GetY(obj)-ObjMove_GetY(objEnemy))^2+(ObjMove_GetX(obj)-ObjMove_GetX(objEnemy))^2)^0.5 + speed*5;
+		let to_angle = atan2(ObjMove_GetY(objEnemy)-ObjMove_GetY(obj), ObjMove_GetX(objEnemy)-ObjMove_GetX(obj));
+
+		let t = 0;
+		while(!Obj_IsDeleted(obj) && r > ObjMove_GetSpeed(obj))
+		{
+			if (t < 120) {
+				let tmp = 1-cos((t+1)/120*90);
+				ObjMove_SetAngle(obj, ObjMove_GetAngle(obj)*(1-tmp) + to_angle*tmp);
+			}
+			r -= ObjMove_GetSpeed(obj);
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+		while(!Obj_IsDeleted(obj) && t < 120)
+		{
+			let tmp = 1-cos((t+1)/120*90);
+			ObjMove_SetAngle(obj, ObjMove_GetAngle(obj)*(1-tmp) + to_angle*tmp);
+			t++;
+			yield;
+		}
+	}
+*/

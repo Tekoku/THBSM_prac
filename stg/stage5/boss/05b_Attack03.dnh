@@ -1,0 +1,354 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ねずーりん通常3"]
+#Text["ねずーりん通常3"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Nezu.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(4000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_NEZU);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	NezuCharismaOption(objEnemy, false);
+	wait(120);
+	
+	let wt =  [420, 360, 360, 270][Difficult];
+	
+	let st = 0;
+	let muki = 1;
+	while(eAlive)
+	{
+		ascent(i in 0 .. 3)
+		{
+			SetRollFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), rand(0,360), i, st, 120-i*5, muki);
+			wait(5);
+			muki = -muki;
+		}
+		CallSound(sndBoon);
+		loop(10)
+		{
+			if (!eAlive) { return; }
+			if (length(GetAllEnemyID()) <= 1) { break; }
+			wait((wt-60)/10);
+		}
+		st++;
+		wait(60);
+	}
+}
+
+// 使い魔セット
+task SetRollFamilier(x, y, angle, base_value, color_value, delay, muki)
+{
+	let way = [7, 8, 10, 10][Difficult];
+	
+	ascent(i in 0 .. way)
+	{
+		SetFamilier01(x, y, 1, angle+i*360/way, muki, base_value, color_value, ((i*3)%way)*5+base_value*5*way, delay);
+	}
+}
+
+
+// 使い魔
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue, iniValue2, iniTimer, iniTimer2)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let item_count = 0;
+	let item_star = 0;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 100, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	NezuOption_SetDamageRate(objFamilier);	// ダメージ軽減率自機別設定
+	SetDropItemCount(objFamilier, item_count, item_star);
+	SetEnemyVisible(objFamilier, false);
+	DrawHitodama(objFamilier, eColor);
+	TAct();
+	TCheckDispINOut(objFamilier, 32);
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	if (CheckKillType(objFamilier) == 2)
+	{
+		// 撃ち返し
+		TUchikaeshi();
+	}
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+
+	task TMove()
+	{
+		let base_r = 72 + 48*iniValue;
+		let base_a = 90*iniMuki;
+		let r = 0;
+		let angle = iniAngle;
+		
+		let baseX = iniX;
+		let baseY = iniY;
+		
+		let t = 0;
+		while (CanShotBullet(objFamilier))
+		{
+			if (t == 15)
+			{
+				SetEnemyVisible(objFamilier, true);
+			}
+			if (t < iniTimer2)
+			{
+				let tmp = sin((t+1)/iniTimer2*90);
+				r = tmp*base_r;
+				angle = iniAngle + tmp*base_a;
+				baseY = iniY - tmp*64;
+			}
+			else
+			{
+				wait(iniTimer);
+				ObjMove_SetAngle(objFamilier, GetAngleToPlayer(objFamilier));
+				ObjMove_SetSpeed(objFamilier, 0);
+				ObjMove_SetAcceleration(objFamilier, 8/240);
+				ObjMove_SetMaxSpeed(objFamilier, 8);
+				break;
+			}
+			ObjMove_SetPosition(objFamilier, baseX+cos(angle)*r, baseY+sin(angle)*r);
+			t++;
+			yield;
+		}
+	}
+	
+	task TShot()
+	{
+		wait(iniTimer2);
+		
+		let speed =  [1, 1, 1, 1.5][Difficult];
+		let graphics = [
+			[ADD_BGW_SCALE_RED, ADD_BGW_SCALE_PURPLE, BGB_SCALE_RED],
+			[ADD_BGW_SCALE_SKY, ADD_BGW_SCALE_BLUE, BGB_SCALE_PURPLE],
+			[ADD_BGW_SCALE_YELLOW, ADD_BGW_SCALE_GREEN, BGB_SCALE_WHITE],
+			[ADD_BGW_SCALE_BLUE, ADD_BGW_SCALE_SKY, BGB_SCALE_BLUE]
+			][(iniValue+iniValue2)%4];
+
+		
+		if (CanShotBullet(objFamilier))
+		{
+			alternative(iniValue2%4)
+			case(0)
+			{
+				let fs = 2.75;
+				let way = [15, 15, 15, 15][Difficult];
+				let sa = iniAngle;
+
+				A03Circle(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed, sa, graphics, 0, fs, way);
+				CallSound(sndShot2);
+			}
+			case(1)
+			{
+				let fs = 3.25;
+				let way = [4, 4, 4, 4][Difficult];
+				let sa = iniAngle;
+
+				A03Square(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed, sa, graphics, 0, fs, way);
+				CallSound(sndShot2);
+			}
+			case(2)
+			{
+				let fs = 3.5;
+				let way = [8, 8, 8, 8][Difficult];
+				let sa = iniAngle+90*iniMuki;
+
+				A03Arrow(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed, sa, graphics, 0, fs, way);
+				CallSound(sndShot2);
+			}
+			case(3)
+			{
+				let fs = 3.25;
+				let way = [6, 6, 6, 6][Difficult];
+				let sa = iniAngle+90*iniMuki;
+
+				A03Tri(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed, sa, graphics, 0, fs, way);
+				CallSound(sndShot2);
+			}
+		}
+	}
+
+	// ショット
+	task TUchikaeshi()
+	{
+		if (!CheckUchikaeshi(objFamilier, 128)) { return; }
+		let ex = ObjMove_GetX(objFamilier);
+		let ey = ObjMove_GetY(objFamilier);
+		let ba = atan2(GetPlayerY-ey, GetPlayerX-ex);
+		
+		let speed = [3, 3, 4.5, 6][Difficult];
+		let way = [0, 6, 6, 8][Difficult];
+		let graphic = ADD_BGW_LIGHT_S_RED;
+		if (way > 0)
+		{
+			ascent(i in 0 .. way)
+			{
+				if (!eAlive) { return; }
+				let timer = 45 + rand_int(0,5)*6;
+				let fs = rand(0, 2.5^2)^0.5;
+				let sa = rand(0,360);
+				let obj = My_CreateShotA2(ex, ey, fs, sa, -fs/timer, 0, graphic, 15);
+				ObjMove_AddPatternA4(obj, timer, NO_CHANGE, rand(-5,5), speed/120, 0, speed, objPlayer, NO_CHANGE);
+				Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+				CallSound(sndShot3);
+				wait(2);
+			}
+		}
+	}
+}
+
+// 円形
+task A03Circle(x, y, speed, angle, graphics, delay, fs, way)
+{
+	CallSoundDelay(sndShot2, 60, objEnemy);	// 効果音
+
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + i*360/way;
+		A03Shot(x, y, speed, sa, graphics[0], graphics[2], 15, fs);
+	}
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + (i+0.5)*360/way;
+		A03Shot(x, y, speed*0.9, sa, graphics[1], graphics[2], 15, fs*0.9);
+	}
+}
+// 四角形
+task A03Square(x, y, speed, angle, graphics, delay, fs, way)
+{
+	CallSoundDelay(sndShot2, 60, objEnemy);	// 効果音
+
+	ascent(j in 0 .. 4)
+	{
+		let vx1 = cos(j*90+angle);
+		let vy1 = sin(j*90+angle);
+		let vx2 = cos((j+1)*90+angle);
+		let vy2 = sin((j+1)*90+angle);
+		ascent(i in 0 .. way)
+		{
+			let tmp = i/way;
+			let vx = vx1*(1-tmp) + vx2*tmp;
+			let vy = vy1*(1-tmp) + vy2*tmp;
+			let vs = (vx^2+vy^2)^0.5;
+			let sa = atan2(vy, vx);
+			A03Shot(x, y, speed, sa, graphics[0], graphics[2], 15, fs*vs);
+		}
+		ascent(i in 0 .. way)
+		{
+			let tmp = (i+0.5)/way;
+			let vx = vx1*(1-tmp) + vx2*tmp;
+			let vy = vy1*(1-tmp) + vy2*tmp;
+			let vs = (vx^2+vy^2)^0.5;
+			let sa = atan2(vy, vx);
+			A03Shot(x, y, speed*0.9, sa, graphics[1], graphics[2], 15, fs*vs*0.9);
+		}
+	}
+}
+// くさび形
+task A03Arrow(x, y, speed, angle, graphics, delay, fs, way)
+{
+	CallSoundDelay(sndShot2, 60, objEnemy);	// 効果音
+
+	ascent(j in 0 .. 2)
+	{
+		let vx1 = cos(angle)/2;
+		let vy1 = sin(angle)/2;
+		let vx2 = cos((j-0.5)*240+angle);
+		let vy2 = sin((j-0.5)*240+angle);
+		ascent(i in 0 .. way)
+		{
+			let tmp = i/way;
+			let vx = vx1*(1-tmp) + vx2*tmp;
+			let vy = vy1*(1-tmp) + vy2*tmp;
+			let vs = (vx^2+vy^2)^0.5;
+			let sa = atan2(vy, vx);
+			A03Shot(x, y, speed, sa, graphics[0], graphics[2], 15, fs*vs);
+		}
+		ascent(i in 0 .. way)
+		{
+			let tmp = (i+0.5)/way;
+			let vx = vx1*(1-tmp) + vx2*tmp;
+			let vy = vy1*(1-tmp) + vy2*tmp;
+			let vs = (vx^2+vy^2)^0.5;
+			let sa = atan2(vy, vx);
+			A03Shot(x, y, speed*0.8, sa, graphics[1], graphics[2], 15, fs*vs*0.8);
+		}
+	}
+}
+// 三角形
+task A03Tri(x, y, speed, angle, graphics, delay, fs, way)
+{
+	CallSoundDelay(sndShot2, 60, objEnemy);	// 効果音
+
+	ascent(j in 0 .. 3)
+	{
+		let vx1 = cos(j*120+angle);
+		let vy1 = sin(j*120+angle);
+		let vx2 = cos((j+1)*120+angle);
+		let vy2 = sin((j+1)*120+angle);
+		ascent(i in 0 .. way)
+		{
+			let tmp = i/way;
+			let vx = vx1*(1-tmp) + vx2*tmp;
+			let vy = vy1*(1-tmp) + vy2*tmp;
+			let vs = (vx^2+vy^2)^0.5;
+			let sa = atan2(vy, vx);
+			A03Shot(x, y, speed, sa, graphics[0], graphics[2], 15, fs*vs);
+		}
+		ascent(i in 0 .. way)
+		{
+			let tmp = (i+0.5)/way;
+			let vx = vx1*(1-tmp) + vx2*tmp;
+			let vy = vy1*(1-tmp) + vy2*tmp;
+			let vs = (vx^2+vy^2)^0.5;
+			let sa = atan2(vy, vx);
+			A03Shot(x, y, speed*0.9, sa, graphics[1], graphics[2], 15, fs*vs*0.9);
+		}
+	}
+}
+
+task A03Shot(x, y, speed, angle, graphic, to_graphic, delay, fs)
+{
+	let obj = CreateShotA2(x, y, fs, angle, -fs/30, 0, graphic, 0);
+	ObjMove_AddPatternA3(obj, 60, NO_CHANGE, NO_CHANGE, speed/60, 0, speed, to_graphic);
+	/*
+	wait(60);
+	if (!Obj_IsDeleted(obj))
+	{
+		Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI);
+		ObjShot_SetGraphic(obj, to_graphic);
+		CallSound(sndShot2);
+	}
+	*/
+}

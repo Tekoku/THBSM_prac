@@ -1,0 +1,178 @@
+
+
+//@ˆê—jspell”wŒi
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../../lib/spell_function.dnh"
+
+let imgBgTexture = [];
+let flagEnd = false;
+
+@Event
+{
+	alternative(GetEventType())
+	case(EV_END_BOSS_STEP)
+	{
+		//”wŒiíœ
+		flagEnd = true;
+		CloseMine(180);
+	}
+}
+
+@Initialize
+{
+	init();	//‰ŠúÝ’è
+	imgBgTexture = LoadingImageFile_SpellBg(BOSS_ID_ICHIYOU);
+	TMain;
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task TMain()
+{
+	if (IsDrawBackground() >= 2) { SetSpellCardBG04a(GetEnemyBossObjectID()[0]); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+
+task SetSpellCardBG04a( CallID )
+{
+	BackGround1;
+	BackGround_NINJA;
+	BackGround2;
+
+	task BackGround1
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG);
+		ObjRender_SetColor(obj, 128, 128, 160);
+		ObjPrim_SetTexture(obj, imgBgTexture[0]);
+		ObjSprite2D_SetDestRect(obj, 0, 0, GetStgFrameWidth, GetStgFrameHeight);
+
+		let t = 0;
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha = min(255, alpha+5);
+			ObjRender_SetAlpha(obj, alpha);
+			ObjSprite2D_SetSourceRect(obj, 0-t/4, 0+t/2, GetStgFrameWidth-t/4, GetStgFrameHeight+t/2);
+			t++;
+			yield;
+		}
+		while(!flagEnd)
+		{
+			ObjSprite2D_SetSourceRect(obj, 0-t/4, 0+t/2, GetStgFrameWidth-t/4, GetStgFrameHeight+t/2);
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	task BackGround2
+	{
+		let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+		Obj_SetRenderPriorityI(obj, prioritySpellBG+1);
+		ObjRender_SetColor(obj, 128, 128, 128);
+		ObjPrim_SetTexture(obj, imgBgTexture[2]);
+		ObjSprite2D_SetSourceRect(obj, 0, 0, 512, 512);
+		ObjSprite2D_SetDestCenter(obj);
+		ObjRender_SetPosition(obj, GetStgFrameWidth/2, GetStgFrameHeight/2, 0);
+		ObjRender_SetBlendType(obj, BLEND_SUBTRACT);
+		ObjRender_SetScaleXYZ(obj, 1.2, 1.2, 1);
+
+		let t = 0;
+		let alpha = 0;
+		while (alpha < 255)
+		{
+			alpha = min(255, alpha+5);
+			ObjRender_SetAlpha(obj, alpha);
+			ObjRender_SetAngleZ(obj, -t/4);
+			t++;
+			yield;
+		}
+		while(!flagEnd)
+		{
+			ObjRender_SetAngleZ(obj, -t/4);
+			t++;
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+
+	task BackGround_NINJA
+	{
+		let colors = [[255,255,128],[255,128,255],[128,255,255]];
+		let t = 0;
+		while(!flagEnd)
+		{
+			_BackGround_NINJA(GetStgFrameWidth/2+randEffect(-64, 64), GetStgFrameHeight/2+randEffect(-64, 64), +randEffect(0, 360), t%4, colors[t%3]);
+			t++;
+			wait(180);
+		}
+
+		task _BackGround_NINJA(x, y, angle, type, color)
+		{
+			let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+			Obj_SetRenderPriorityI(obj, prioritySpellBG);
+			ObjPrim_SetTexture(obj, imgBgTexture[1]);
+			ObjSprite2D_SetSourceRect(obj, 0+type*256, 0+trunc(type/2)*256, 256+type*256, 256+trunc(type/2)*256);
+			ObjSprite2D_SetDestCenter(obj);
+			ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+			ObjRender_SetScaleXYZ(obj, 2, 2, 1);
+			
+			let vx = cos(angle)*120;
+			let vy = sin(angle)*120;
+			let alpha = 0;
+			ascent(t in 0 .. 240)
+			{
+				if (flagEnd) { break; }
+				let tmp = cos((t+1)/240*180);
+				let tmp_c = 0.3*(1-absolute(tmp));
+				ObjRender_SetPosition(obj, x+vx*tmp, y+vy*tmp, 0);
+				ObjRender_SetAngleY(obj, tmp*270);
+				ObjRender_SetColor(obj, color[0]*tmp_c, color[1]*tmp_c, color[2]*tmp_c);
+				if (t == 120)
+				{
+					loop(120)
+					{
+						if (flagEnd) { break; }
+						yield;
+					}
+				}
+				yield;
+			}
+			Obj_Delete(obj);
+		}
+	}
+}
+
+task BackGroundLite
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,prioritySpellBG);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,imgBgTexture[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	while(alpha<255) {
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+

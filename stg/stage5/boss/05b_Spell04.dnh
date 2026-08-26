@@ -1,0 +1,388 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["殺生石"]
+#Text["殺生石"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Nezu.dnh"
+
+let STONE_COUNT = 0;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(750);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(90);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 10;		//ダメージ透過率
+
+	bossDropItem = 80;	//アイテム数
+	bossHitToShot = 58;
+	bossDropStarItem = 160;
+	
+	bossDropStarItemR = 108;
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_NEZU);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(47), [14,14,15,16][Difficult], 
+			GetCurrentScriptDirectory()~"05a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 240);
+	NezuCharismaOption(objEnemy, true);
+	wait(60);
+	
+	BossCharge(objEnemy);
+	BossCharge(objEnemy);
+	ascent(i in 0 .. 5)
+	{
+		EffectConcentrationLineEx(GetStgFrameWidth*(i+0.5)/5, MinY-96, EFF_PURPLE, 120, 12);
+	}
+	wait(120);
+	CallSpellCard(true);	//スペカ起動
+	
+	wait(30);
+	TShot01();
+}
+
+task TShot01
+{
+	let posX = [-80, 80, -120, -40, 120, -100, 100, 40];
+	let posMuki = [-1, 1, -1, -1, 1, -1, 1, 1];
+	
+	let wt = 9999;
+	
+	let st = 0;
+	let t = 0;
+	while(eAlive)
+	{
+		if (GetBossLifeRate(objEnemy) < 0.25) {
+			wt = [200, 150, 120, 150][Difficult];
+		} else if (GetBossLifeRate(objEnemy) < 0.5) {
+			wt = [220, 180, 150, 180][Difficult];
+		} else if (GetBossLifeRate(objEnemy) < 0.75) {
+			wt = [260, 240, 190, 240][Difficult];
+		} else {
+			wt = [300, 300, 240, 300][Difficult];
+		}
+		
+		st++;
+		if (STONE_COUNT <= 0)
+		{
+			SetFamilier01_Set(ObjMove_GetX(objEnemy)+posX[t%length(posX)], -24, rand(0,360), posMuki[t%length(posMuki)], 0);
+			st = 0;
+		}
+		else if (STONE_COUNT <= 1 && st >= 4)
+		{
+			SetFamilier01_Set(ObjMove_GetX(objEnemy)+posX[t%length(posX)], -24, rand(0,360), posMuki[t%length(posMuki)], 0);
+			st = 0;
+		}
+		else if (st >= 6)
+		{
+			SetFamilier01_Set(ObjMove_GetX(objEnemy)+posX[t%length(posX)], -24, rand(0,360), posMuki[t%length(posMuki)], 0);
+			st = 0;
+		}
+		t++;
+		wait(wt/6);
+	}
+}
+
+// 使い魔
+task SetFamilier01_Set(iniX, iniY, iniAngle, iniMuki, iniValue)
+{
+	let scale = 0.66;
+	let iniTimer = 600;
+	let iniShotTimer = 9999;
+
+	let objParent = CreateShotA1(iniX, iniY, 0, 0, BGW_BALL_M_RED, 0);
+	ObjMove_AddPatternA2(objParent, 0, 0, 90, 3/iniTimer, 0, 1);
+	Obj_SetValue(objParent, "CT", []);
+	Obj_SetVisible(objParent, false);
+	ObjShot_SetSpellResist(objParent, true);
+	
+	STONE_COUNT++;
+	
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+	
+	ascent(i in 0 .. length(obj))
+	{
+		ObjPrim_SetTexture(obj[i], imgEffectKaname);
+	}
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI()+2);
+	Obj_SetRenderPriorityI(obj[1], GetShotRenderPriorityI()-1);
+	// 座標せっつ
+	
+	
+	ascent(i in 0 .. 6)
+	{
+		SetFamilier01(objParent, iniX, iniY, iniAngle, iniMuki, iniValue, iniShotTimer);
+	}
+	
+	let t = 0;
+	let at = 0;
+	while(!Obj_IsDeleted(objParent) && length(Obj_GetValueD(objParent, "CT", [])) > 0)
+	{
+		if (t < 60)
+		{
+			let tmp = sin((t+1)/60*90);
+			ascent(i in 0 .. 2)
+			{
+				ObjRender_SetScaleXYZ(obj[i], (tmp^2)*scale, (3-tmp*2)*scale, 0);
+			}
+		}
+		if (t%10 == 0)
+		{
+			let tmp_at = 3-absolute((at%6)-3);
+			ascent(i in 0 .. 2)
+			{
+				ObjSprite2D_SetSourceRect(obj[i], tmp_at*128, i*128, (tmp_at+1)*128, (i+1)*128);
+				ObjSprite2D_SetDestCenter(obj[i]);
+			}
+			at++;
+		}
+		ascent(i in 0 .. 2)
+		{
+			ObjRender_SetPosition(obj[i], ObjMove_GetX(objParent), ObjMove_GetY(objParent), 0);
+		}
+		t++;
+		yield;
+	}
+
+	STONE_COUNT--;
+
+	descent(t in 0 .. 15)
+	{
+		let tmp = sin((t+1)/15*90);
+		ascent(i in 0 .. 2)
+		{
+			ObjRender_SetScaleXYZ(obj[i], (tmp^2)*scale, (3-tmp*2)*scale, 0);
+		}
+		yield;
+	}
+	ascent(i in 0 .. 2) { Obj_Delete(obj[i]); }
+}
+// 回転するタイプ
+task SetFamilier01(objParent, iniX, iniY, iniAngle, iniMuki, iniValue, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let item_count = 0;
+	let item_star = 0;
+	let baseAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 100, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	NezuOption_SetDamageRate(objFamilier);	// ダメージ軽減率自機別設定
+	Obj_SetValue(objParent, "CT", Obj_GetValueD(objParent, "CT", [])~[objFamilier]);	// 配列に追加
+	SetEnemyVisible(objFamilier, false);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawHitodama(objFamilier, eColor);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	local
+	{
+		// 配列から削除
+		let tmp_ct = Obj_GetValueD(objParent, "CT", []);
+		ascent(i in 0 .. length(tmp_ct))
+		{
+			if (tmp_ct[i] == objFamilier)
+			{
+				Obj_SetValue(objParent, "CT", erase(tmp_ct, i));
+				break;
+			}
+		}
+	}
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		yield;
+		
+		let base_r = 64;
+		let ct = 0;
+		let tmp_ct = Obj_GetValueD(objParent, "CT", []);
+		let ct_max = length(tmp_ct);
+		ascent(i in 0 .. ct_max)
+		{
+			if (tmp_ct[i] == objFamilier)
+			{
+				ct = i;
+				break;
+			}
+		}
+		baseAngle = baseAngle + ct/ct_max*360;
+
+		/*
+		local
+		{
+			let r = base_r;
+			let to_x = ObjMove_GetX(objParent) + r*cos(baseAngle);
+			let to_y = ObjMove_GetY(objParent) + r*sin(baseAngle)/3;
+			let wt = 60;
+
+			MoveTo(objFamilier, to_x, to_y, wt);
+		}
+		wait(120);
+		if (!CanShotBullet(objFamilier)) { return; }
+		*/
+		SetEnemyVisible(objFamilier, true);
+		TShot(iniTimer);
+		if (Difficult >= D_LUNA) { TLaser(iniTimer); }
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier) && !Obj_IsDeleted(objParent))
+		{
+			let r = base_r;
+			let to_x = ObjMove_GetX(objParent) + r*cos(baseAngle);
+			let to_y = ObjMove_GetY(objParent) + r*sin(baseAngle)/3;
+			ObjMove_SetPosition(objFamilier, to_x, to_y);
+			baseAngle += 0.75*iniMuki;
+			t++;
+			yield;
+		}
+		EraseEnemy(objFamilier);
+	}
+	
+	task TShot(timer)
+	{
+		let speed = [1.25, 1.25, 1.5, 1.5][Difficult];
+		let shot_span = [12, 12, 12, 12][Difficult];
+		let shot_count = [6, 8, 8, 8][Difficult];
+		let graphic = [BGW_SCALE_RED, BGW_SCALE_RED, BGW_SCALE_PURPLE, BGW_SCALE_WHITE][Difficult];
+		let graphic2 = [BGW_SCALE_BLUE, BGW_SCALE_BLUE, BGW_SCALE_GREEN, BGW_SCALE_WHITE][Difficult];
+		let wt = 4;
+		
+		let sst = 0;
+		let st = 0;
+		
+		let t = 0;
+		ascent(t in 0 .. timer)
+		{
+			if (!CanShotBullet(objFamilier)) { break; }
+
+			let tmp = t/(timer-1);
+			if (st > wt)
+			{
+				let sa = baseAngle - 90*iniMuki;
+				if (sst%shot_span < shot_count)
+				{
+					CreateDarkShotsA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+						speed, sa, graphic, graphic2, 15, 1.5);
+				}
+				if (sst%3 == 0) { CallSound(sndShot2); }
+				st -= wt;
+				sst++;
+			}
+			st++;
+			yield;
+		}
+	}
+
+	task TLaser(timer)
+	{
+		let speed = 1;
+		let wt = 10;
+		
+		let objLaser = My_CreateStraightLaserA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0, 0, 12, 9999, BGW_BEAM_BLUE, 0, true);
+		
+		let st = 0;
+		let base_len = 0;
+		let pr = 72;
+		while(CanShotBullet(objFamilier))
+		{
+			let vx = cos(baseAngle);
+			let vy = sin(baseAngle)/3;
+			let vr = ((vx^2+vy^2)^0.5);
+			let la = atan2(vy, vx);
+			let ll = base_len * vr;
+
+			//レーザー配置
+			let lx = ObjMove_GetX(objFamilier) + vx*base_len;
+			let ly = ObjMove_GetY(objFamilier) + vy*base_len;
+			let lr = ((lx-GetPlayerX)^2 + (ly-GetPlayerY)^2)^0.5;
+			if (lr > pr) {
+				base_len = min(600, base_len+16);
+			}
+			if (ll > lr-pr)
+			{
+				let r = absolute(CalcDot(vy, -vx, ObjMove_GetX(objFamilier)-GetPlayerX, ObjMove_GetY(objFamilier)-GetPlayerY));
+				if (r <= pr)
+				{
+					let lh = (pr^2-r^2)^0.5;
+					let ld = (((ObjMove_GetX(objFamilier)-GetPlayerX)^2+(ObjMove_GetY(objFamilier)-GetPlayerY)^2) - r^2)^0.5 - lh;
+					if (ld < ll)
+					{
+						ll = ld;
+						base_len = ld / vr;
+					}
+					st++;
+					if (st > wt)
+					{
+						st -= wt;
+						
+						let ss = speed;
+						let sa = 90;
+						//let sa = atan2(GetPlayerY-ly, GetPlayerX-lx);
+						Laser_FireShot(lx, ly, speed, sa);
+					}
+				}
+			}
+
+			ObjMove_SetPosition(objLaser, ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier));
+			ObjStLaser_SetAngle(objLaser, la);
+			ObjLaser_SetLength(objLaser, ll);
+			yield;
+		}
+		Obj_Delete(objLaser);
+	}
+	
+	task Laser_FireShot(x, y, speed, angle)
+	{
+		let obj = CreateShotA2(x, y, 0, angle, speed/120, speed, ADD_BGW_FIRE_BLUE, 0);
+		Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+2);
+
+		let objEffect = CreateShotA2(x, y, 0, angle, speed/120, speed, BGW_LIGHT_L_YELLOW, 0);
+		SetShotDisabled(objEffect);
+		Obj_SetRenderPriorityI(objEffect, GetShotRenderPriorityI+3);
+	//	ObjRender_SetBlendType(objEffect, BLEND_SUBTRACT);
+		descent(t in 0 .. 30)
+		{
+			let tmp = (t+1)/30;
+			ObjRender_SetAlpha(objEffect, tmp*128);
+			ObjRender_SetScaleXYZ(objEffect, tmp*1, tmp*1, 1);
+			yield;
+		}
+		Obj_Delete(objEffect);
+	}
+	
+	task HitodamaLaser(x, y, angle, l_len, timer, graphic, delay)
+	{
+		let obj = My_CreateStraightLaserA1(x, y, angle, 0, 8, timer, graphic, delay, true);
+		
+		ascent(t in 0 .. 30)
+		{
+			let tmp = (t+1)/30;
+			ObjLaser_SetLength(obj, tmp*l_len);
+			yield;
+		}
+	}
+}

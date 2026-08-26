@@ -1,0 +1,353 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["十四日月のセレナーデ"]
+#Text["十四日月のセレナーデ"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Ichiyou.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(4000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	case(EV_REQUEST_IS_LAST_SPELL)	{ SetScriptResult(true);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	BossEffect_ResetMagicCircle();
+	Reset_aTime(BOSS_ID_ICHIYOU);
+
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_ICHIYOU);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(105), [12,12,13,13][Difficult], 
+			GetCurrentScriptDirectory()~"04b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	ObjMove_SetPosition(objEnemy, CenX, 140);
+
+	ObjEnemy_SetDamageRate(objEnemy, 0.1*dIni_Shot, 0.1*dIni_Shot*dIni_Spell);
+	LWMotion();
+
+	let t = 0;
+	let muki = rand_dir();
+
+	// 開幕
+	YoyoSet3(GetAngleToPlayer(objEnemy)+180-1*muki*60, 1*muki, 150, false, muki, t);
+	SetAction(objEnemy, ACT_SHOT1, 240);
+	muki = -muki;
+
+	wait(90);
+	CallSpellCard(true);	//スペカ起動
+	ObjEnemy_SetDamageRate(objEnemy, dIni_Shot, dIni_Shot*dIni_Spell);	// ダメージがまともに通るように
+	wait(90);
+	BossCharge(objEnemy);
+	wait(90);
+	
+	while(eAlive)
+	{
+		YoyoSet([GetPlayerX, GetPlayerY], [CenX+128*muki, rand(120,160)], -muki, t);
+		wait(180);
+		if (!eAlive) { return; }
+		YoyoSet([GetPlayerX, GetPlayerY], [CenX-128*muki, rand(120,160)], muki, t);
+		wait(210);
+		if (!eAlive) { return; }
+		YoyoSet2([GetPlayerX, GetPlayerY], [CenX, 180], 120, muki, t);
+		wait(240-90);
+		if (!eAlive) { return; }
+		BossCharge(objEnemy);
+		wait(90);
+		if (!eAlive) { return; }
+		YoyoSet3(GetAngleToPlayer(objEnemy)+180-0.75*muki*120, 0.75*muki, 210, true, muki, t);
+		SetAction(objEnemy, ACT_SHOT1, 240);
+		wait(300);
+		muki = -muki;
+		t = min(4, t+1);
+	}
+}
+
+task YoyoSet(to_pos, move_pos, muki, shot_rank)
+{
+	let speed = [3.5, 3.5, 3.75, 4.25][Difficult];
+	let way = [5, 7, 7, 9][Difficult];
+	let way_angle = [30, 30, 30, 30][Difficult] * muki;
+	let add_way = [0.5, 0.525, 0.525, 0.525][Difficult];
+	let count = [12+shot_rank*2, 18+shot_rank*3, 24+shot_rank*3, 30+shot_rank*4][Difficult];
+
+	let graphic = ADD_BGW_SHURIKEN_YELLOW;
+	let timer = 120;
+	let wt = 3;
+	
+	MoveTo(objEnemy, move_pos[0], move_pos[1], 120);
+	
+	ascent(t in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let ba = atan2(to_pos[1]-ObjMove_GetY(objEnemy), to_pos[0]-ObjMove_GetX(objEnemy));
+
+		let sa = ba  + (t-2)*way_angle*add_way;
+		YoyoShotWay(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			speed, sa, graphic, 15, way, way_angle, timer);
+		CallSound(sndShot2);
+		wait(wt);
+	}
+	wait(timer-count*wt);
+	if (!eAlive) { return; }
+	CallSound(sndPower3);
+}
+
+task YoyoSet2(to_pos, move_pos, timer, muki, shot_rank)
+{
+	let speed = [3.5, 3.5, 3.75, 4.25][Difficult];
+	let way_angle = 35 * muki;
+	
+	let count = [15+shot_rank*2, 18+shot_rank*2, 22+shot_rank*2, 26+shot_rank*2][Difficult];
+	let wt = timer/count;
+	
+	MoveTo(objEnemy, move_pos[0], move_pos[1], 120);
+	let ba = atan2(to_pos[1]-ObjMove_GetY(objEnemy), to_pos[0]-ObjMove_GetX(objEnemy));
+	
+	ascent(t in 0 .. count)
+	{
+		if (!eAlive) { return; }
+
+		let sa = ba + way_angle*t;
+		YoyoArrow(sa);
+		CallSound(sndShot2);
+		wait(wt);
+	}
+}
+
+task YoyoSet3(angle, add_angle, timer, shot_jiki, muki, shot_rank)
+{
+	let speed = 3;
+	let way_angle =  [160, 170, 170, 172.5][Difficult];
+	
+	let graphic = ADD_BGW_SHURIKEN_YELLOW;
+//	let timer = 210;
+	
+	let count = 32;
+	let wt = 2;
+	if (!shot_jiki) { wt = 1; }
+
+	if (shot_jiki) { YoyoSet3_arrow(timer-60, muki, shot_rank); }
+	ascent(t in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let add_a = t/count*way_angle;
+		let sa = angle + add_angle*t*wt;
+		
+		YoyoShot2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			speed, sa+add_a, graphic, 15, add_angle, timer);
+		if (t > 0)
+		{
+			YoyoShot2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed, sa-add_a, graphic, 15, add_angle, timer);
+		}
+		if (shot_jiki) { CallSound(sndShot2); }
+		wait(wt);
+	}
+	wait(timer-count*wt);
+	if (!eAlive) { return; }
+	CallSound(sndPower3);
+}
+task YoyoSet3_arrow(timer, muki, shot_rank)
+{
+	let wt = [75, 45, 12, 8][Difficult];
+	wt = ceil(wt * (1-shot_rank*0.1));
+	let add_angle = [0, 0, 72, 72][Difficult] *muki;
+	
+	let t = 0;
+	let st = 0;
+	while(t < timer)
+	{
+		if (!eAlive) { return; }
+		if (t > 0)
+		{
+			YoyoArrow(GetAngleToPlayer(objEnemy) + st*add_angle);
+			st++;
+		}
+		wait(wt);
+		t += wt;
+	}
+}
+
+
+task YoyoArrow(angle)
+{
+	let speed = [3.75, 4, 4.25, 5][Difficult];
+	let way = 6;
+	let way_angle = 1.5;
+	
+	let graphic = ADD_BGW_SHURIKEN_WHITE;
+	let timer = 120;
+	
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let ss = speed;
+		let sa = angle + i*way_angle;
+		YoyoShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			ss, sa, graphic, 15, timer);
+		if (i > 0)
+		{
+			let sa = angle - i*way_angle;
+			YoyoShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				ss, sa, graphic, 15, timer);
+		}
+		if (i == 0) { CallSound(sndShot7); }
+		wait(3);
+	}
+//	wait(timer-way*3-15);
+//	if (!eAlive) { return; }
+//	CallSound(sndPower3);
+}
+task YoyoShotWay(x, y, speed, angle, graphic, delay, way, way_angle, timer)
+{
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + (i-(way-1)/2)*way_angle;
+		YoyoShot(x, y, speed, sa, graphic, delay, timer);
+	}
+}
+task YoyoShot(x, y, speed, angle, graphic, delay, timer)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, 0);
+	My_RaiseShotEffectA(obj, delay);
+	RollShot(obj, 8);
+	ObjShot_SetAutoDelete(obj, false);
+	
+	let objDummy = CreateStraightLaserA1(x, y, angle, 0, 6, 36000, BGW_BEAM_L_WHITE, 0);
+	ObjStLaser_SetSource(objDummy, false);
+	ObjShot_SetAutoDelete(objDummy, false);
+	ObjShot_SetItemChange(objDummy, false);
+	ObjShot_SetIntersectionEnable(objDummy, false);
+	ObjRender_SetColor(objDummy, 64, 64, 0);
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj) && !Obj_IsDeleted(objEnemy))
+	{
+		let sr = GetObjectDistance(obj, objEnemy);
+		let sa = atan2(ObjMove_GetY(obj)-ObjMove_GetY(objEnemy), ObjMove_GetX(obj)-ObjMove_GetX(objEnemy));
+		ObjStLaser_SetAngle(objDummy, sa);
+		ObjLaser_SetLength(objDummy, max(0, sr-32));
+		ObjMove_SetPosition(objDummy, ObjMove_GetX(objEnemy)+cos(sa)*24, ObjMove_GetY(objEnemy)+sin(sa)*24);
+		if (t == timer)
+		{
+			ObjMove_SetSpeed(obj, 0);
+			ObjMove_SetAcceleration(obj, -36/240);
+			ObjMove_SetMaxSpeed(obj, -36);
+			ObjRender_SetColor(objDummy, 255, 160, 0);
+		}
+		if (t > timer)
+		{
+			if (sr < 32)
+			{
+				Obj_Delete(obj);
+				CallSound(sndBulletBreak);
+				break;
+			}
+			ObjMove_SetAngle(obj, sa);
+		}
+		t++;
+		yield;
+	}
+	ObjShot_FadeDelete(objDummy);
+}
+
+// 角度が回転する奴
+task YoyoShot2(x, y, speed, angle, graphic, delay, add_angle, timer)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, 0);
+	ObjMove_SetAngularVelocity(obj, add_angle);
+	My_RaiseShotEffectA(obj, delay);
+	RollShot(obj, 8);
+	ObjShot_SetAutoDelete(obj, false);
+	
+	let objDummy = CreateStraightLaserA1(x, y, angle, 0, 6, 36000, BGW_BEAM_L_WHITE, 0);
+	ObjStLaser_SetSource(objDummy, false);
+	ObjShot_SetAutoDelete(objDummy, false);
+	ObjShot_SetItemChange(objDummy, false);
+	ObjShot_SetIntersectionEnable(objDummy, false);
+	ObjRender_SetColor(objDummy, 64, 64, 0);
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj) && !Obj_IsDeleted(objEnemy))
+	{
+		let sr = GetObjectDistance(obj, objEnemy);
+		let sa = atan2(ObjMove_GetY(obj)-ObjMove_GetY(objEnemy), ObjMove_GetX(obj)-ObjMove_GetX(objEnemy));
+		ObjStLaser_SetAngle(objDummy, sa);
+		ObjLaser_SetLength(objDummy, max(0, sr-32));
+		ObjMove_SetPosition(objDummy, ObjMove_GetX(objEnemy)+cos(sa)*24, ObjMove_GetY(objEnemy)+sin(sa)*24);
+		if (t == timer)
+		{
+			ObjMove_SetSpeed(obj, 0);
+			ObjMove_SetAcceleration(obj, -36/240);
+			ObjMove_SetMaxSpeed(obj, -36);
+			ObjMove_SetAngularVelocity(obj, 0);
+			ObjRender_SetColor(objDummy, 255, 160, 0);
+		}
+		if (t > timer)
+		{
+			if (sr < 32)
+			{
+				Obj_Delete(obj);
+				CallSound(sndBulletBreak);
+				break;
+			}
+			ObjMove_SetAngle(obj, sa);
+		}
+		t++;
+		yield;
+	}
+	ObjShot_FadeDelete(objDummy);
+}
+
+
+// ラスワ開幕モーション
+function LWMotion()
+{
+	ObjEnemyBossScene_SetSpellTimer(objScene, -1);	// タイマー停止
+	SetEnemyVisible(objEnemy, false);
+	BossEffect_DisableMagicCircle(objEnemy);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	ascent(i in 0 .. 3)
+	{
+		EffectConcentrationCircle(objEnemy, 3, 45);
+		CallSound(sndShot1);
+		wait([50, 20, 20][i]);
+	}
+	RaiseBoss();
+	
+	task RaiseBoss()
+	{
+		ObjEnemyBossScene_SetSpellTimer(objScene, 99*60);	// タイマー開始
+		SetEnemyVisible(objEnemy, true);
+		BossEffect_EnableMagicCircle(objEnemy);
+		Obj_SetVisible(GetBossImageID(objEnemy), true);	//画像表示
+		ascent(t in 0 .. 30)
+		{
+			let tmp_a = (t+1)/30*255;
+			ObjRender_SetAlpha(GetBossImageID(objEnemy), tmp_a);
+			yield;
+		}
+	}
+}

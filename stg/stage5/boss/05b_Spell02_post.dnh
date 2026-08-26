@@ -1,0 +1,124 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["電弧石火"]
+#Text["電弧石火"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Nezu.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(1);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+
+	let boss_id = BOSS_ID_NEZU;
+	alternative(GetPlayerType())
+	case(PLAYER_REIMU_A)  { boss_id = BOSS_ID_NEZU_R; }
+	case(PLAYER_MARISA_A) { boss_id = BOSS_ID_NEZU_M;  }
+	case(PLAYER_SANAE_A)  { boss_id = BOSS_ID_NEZU_S;  }
+
+	objEnemy = CreateBossTalk(boss_id);	//ボスセット
+	NezuCharismaAura(objEnemy);	// オーラえへくと
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	let to_x = CenX;
+	let to_y = 140;
+	
+	let boss_id = BOSS_ID_NEZU;
+	
+	// 移動先座標をセット
+	Boss_SetInitPositionEx(boss_id, [to_x, to_y]);
+
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+	
+	// 描画タスク
+	let objBase = CreateShotA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 0, BGW_BALL_S_RED, 0);	// ダミー
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	DrawChangedNezu(objBase, boss_id);
+	
+	// 煙えへくと（拡散）
+	SetNezuSmoke(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 2, false);
+	wait(30);
+	HideBoss(objEnemy, 30);	// ボスを消す
+	wait(30);
+	ObjMove_SetPosition(objEnemy, to_x, to_y);	// 移動
+	// 煙えへくと（集中）
+	SetNezuSmoke(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 2, true);
+	wait(60);
+	RaiseBoss(objBase, 30);	// 変身ボス登場
+	wait(30);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+task DrawChangedNezu(objBase, boss_id)
+{
+	//初期設定
+	Boss_SetIDtoObj(objBase, boss_id);
+	
+	//タスク起動
+	Boss_AnimeTimer(objBase);	//アニメ状態管理タスク
+	BossAnime_Initialize(objBase);	//ボス描画タスク
+
+	let objImg = GetBossImageID(objBase);
+	Obj_SetRenderPriorityI(objImg, priorityBoss+1);
+	Obj_SetVisible(objImg, false);
+
+	let fade_flg = false;
+	while(!Obj_IsDeleted(objBase) && !Obj_IsDeleted(objEnemy))
+	{
+		if (!Obj_IsDeleted(objEnemy))
+		{
+			ObjMove_SetPosition(objBase, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy));
+		}
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+task HideBoss(objBase, timer)
+{
+	let objImg = GetBossImageID(objBase);
+
+	Obj_SetVisible(objImg, true);
+	descent(i in 0 .. timer)
+	{
+		let tmp = (i+1)/timer*255;
+		ObjRender_SetAlpha(objImg, tmp);
+		yield;
+	}
+	Obj_SetVisible(objImg, false);
+}
+
+task RaiseBoss(objBase, timer)
+{
+	let objImg = GetBossImageID(objBase);
+
+	Obj_SetVisible(objImg, true);
+	ascent(i in 0 .. timer)
+	{
+		let tmp = (i+1)/timer*255;
+		ObjRender_SetAlpha(objImg, tmp);
+		yield;
+	}
+}
+

@@ -1,0 +1,131 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["妹紅通常"]
+#Text["妹紅通常1"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(30);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MOKOU);	//ボスセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	SetEnemyVisible(objEnemy, true);
+	// practice tool: also stand by boss when chapter-skipped directly to this attack (talk skipped -> no EnterBoss move)
+	if (GetPlayMode() == GAME_SPELL || GetPlayMode() == GAME_NONE || GetStartChapter(4) >= 4)
+	{
+		standBy(objEnemy, CenX, 140, 30);
+		wait(15);
+	}
+	wait(15);
+	
+	TShot01();
+	
+	let speed = [3.25, 4, 5, 6][Difficult];
+	let way = [1, 3, 5, 7][Difficult];
+	let way_angle = [90, 60, 50, 45][Difficult];
+	let wt = [180, 150, 105, 90][Difficult];
+
+	wait(120);
+	let t = 0;
+	while(eAlive)
+	{
+		EnemyRandomMove(objEnemy, 120, 48);
+		wait(60);
+		if (!eAlive) { return; }
+		PhenixSet(speed, GetAngleToPlayer(objEnemy), way, way_angle);
+		way_angle = -way_angle;
+		wait(wt);
+		t++;
+	}
+}
+
+task TShot01
+{
+	let graphics = [BGW_BILL_RED, BGB_BILL_RED, BGB_BILL_PURPLE, BGW_BILL_PURPLE, BGW_BILL_BLUE, BGB_BILL_BLUE];
+	let way = [3, 3, 3, 3][Difficult];
+	let count = [5, 6, 6, 6][Difficult];
+	let wt = [12, 10, 8, 6][Difficult];
+	let speed = [1.25, 1.25, 1.5, 1.75][Difficult];
+	let add_angle = [10, 8, 7, 6][Difficult];
+	
+	let angle = GetAngleToPlayer(objEnemy)+180;
+	while(eAlive)
+	{
+		ascent(i in 0 .. count)
+		{
+			let ss = speed * (1 + i*0.2);
+			let sa = angle - i*add_angle*0.8;
+			let sr = 16 + i*4;
+			CreateShotCircle(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), ss, sa, graphics[trunc(i/count*6)], 15, way, sr);
+		}
+		angle += add_angle;
+		CallSound(sndShot2);
+		wait(wt);
+	}
+}
+
+task PhenixSet(speed, angle, way, way_angle)
+{
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let sa = angle + (i-(way-1)/2)*way_angle;
+		PhenixShot(ObjMove_GetX(objEnemy)+cos(sa)*32, ObjMove_GetY(objEnemy)+sin(sa)*32,
+			speed, sa, 1);
+		if (i == 0) { CallSound(sndShot7); }
+		wait(5);
+	}
+}
+
+task PhenixShot(x, y, speed, angle, scale)
+{
+	let graphic = ADD_BGW_FIRE_RED;
+	
+	ascent(i in -2 .. 2) { PhenixShot_sub(0, i*18); }
+	ascent(i in 1 .. 5) { PhenixShot_sub(i*14, -i*6); PhenixShot_sub(-i*14, -i*6); }
+	ascent(i in 0 .. 3) { PhenixShot_sub(i*12+42, -i*8-32); PhenixShot_sub(-i*12-42, -i*8-32); }
+	ascent(i in 0 .. 2) { PhenixShot_sub(i*10+64, -i*12-64); PhenixShot_sub(-i*10-64, -i*12-64); }
+
+	task PhenixShot_sub(vx, vy)
+	{
+		let bx = x+cos(angle)*vy*scale;
+		let by = y+sin(angle)*vy*scale;
+		let mvx = cos(angle+90)*vx*scale;
+		let mvy = sin(angle+90)*vx*scale;
+		let obj = CreateShotA1(bx, by, 0, angle, graphic, 0);
+		My_RaiseShotEffectA(obj, 15);
+		ascent(i in 0 .. 30)
+		{
+			if (Obj_IsDeleted(obj)) { return; }
+			let tmp = sin((i+1)/30*90);
+			ObjMove_SetPosition(obj, bx+mvx*tmp, by+mvy*tmp);
+			yield;
+		}
+		ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, speed/60, 0, speed);
+	}
+}
+

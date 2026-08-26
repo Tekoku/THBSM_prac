@@ -1,0 +1,238 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ミラーマッチ（早苗）"]
+#Text["ミラーマッチ（早苗）"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Nezu.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(75);		}
+	BossEvent();
+}
+
+@Initialize {
+
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_NEZU_S);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(45), [12,12,13,13][Difficult], 
+			GetCurrentScriptDirectory()~"05a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	if (GetPlayMode() == GAME_SPELL)
+	{
+		standBy(objEnemy, CenX, 140, 45+45);
+		wait(60);
+	}
+	else
+	{
+		standBy(objEnemy, CenX, 140, 45);
+		wait(15);
+	}
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+	
+	let wt = [270, 240, 270, 240][Difficult];
+	
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		SetRollFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), rand(0,360), muki);
+		CallSound(sndBoon);
+		wait(120);
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 140, 48);
+		wait(wt-120);
+		muki = -muki;
+	}
+}
+
+
+task SetRollFamilier(x, y, angle, muki)
+{
+	let way = [8, 10, 8, 10][Difficult];
+	let speed = 1.5;
+	let add_angle = 1.25 * muki;
+	let timer = [360, 360, 360, 360][Difficult];
+	let shot_type = [0, 1][muki<0];
+	
+	let objBase = CreateShotA1(x, y, 0, 0, BGW_BALL_S_RED, 0);
+	Obj_SetValue(objBase, "ANGLE", angle);
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	
+	ascent(i in 0 .. way)
+	{
+		SetFamilier01(x, y, speed, i*360/way, muki, i, timer);
+	}
+}
+
+
+// 使い魔
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let item_count = 0;
+	let item_star = 0;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 200, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	NezuOption_SetDamageRate(objFamilier);	// ダメージ軽減率自機別設定
+	SetDropItemCount(objFamilier, item_count, item_star);
+	SetEnemyVisible(objFamilier, false);
+	DrawHitodama(objFamilier, eColor);
+	TCheckDispINOut(objFamilier, 16);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TShot();
+		
+		let add_r = iniSpeed;
+		let add_a = 0.5*iniMuki;
+		
+		let r = 0;
+		let angle = iniAngle;
+		let t = 0;
+		while (CanShotBullet(objFamilier))
+		{
+			if (ObjMove_GetY(objFamilier) < -4)
+			{
+				if (Difficult >= D_HARD)
+				{
+					ThunderSet(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier));
+				}
+				EraseEnemy(objFamilier);
+				break;
+			}
+			if (t == 15)
+			{
+				SetEnemyVisible(objFamilier, true);
+			}
+			
+			if (t < 90)
+			{
+				let tmp = (t+1)/90;
+				r += add_r*(1-tmp)*1.5;
+				angle += add_a*(1-tmp)*4;
+			}
+			else if (t < 450)
+			{
+				let tmp = (t-90)/360;
+				let tmp2 = min(1, (t-90)/180);
+				r += add_r*tmp2;
+				angle += add_a*tmp;
+			}
+			else
+			{
+				r += add_r;
+				angle += add_a;
+			}
+
+			ObjMove_SetPosition(objFamilier, iniX+cos(angle)*r, iniY+sin(angle)*r);
+			t++;
+			yield;
+		}
+	}
+	
+	
+	task TShot()
+	{
+		wait(75);
+		
+		let speed = 5;
+		let wt = 4;
+		let add_angle = 105*iniMuki;
+
+		let graphic = [ADD_BGB_SCALE_BLUE, ADD_BGB_SCALE_YELLOW][iniMuki>0];
+		
+		let t = 0;
+		let st = 0;
+		while(CanShotBullet(objFamilier) && t < 360)
+		{
+			let fs = 1 + min(4, st/10);
+			let base_angle = atan2(iniY-ObjMove_GetY(objFamilier), iniX-ObjMove_GetX(objFamilier));
+			WindShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), speed, base_angle, graphic, 0, add_angle);
+			CallSound(sndShot2);
+
+			st++;
+			t += wt;
+			wait(wt);
+		}
+	}
+	
+	task WindShot(x, y, speed, angle, graphic, delay, add_angle)
+	{
+		let obj = CreateShotA1(x, y, 0, angle, graphic, delay);
+		wait(delay);
+
+		let st = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			ObjMove_AddPatternA2(obj, 0, speed, angle+(st%2)*add_angle, -speed/30, 0, 0);
+			st++;
+			wait(30);
+		}
+	}
+}
+
+// 雷レーザー
+task ThunderSet(x, y)
+{
+	let ba = atan2(GetPlayerY-y, GetPlayerX-x);
+	
+	let way = [6, 6, 6, 6][Difficult];
+	let way_angle = [15, 15, 15, 15][Difficult];
+	
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+
+		let sa = ba + i*way_angle;
+		if (sin(sa) > 0) { S02ThunderLaser(x, y, sa); }
+
+		if (i > 0)
+		{
+			let sa = ba - i*way_angle;
+			if (sin(sa) > 0) { S02ThunderLaser(x, y, sa); }
+		}
+		wait(5);
+	}
+}
+
+task S02ThunderLaser(x, y, angle)
+{
+	LaserDelayEffect01(objEnemy, x, y, angle, BGW_BEAM_BLUE, 60);
+	CallSound(sndBulletBreak);
+	wait(60);
+	if (!eAlive) { return; }
+	CallSound(sndShot4);
+	ascent(i in 0 .. 3)
+	{
+		if (!eAlive) { return; }
+		My_CreateLooseLaserA1(x, y, 16+i*6, angle, 600-i*120, 16+i*8, BGW_THUNDER_BLUE, 0);
+		wait(2);
+	}
+}

@@ -1,0 +1,302 @@
+//　Stage1
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../lib/wor_function.dnh"
+
+let flagEnd = false;
+let flgScriptValue = 0;
+
+//　ステージの背景テクスチャ
+let world05_path;
+
+let STAGE_SCENE = 0;
+
+let STAR_SCALE = 1;
+let SKY_DELAY = 1140;
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_NextStageScene)
+	{
+		STAGE_SCENE++;
+	}
+	case(ev_CloseScript)
+	{
+		//背景削除
+		flagEnd = true;
+		//ブラックアウト
+		BlackOut( world_layer+1, 120, false, [0, 0, 0] );
+		CloseMine(300);
+	}
+}
+
+@Initialize
+{
+	init();	//初期設定
+	
+	// 画像パスをセット
+	world05_path = LoadingImageFile_StgWorld(5);
+
+	// 背景スクリプト起動
+	if (IsDrawBackground() >= 2) { SetWorld05a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task BackGroundLite
+{
+	let obj2 = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj2,world_layer);
+	ObjRender_SetColor(obj2,255,255,255);
+	ObjPrim_SetTexture(obj2,world05_path[1]);
+	ObjSprite2D_SetSourceRect(obj2,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj2,0,0,384,448);
+	ObjRender_SetAlpha(obj2,0);
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,world_layer);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,world05_path[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+
+	let t = 0;
+	while(alpha < 255)
+	{
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		t++;
+		yield;
+	}
+	ObjRender_SetAlpha(obj2, 255);
+	while(!flagEnd && alpha > 0)
+	{
+		if (t > SKY_DELAY)
+		{
+			alpha -= 2;
+			ObjRender_SetAlpha(obj,alpha);
+		}
+		t++;
+		yield;
+	}
+	Obj_Delete(obj);
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj2);
+
+	task BackGroundLite2
+	{
+
+		while(alpha<255)
+		{
+			alpha+=5;
+			ObjRender_SetAlpha(obj,alpha);
+			yield;
+		}
+		while(!flagEnd)
+		{
+			yield;
+		}
+		Obj_Delete(obj);
+	}
+}
+
+task SetWorld05a()
+{
+	TBG03;
+	TBG02;
+	TBGStar();
+	TBG01;
+
+	SetCameraFocusX(0);
+	SetCameraFocusY(200);
+	SetCameraFocusZ(0);
+	SetCameraRadius(500);
+
+	SetCameraAzimuthAngle(90);
+	SetCameraElevationAngle(-15);
+	
+
+//	wait(240);
+	
+	let t = 0;
+	let next_wt = SKY_DELAY+180;
+	while(!flagEnd)
+	{
+		if (t < 360)
+		{
+			let tmp = (t+1)/360;
+			SetFogParam(-384+384*tmp, -128+512*tmp, 0, 0, 0);
+		}
+		if( next_wt < 0 )
+		{
+			CreateFallingStar( [randEffect(-256,256), randEffect(300,600), 64],
+				[randEffect(8,12),-4,-3],
+				0.5, 255, 45, [192,192,randEffect(64,255)] );
+			next_wt = randEffect(5, 15);
+		}
+		next_wt--;
+		t++;
+		yield;
+	}
+}
+
+
+// 地形
+task TBG01
+{
+	let ID = [ObjMesh_Create(), ObjMesh_Create(), ObjMesh_Create()];
+	ascent(i in 0 .. 3)
+	{
+		ObjMesh_Load(ID[i], world05_path[1]);
+		Obj_SetRenderPriorityI(ID[i],world_layer+2);
+//		ObjRender_SetBlendType(ID[i], BLEND_ADD_ARGB);
+	}
+
+	let bazeZ = 0;
+	let t = 0;
+	while(!flagEnd)
+	{
+		ascent(i in 0 .. 3)
+		{
+			let bz = (bazeZ+i*256)%768 -256;
+			ObjRender_SetPosition(ID[i], 0, 0, bz);
+		}
+		bazeZ += 0.5;
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. 3) { Obj_Delete(ID[i]); }
+}
+// 星マスク
+task TBG02
+{
+	let alpha = 0;
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj,world_layer);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,world05_path[2]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	ObjRender_SetAlpha(obj,alpha);
+	wait(SKY_DELAY);
+
+	while(alpha<255)
+	{
+		alpha+=4;
+		ObjRender_SetColor(obj,alpha,alpha,alpha);
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+// キラキラ背景
+task TBG03
+{
+	let alpha = 0;
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(obj,world_layer);
+	ObjRender_SetColor(obj,96,96,96);
+	ObjPrim_SetTexture(obj,world05_path[3]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+	ObjRender_SetAlpha(obj,alpha);
+	wait(SKY_DELAY+60);
+
+	let t = 0;
+	let bx = 0;
+	let by = 0;
+	while(!flagEnd)
+	{
+		let timer = trunc(randEffect(45, 120));
+		ascent(i in 0 .. timer)
+		{
+			if (flagEnd) { break; }
+			let tmp_c = sin((i+1)/timer*180)*96 + 160;
+			ObjRender_SetColor(obj, tmp_c, tmp_c, tmp_c);
+			ObjSprite2D_SetSourceRect(obj,0+bx,0+by,384+bx,448+by);
+			bx += 0.15;
+			by += 0.25;
+			t++;
+			if (alpha < 255)
+			{
+				alpha+=3;
+				ObjRender_SetAlpha(obj,alpha);
+				ObjRender_SetColor(obj, tmp_c*alpha/255, tmp_c*alpha/255, tmp_c*alpha/255);
+			}
+			yield;
+		}
+//		bx = randEffect(0,384);
+//		by = randEffect(0,448);
+	}
+	Obj_Delete(obj);
+}
+// 大三角
+task TBGStar()
+{
+	wait(SKY_DELAY+60);
+	
+	let pos = [[109, 110], [198, 38], [278, 214]];
+	let _rect = [ 3, 0 ];
+	
+	let ID = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+	
+	ascent(i in 0 .. 3)
+	{
+		ObjRender_SetPosition( ID[i], pos[i][0], pos[i][1], 0 );
+		ObjPrim_SetTexture( ID[i], imgEffectStageParticle );
+		ObjRender_SetBlendType( ID[i], BLEND_ADD_ARGB );
+		Obj_SetRenderPriorityI( ID[i], world_layer+1 );
+		ObjRender_SetColor( ID[i], 96, 96, 128 );
+		ObjSprite2D_SetSourceRect( ID[i], 0 + _rect[0]*64, 0 + _rect[1]*64, 64 + _rect[0]*64, 64 + _rect[1]*64 );
+		ObjSprite2D_SetDestCenter( ID[i] );
+	}
+	BlightStar(120);
+	
+	let t = 0;
+	while(!flagEnd)
+	{
+		let tmp_s = STAR_SCALE * (0.66+sin(t*3)*0.33);
+		if (t < 60)
+		{
+			tmp_s *= (t+1)/60;
+		}
+		ascent(i in 0 .. 3)
+		{
+			ObjRender_SetScaleXYZ( ID[i], tmp_s, tmp_s, tmp_s );
+			ObjRender_SetAngleZ( ID[i], t );
+		}
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. 3)
+	{
+		Obj_Delete( ID[i] );
+	}
+}
+task BlightStar(timer)
+{
+	descent(t in 0 .. timer)
+	{
+		let tmp = (t+1)/timer;
+		STAR_SCALE = 1 + 2*min(1,tmp*2);
+		yield;
+	}
+	STAR_SCALE = 1;
+}

@@ -1,0 +1,257 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ダークテイル"]
+#Text["ダークテイル"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Nezu.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(4000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	case(EV_REQUEST_IS_LAST_SPELL)	{ SetScriptResult(true);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	BossEffect_ResetMagicCircle();
+	Reset_aTime(BOSS_ID_NEZU);
+
+	bossDropItem = 0;	//アイテム数
+	bossHitToShot = 64;
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_NEZU);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(106), [18,18,19,19][Difficult], 
+			GetCurrentScriptDirectory()~"05a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	ObjMove_SetPosition(objEnemy, CenX, 140);
+
+	ObjEnemy_SetDamageRate(objEnemy, 0.1*dIni_Shot, 0.1*dIni_Shot*dIni_Spell);
+	LWMotion();
+	NezuCharismaOption(objEnemy, true);
+
+	wait(60);
+	
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+	ObjEnemy_SetDamageRate(objEnemy, dIni_Shot, dIni_Shot*dIni_Spell);	// ダメージがまともに通るように
+	
+	let wt = [420, 390, 420, 390][Difficult];
+	let way_angle = [60, 75, 75, 75][Difficult];
+	let way_angle_max = [90, 105, 110, 120][Difficult];
+	
+	let muki = 1;
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		wait(90);
+
+		if (!eAlive) { return; }
+		CallSound(sndBoon);
+		LaserSet(muki, way_angle);
+		wait(wt-150);
+
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 140, 24);
+		wait(60);
+		muki = -muki;
+		way_angle = way_angle + (way_angle_max-way_angle)*0.33;
+	}
+}
+
+task LaserSet(muki, way_angle)
+{
+	ascent(i in 0 .. 9)
+	{
+		let sa = GetAngleToPlayer(objEnemy);
+		let to_a = sa+ (360 - (i-4)/9*way_angle)*muki;
+		let ll = 600;
+		let delay = 180 + i*15;
+		
+		let speed_rate = 1 + i*0.1;
+	//	if (Difficult >= D_HARD) { speed_rate = 1; }
+		
+		TailLaser(sa, to_a, ll, delay, speed_rate);
+	}
+}
+
+task TailLaser(from_angle, to_angle, max_len, delay, speed_rate)
+{
+	let bx = ObjMove_GetX(objEnemy);
+	let by = ObjMove_GetY(objEnemy);
+	let muki = [1, -1][from_angle > to_angle];
+	
+	let shot_graphic = [ADD_BGW_FIRE_ORANGE, ADD_BGW_FIRE_ORANGE, ADD_BGW_FIRE_RED, ADD_BGW_FIRE_RED][Difficult];
+	let shot_wt = [3, 3, 3, 2][Difficult];
+	let shot_speed = [3, 3, 3, 4.5][Difficult];
+	let shot_add = [-150, -135, 180, 180][Difficult];
+	
+	let objLaser = My_CreateStraightLaserA1(-64, -64, from_angle, 0, 12, 9999, BGW_BEAM_RED, 9999, true);
+	
+	let st = 0;
+	ascent(t in 0 .. delay)
+	{
+		if (!eAlive) { break; }
+		let tmp = (1-cos((t+1)/delay*180))/2;
+		let la = from_angle*(1-tmp) + to_angle*tmp;
+		let r = tmp*64;
+		let sx = bx+r*cos(la);
+		let sy = by+r*sin(la);
+		ObjLaser_SetLength(objLaser, tmp*max_len);
+		ObjMove_SetPosition(objLaser, sx, sy);
+		ObjStLaser_SetAngle(objLaser, la);
+		
+		if (t%shot_wt == 0)
+		{
+			let ss = (0.25+tmp*0.75) * shot_speed * (1-(st%2)/2);
+			let obj = CreateShotA1(sx, sy, ss, la+tmp*shot_add*muki, shot_graphic, 0);
+			Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+1);
+			st++;
+		}
+		yield;
+	}
+	if (eAlive && !Obj_IsDeleted(objLaser))
+	{
+		TailLaserFire(ObjMove_GetX(objLaser), ObjMove_GetY(objLaser), ObjStLaser_GetAngle(objLaser));
+		TailLaserShot(ObjMove_GetX(objLaser), ObjMove_GetY(objLaser), ObjStLaser_GetAngle(objLaser), speed_rate);
+		CallSound(sndShot4);
+	}
+	ObjShot_FadeDelete(objLaser);
+}
+
+task TailLaserFire(x, y, angle)
+{
+	ascent(i in 0 .. 45)
+	{
+		if (!eAlive) { break; }
+		let tmp = i/45;
+		let ss = 6 + tmp*4;
+		let sa = angle + rand(-1,1)*tmp*8;
+		let ll = 300;
+		let lw = 32 + tmp*80;
+		let obj = CreateLooseLaserA1(x, y, ss, sa, ll, lw, BGW_FIRE_RED, 0);
+		Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+2);
+		ObjLaser_SetIntersectionWidth(obj, lw/3);
+		ObjShot_SetItemChange(obj, false);
+		if (Difficult >= D_HARD)
+		{
+			ObjRender_SetColor(obj, 192, 128, 64);
+			ObjRender_SetBlendType(obj, BLEND_SUBTRACT);
+
+			let obj2 = CreateLooseLaserA1(x, y, ss, sa, ll, lw*1.5, BGW_FIRE_RED, 0);
+			ObjRender_SetColor(obj2, 128, 96, 32);
+			Obj_SetRenderPriorityI(obj2, GetShotRenderPriorityI+1);
+			ObjShot_SetIntersectionEnable(obj2, false);
+			ObjShot_SetItemChange(obj2, false);
+		}
+		else
+		{
+			ObjRender_SetColor(obj, 128, 96, 32);
+		}
+		wait(3);
+	}
+}
+
+task TailLaserShot(x, y, angle, speed_rate)
+{
+	wait(15);
+	
+	let vx = cos(angle)*6;
+	let vy = sin(angle)*6;
+	
+	let speed = [0.6, 0.75, 0.75, 0.75][Difficult];
+	let way = [3, 3, 4, 5][Difficult];
+	let way_angle = [2, 2, 1.5, 1.5][Difficult];
+	let graphic = [BGW_FIRE_RED, BGW_FIRE_RED, BGW_FIRE_BLUE, BGW_FIRE_BLUE][Difficult];
+	let wt = [5, 5, 5, 6][Difficult];
+	
+	let t = 0;
+	while(CheckDispINEx(x, y, 0))
+	{
+		if (!eAlive) { break; }
+		
+		if (t > 0 && t%wt == 0)
+		{
+			let wa = t*way_angle;
+			local
+			{
+				let sa = angle+180;
+				let ss = speed * (1-t*0.01) * speed_rate;
+				CreateShotA2(x, y, ss*6, sa, -ss/5, ss, graphic, 0);
+			}
+			ascent(i in 1 .. way)
+			{
+				let ss = speed * (1-t*0.01) * (1-i*0.1) * speed_rate;
+				local
+				{
+					let sa = angle+180 + (i+0.5)*wa;
+					CreateShotA2(x, y, ss*6, sa, -ss/5, ss, graphic, 0);
+				}
+				local
+				{
+					let sa = angle+180 - (i+0.5)*wa;
+					CreateShotA2(x, y, ss*6, sa, -ss/5, ss, graphic, 0);
+				}
+			}
+		}
+		if (t%5 == 0)
+		{
+			CallSound(sndFire);
+		}
+		
+		x += vx; y += vy;
+		t++;
+		yield;
+	}
+}
+
+// ラスワ開幕モーション
+function LWMotion()
+{
+	ObjEnemyBossScene_SetSpellTimer(objScene, -1);	// タイマー停止
+	SetEnemyVisible(objEnemy, false);
+	BossEffect_DisableMagicCircle(objEnemy);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	ascent(i in 0 .. 3)
+	{
+		EffectConcentrationCircle(objEnemy, 3, 45);
+		CallSound(sndShot1);
+		wait([50, 20, 20][i]);
+	}
+	RaiseBoss();
+	
+	task RaiseBoss()
+	{
+		ObjEnemyBossScene_SetSpellTimer(objScene, 99*60);	// タイマー開始
+		SetEnemyVisible(objEnemy, true);
+		BossEffect_EnableMagicCircle(objEnemy);
+		Obj_SetVisible(GetBossImageID(objEnemy), true);	//画像表示
+		ascent(t in 0 .. 30)
+		{
+			let tmp_a = (t+1)/30*255;
+			ObjRender_SetAlpha(GetBossImageID(objEnemy), tmp_a);
+			yield;
+		}
+	}
+}

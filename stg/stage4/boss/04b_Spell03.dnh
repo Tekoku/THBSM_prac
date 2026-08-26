@@ -1,0 +1,514 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["畳返の術"]
+#Text["畳返の術"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Ichiyou.dnh"
+
+let TATAMI = [];
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(600);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 35;		//ダメージ透過率
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_ICHIYOU);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(34), [6,6,7,8][Difficult], 
+			GetCurrentScriptDirectory()~"04b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 120, 120);
+	wait(60);
+	TATAMI_SET();
+	SetAction(objEnemy, ACT_SHOT1, 120);
+	wait(90);
+	CallSpellCard(true);	//スペカ起動
+	wait(120);
+	
+	let speed = 12;
+	let wt_rate = [1.5, 1.2, 1, 1][Difficult];
+	
+	while(eAlive)
+	{
+		let muki = 1;
+		let rotation = 9;
+		ascent(t in 0 .. rotation)
+		{
+			let way = 1;
+			let way_angle = 1;
+			let wt = 60;
+			alternative(t)
+			case(0, 6)
+			{
+				way = [5, 5, 6, 7][Difficult];
+				way_angle = [2, 5, 5, 5][Difficult];
+				wt = 60;
+				S03Suriken_way(speed, GetAngleToPlayer(objEnemy), way, way_angle*muki, 3);
+			}
+			case(1, 4)
+			{
+				way = [5, 7, 7, 9][Difficult];
+				way_angle = 120/way;
+				wt = 60;
+				S03Suriken_way(speed, GetAngleToPlayer(objEnemy), way, way_angle*muki, 3);
+			}
+			case(3, 7)
+			{
+				way = [6, 6, 8, 8][Difficult];
+				way_angle = 240/way;
+				wt = 60;
+				S03Suriken_way(speed, GetAngleToPlayer(objEnemy), way, way_angle*muki, 3);
+			}
+			case(2)
+			{
+				way = [7, 8, 9, 10][Difficult];
+				way_angle = 180/way;
+				wt = 90;
+				S03Suriken_way(speed, GetAngleToPlayer(objEnemy)+way_angle*1.25*muki, way, way_angle*muki, 3);
+				S03Suriken_way(speed, GetAngleToPlayer(objEnemy)-way_angle*1.25*muki, way, -way_angle*muki, 3);
+			}
+			case(5, 8)
+			{
+				way = [1, 2, 3, 5][Difficult];
+				way_angle = [5, 5, 5, 5][Difficult];
+				wt = 30;
+				loop(6)
+				{
+					if (!eAlive) { return; }
+					S03Suriken_way(speed, GetAngleToPlayer(objEnemy), way, way_angle*muki, 0);
+					wait(10);
+				}
+			}
+			EnemyRandomMoveEx(objEnemy, CenX, 120, CenX*0.33, 48/2, 48, 0.75);
+			
+			let tmp_wt = wt*wt_rate;
+			if (t >= rotation-1) { tmp_wt -= 60; }
+			wait(tmp_wt);
+			muki = -muki;
+		}
+		if (!eAlive) { return; }
+		TATAMI_BREAK();
+		wait(120);
+		if (!eAlive) { return; }
+		TATAMI_SET();
+		SetAction(objEnemy, ACT_SHOT1, 120);
+		wait(135);
+	}
+
+}
+
+task TATAMI_SET()
+{
+	NinjutuCharge(objEnemy, 90, [0, 192, 192]);
+	BossCharge(objEnemy);
+	wait(60);
+	if (!eAlive) { return; }
+	CallSound(sndBoon);
+	
+	if (Difficult >= D_HARD)
+	{
+		let bx = CenX;
+		let by = 300;
+		descent(i in 0 .. 4)
+		{
+			if (!eAlive) { return; }
+			let tmp = i*60;
+			let delay = i*4;
+			SetTatami(bx+tmp, by-tmp/3, 90, delay);
+			if (i > 0)
+			{
+				SetTatami(bx-tmp, by-tmp/3, 90, delay);
+			}
+			wait(4);
+		}
+		descent(i in 2 .. 4)
+		{
+			if (!eAlive) { return; }
+			let tmp = i*60;
+			let delay = i*4 - 4*4;
+			SetTatami(bx+tmp, by+tmp-360, 90, delay);
+			if (i > 0)
+			{
+				SetTatami(bx-tmp, by+tmp-360, 90, delay);
+			}
+			wait(4);
+		}
+	}
+	else
+	{
+		let bx = CenX;
+		let by = 130;
+		descent(i in 0 .. 3)
+		{
+			if (!eAlive) { return; }
+			let a = 90 + i*30;
+			let r = 160;
+			let delay = i*4;
+			SetTatami(bx+r*cos(a), by+r*sin(a), 90, delay);
+			if (i > 0)
+			{
+				let a = 90 - i*30;
+				SetTatami(bx+r*cos(a), by+r*sin(a), 90, delay);
+			}
+			wait(4);
+		}
+	}
+}
+task TATAMI_BREAK()
+{
+	ascent(i in 0 .. length(TATAMI))
+	{
+		Obj_SetValue(TATAMI[i], "FLASH", 1);
+	}
+	wait(60);
+	ascent(i in 0 .. length(TATAMI))
+	{
+		ObjEnemy_AddLife(TATAMI[i], -99999);
+	}
+}
+
+task S03Suriken_way(speed, angle, way, way_angle, wt)
+{
+	let graphic = BGW_SHURIKEN_WHITE;
+	let to_graphic = BGB_KUNAI_WHITE;
+	let delay = 30;
+	
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		let sa = angle + (i-(way-1)/2)*way_angle;
+		let sx = ObjMove_GetX(objEnemy) + 16*cos(sa);
+		let sy = ObjMove_GetY(objEnemy) + 16*sin(sa);
+		S03Suriken(sx, sy, speed, sa, graphic, delay, to_graphic);
+		wait(wt);
+	}
+}
+
+task S03Suriken(x, y, speed, angle, graphic, delay, to_graphic)
+{
+	let obj = SurikenShoot(x, y, speed, angle, graphic, delay, true);
+	if (Obj_IsDeleted(obj)) { return; }
+	CallSound(sndShuriken);
+
+	while(!Obj_IsDeleted(obj))
+	{
+		ascent(i in 0 .. length(TATAMI))
+		{
+			if (absolute(ObjMove_GetX(obj)-ObjMove_GetX(TATAMI[i])) < 36 &&
+				absolute(ObjMove_GetY(obj)-(ObjMove_GetY(TATAMI[i])-36)) < 36)
+			{
+				CreateShotWay(ObjMove_GetX(obj), ObjMove_GetY(obj),
+					speed/2, -90+rand(-30,30), to_graphic, 0, 8, 120/8, 0);
+				if (Difficult >= D_LUNA)
+				{
+					SkeletonKunai(ObjMove_GetX(obj), ObjMove_GetY(obj),
+						90+rand(-15,15), 3, BGW_FIRE_RED, 15);
+				}
+
+				CallSound(sndBulletBreak);
+				Obj_Delete(obj);
+				return;
+			}
+		}
+		yield;
+	}
+}
+
+// TATAMI!
+task SetTatami(iniX, iniY, iniAngle, iniDelay)
+{
+	let scale = 0.4;
+	let eSize = ENEMY_S;
+	let eColor = EFF_GREEN;
+	let item_count = 0;
+	let item_star = 0;
+	let eLife = [200, 150][Difficult>=D_HARD];
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, eLife, eSize);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	SetEnemyVisible(objFamilier, false);
+	ObjMove_SetAngle(objFamilier, iniAngle);
+	
+	DelayTatami(objFamilier, scale);
+	wait(15+iniDelay);
+	if (eAlive)
+	{
+		CallSound(sndShot1);
+		DrawTatami(objFamilier, scale, iniDelay);
+	}
+	TAct();
+	
+	// 配列に追加
+	TATAMI = TATAMI ~ [objFamilier];
+	
+	WaitForKilledFamilier_S03(objFamilier, 32, 24, 256*scale);
+	
+	Obj_GetValueD(objFamilier, "ANIME_STOP", 1);	// 画像削除
+	SetEnemyVisible(objFamilier, false);
+	if (CheckKillType(objFamilier) == 2)
+	{
+		// 撃ち返し
+		TUchikaeshi();
+		CallSound(sndShot1);
+	}
+	wait(30);
+	// 配列から削除
+	ascent(i in 0 .. length(TATAMI))
+	{
+		if (TATAMI[i] == objFamilier) { TATAMI = erase(TATAMI, i); break; }
+	}
+	Obj_Delete(objFamilier);
+	
+	task TAct()
+	{
+	}
+	
+	task TUchikaeshi()
+	{
+		let speed = [5, 6, 9, 10][Difficult];
+		let way = [4, 6, 7, 7][Difficult];
+		let way_angle = [30, 45, 38, 38][Difficult];
+		let count = 8;
+
+		let bx = ObjMove_GetX(objFamilier);
+		let by = ObjMove_GetY(objFamilier);
+		let base_angle = ObjMove_GetAngle(objFamilier);
+		let br = 256*scale/2;
+		let timer = 30;
+		
+		let graphic = [BGW_KUNAI_WHITE, BGW_KUNAI_WHITE, BGW_KUNAI_WHITE, BGW_FIRE_ORANGE][Difficult];
+		
+		// 上ショット
+		local
+		{
+			if (!eAlive) { return; }
+			let way2 = 48;
+			ascent(i in 0 .. way2)
+			{
+				let tmp = i/(way2-1);
+				let sr = 16;
+				let srx = 36*(tmp-0.5);
+				let sx = bx - sr*cos(base_angle) + srx*cos(base_angle+90);
+				let sy = by - sr*sin(base_angle) + srx*sin(base_angle+90);
+				CreateShotB1(sx, sy, (tmp-0.5)*18, -3, ADD_BGW_SCALE_BLUE, 0);
+			}
+		}
+		// 下ショット
+		ascent(j in 0 .. count)
+		{
+			if (!eAlive) { return; }
+			let ba = base_angle + rand(-8,8);
+			ascent(i in 0 .. way)
+			{
+				let tmp = i/(way-1);
+				let sr = (count-j)*8;
+				let srx = 36*(tmp-0.5);
+				let sx = bx - sr*cos(base_angle) + srx*cos(base_angle+90);
+				let sy = by - sr*sin(base_angle) + srx*sin(base_angle+90);
+				let sa = ba + (tmp-0.5)*way_angle;
+				let ss = speed * (1-j/count*0.75);
+				SkeletonKunai(sx, sy, sa, ss, graphic, 15);
+			}
+			wait(5);
+		}
+	}
+}
+
+task SkeletonKunai(sx, sy, sa, ss, graphic, delay)
+{
+	CreateShotA2(sx, sy, 0, sa, ss/120, ss, graphic, delay);
+
+	let obj2 = CreateShotA2(sx, sy, 0, sa, ss/120, ss, graphic, delay);
+	Obj_SetRenderPriorityI(obj2, GetShotRenderPriorityI+2);
+	ObjRender_SetBlendType(obj2, BLEND_ADD_ARGB);
+	ObjRender_SetColor(obj2, 64, 64, 192);
+	ObjShot_SetIntersectionEnable(obj2, false);
+}
+
+task DrawTatami(objFamilier, scale, delay)
+{
+	let xscale = 1.5;
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	Obj_SetRenderPriorityI(objImg, GetShotRenderPriorityI+1);
+	ObjPrim_SetTexture(objImg, imgEffectIchiyou2);
+	ObjRender_SetPosition(objImg, ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0);
+	let objImg2 = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	if (Difficult <= D_HARD)
+	{
+		SetDistortion2D(objImg, [[-64*xscale,-256],[64*xscale,-256],[64,0],[-64,0]], [[0,0], [128,256]]);	// 矩形自由変形用
+	}
+	else
+	{
+		Obj_SetRenderPriorityI(objImg2, GetShotRenderPriorityI);
+		ObjPrim_SetTexture(objImg2, imgEffectIchiyou2);
+		ObjRender_SetPosition(objImg2, ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0);
+		ObjRender_SetBlendType(objImg2, BLEND_ADD_ARGB);
+		ObjRender_SetColor(objImg2, 255, 255, 0);
+
+		SetDistortion2D(objImg, [[-64*xscale,-256],[64*xscale,-256],[64,0],[-64,0]], [[0,256], [128,512]]);	// 矩形自由変形用
+		SetDistortion2D(objImg2, [[-64*xscale,-256],[64*xscale,-256],[64,0],[-64,0]], [[128,256], [256,512]]);	// 矩形自由変形用
+	}
+	ObjRender_SetScaleXYZ(objImg, scale, scale, scale);
+	
+	let t = 0;
+	while(CanShotBullet(objFamilier))
+	{
+		let tmp_i2 = ((t+delay)%15)/15;
+		ObjRender_SetAlpha(objImg2, (1-tmp_i2)*384);
+		ObjRender_SetScaleXYZ(objImg2, scale*(1+tmp_i2/3), scale*(1+tmp_i2), 1);
+
+		if (t < 15)
+		{
+			let tmp = sin((t+1)/15*90);
+			ObjRender_SetScaleY(objImg, tmp*scale);
+			ObjRender_SetScaleY(objImg2, tmp*scale);
+		}
+		else if (t == 15)
+		{
+			SetEnemyVisible(objFamilier, true);
+		}
+		if (ObjEnemy_GetInfo(objFamilier, INFO_LIFE) < 100 || Obj_GetValueD(objFamilier, "FLASH", 0))
+		{
+			ObjRender_SetColor(objImg, 255, 255-(t%5)*60, 255-(t%5)*60);
+		}
+		ObjRender_SetAngleZ(objImg, ObjMove_GetAngle(objFamilier)-90);
+		ObjRender_SetAngleZ(objImg2, ObjMove_GetAngle(objFamilier)-90);
+		t++;
+		yield;
+	}
+	ObjRender_SetColor(objImg, 255, 255, 255);
+	ascent(i in 0 .. 45)
+	{
+		let tmp = i/45;
+		ObjRender_SetAngleX(objImg, ObjRender_GetAngleX(objImg)+6*tmp);
+		ObjRender_SetAlpha(objImg, (1-tmp)*512);
+
+		let tmp_i2 = ((t+delay)%15)/15;
+		ObjRender_SetAlpha(objImg2, (1-tmp_i2)*384*(1-tmp));
+		ObjRender_SetScaleXYZ(objImg2, scale*(1+tmp_i2/3), scale*(1+tmp_i2), 1);
+		ObjRender_SetAngleX(objImg2, ObjRender_GetAngleX(objImg)+6*tmp);
+		t++;
+		yield;
+	}
+	Obj_Delete(objImg);
+	Obj_Delete(objImg2);
+}
+
+// 畳用準備えへくと
+function DelayTatami(objFamilier, scale)
+{
+	let cp = 8;
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_PRIMITIVE_2D);
+	ObjPrim_SetVertexCount(objImg, (cp+1)*2);
+	ObjPrim_SetPrimitiveType(objImg, PRIMITIVE_TRIANGLESTRIP);
+	Obj_SetRenderPriorityI(objImg, GetShotRenderPriorityI+1);
+	ObjPrim_SetTexture(objImg, imgEffectIchiyou2);
+	ObjRender_SetPosition(objImg, ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), 0);
+	ObjRender_SetScaleXYZ(objImg, scale, scale, scale);
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+	if (Difficult <= D_HARD)
+		{ ObjRender_SetColor(objImg, 220, 64, 255); }
+	else
+		{ ObjRender_SetColor(objImg, 255, 64, 64); }
+	
+	ascent(i in 0 .. cp+1)
+	{
+		let tmp = i/cp;
+		ObjPrim_SetVertexPosition(objImg, i*2+0, -64, tmp*256, 0);
+		ObjPrim_SetVertexPosition(objImg, i*2+1, 64, tmp*256, 0);
+		ObjPrim_SetVertexUVT(objImg, i*2+0, 129, tmp*256);
+		ObjPrim_SetVertexUVT(objImg, i*2+1, 255, tmp*256);
+	}
+	
+	descent(t in 0 .. 40)
+	{
+		if (!eAlive) { break; }
+		let tmp_t = (t-10)/20;
+		ascent(i in 0 .. cp+1)
+		{
+			let tmp_c = i/cp;
+			let tmp = 1-absolute(tmp_t-tmp_c)*3;
+			ObjPrim_SetVertexAlpha(objImg, i*2+0, tmp*256);
+			ObjPrim_SetVertexAlpha(objImg, i*2+1, tmp*256);
+		}
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+
+
+///体力チェックと判定設置（使い魔用）
+function WaitForKilledFamilier_S03(obj, emnToShot, emnToPlayer, enmSize)
+{
+	let hitspan = (enmSize - emnToShot*2)/3;
+	
+	// 固定ディレイ
+	wait(30);
+	while(!Obj_GetValueD(obj, "KILLED", false) &&
+		ObjEnemy_GetInfo(obj, INFO_LIFE) > 0)
+	{
+		if (!eAlive)
+		{
+			ObjEnemy_SetLife(obj, 0);
+			Obj_SetValue(obj, "KILLED", true);
+			break;
+		}
+		//当たり判定登録
+		//画面内にいる時のみ判定あり
+		if (GetEnemyVisible(obj) &&
+			MinX <= ObjMove_GetX(obj) && MaxX >= ObjMove_GetX(obj) &&
+			MinY <= ObjMove_GetY(obj) && MaxY >= ObjMove_GetY(obj) )
+		{
+			let c = cos(ObjMove_GetAngle(obj));
+			let s = sin(ObjMove_GetAngle(obj));
+			let cx = ObjMove_GetX(obj) - enmSize/2*c;
+			let cy = ObjMove_GetY(obj) - enmSize/2*s;
+			if (emnToShot)
+			{
+				ascent(i in 0 .. 3)
+				{
+					ObjEnemy_SetIntersectionCircleToShot(obj, cx+(i-1)*hitspan*c, cy+(i-1)*hitspan*s, emnToShot);
+				}
+			}
+			if (emnToPlayer)
+			{
+				ascent(i in 0 .. 3)
+				{
+					ObjEnemy_SetIntersectionCircleToPlayer(obj, cx+(i-1)*hitspan*c, cy+(i-1)*hitspan*s, emnToPlayer);
+				}
+			}
+		}
+		yield;
+	}
+	//動きを停止
+	ObjMove_SetSpeed(obj, 0);
+	ObjMove_SetAcceleration(obj, 0);
+	Obj_SetValue(obj, "ANIME_STOP", 1);
+}
+

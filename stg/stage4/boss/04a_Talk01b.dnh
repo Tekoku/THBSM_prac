@@ -1,0 +1,144 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["4面　道中会話B"]
+#Text["4面　道中会話B"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_MOKOU);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_MOKOU);
+	ObjMove_SetPosition(objEnemy, CenX-64, -128);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+	EnterBoss();
+
+	wait(60);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MOKOU, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+	SetImageFoward(cutinBoss1, true);
+	BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "鳴く夜雀も黙る丑三つ時の竹林、[r]またもほっつき歩く人間が居るとは");
+			SetBossName(cutinBoss1);	// ボスネーム表示
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "残念だな、今の私は歩く魔力探知機。[r]さて、天の川から竹林に流れるこの魔力は何だ？");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "魔力だと？[r]人里の朝顔が集めたのは欲霊の筈。");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "そうか、何らかの術で変換したのか。");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "ほら、空からお前の願いが流れて来たぞ。[r]「大量エクステンド祈願」");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "何も知らないなら用は無いが[r]折角なのでお前の残機を寄越せ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetAction(objEnemy, ACT_MOVE, 600);
+	ObjMove_SetPosition(objEnemy, CenX, CenY+64);
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 120, 30, 2, 0.1, 8);
+
+	// 登場モーション
+	descent(i in 0 .. 90)
+	{
+		let tmp = sin((i+1)/90*90);
+		let tmp_s = 1 - tmp/2;
+		let tmp_c = 255 - tmp*255;
+		let tmp_a = min(255, (1-tmp)*1024);
+		ObjRender_SetScaleXYZ(GetBossImageID(objEnemy), tmp_s, tmp_s, tmp_s);
+		ObjRender_SetColor(GetBossImageID(objEnemy), tmp_c, tmp_c, tmp_c);
+		ObjRender_SetAlpha(GetBossImageID(objEnemy), tmp_a);
+		yield;
+	}
+}

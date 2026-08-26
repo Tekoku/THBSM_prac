@@ -1,0 +1,490 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["アンチェインドクサリガマ"]
+#Text["アンチェインドクサリガマ"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Ichiyou.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(4000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 100;		//ダメージ透過率
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_ICHIYOU);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(35), [9,9,10,11][Difficult], 
+			GetCurrentScriptDirectory()~"04b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+	SetShotAutoDeleteClip(64, 192, 64, 192);
+	
+	// 蛙弾
+	LoadEnemyShotData(pathShotFrog);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60+180);
+	wait(60);
+	_NinjutuCharge(objEnemy, 90, 2, 96, 0, 3, [255, 255, 255]);
+	_NinjutuCharge(objEnemy, 90, 2, -96, 0, -3, [255, 255, 255]);
+	SetAction(objEnemy, ACT_SHOT1, 60*99);
+	BossCharge(objEnemy);
+	wait(75);
+	if (Difficult <= D_HARD) { TShot_Normal(); }
+	else { TShot_Hard(); }
+}
+
+task TShot_Normal()
+{
+	TChain();
+	wait(75);
+	CallSpellCard(true);	//スペカ起動
+	
+	task TChain()
+	{
+		let muki = 1;
+		let wt = [300, 240, 210, 210][Difficult];
+		let timer = 300;
+
+		let offset_angle = [180, 210, 210, 240][Difficult];
+		
+		ascent(i in 0 .. 3)
+		{
+			loop(2)
+			{
+				let angle = 90+180-45*muki - i*30*muki;
+				ChainWinder(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					8, angle, angle+180*muki, 180, muki, ADD_BGW_SCALE_WHITE, 24, 15);
+				muki = -muki;
+			}
+			if (i == 0) { CallSound(sndShot7); }
+			wait(30);
+		}
+		wait(90);
+		
+		TShot02();
+		while(eAlive)
+		{
+			let angle = 90+180-45*muki;
+			ChainWinder(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				12, angle, angle+offset_angle*muki, timer, muki, ADD_BGW_SCALE_WHITE, 24, 15);
+			CallSound(sndShot7);
+			muki = -muki;
+			wait(wt);
+		}
+	}
+	task TShot02()
+	{
+		let muki = 1;
+		
+		let speed = [2, 2.5, 3, 3][Difficult];
+		let wt = [120, 90, 75, 60][Difficult];
+		let delay = [270, 180, 30, 30][Difficult];
+		
+		wait(delay);
+		KaeruSet(speed, 90, muki, 3, wt);
+	}
+
+	task KaeruSet(speed, timer, muki, way, wt)
+	{
+		let base_x = rand(0, 1);
+		ascent(i in 0 .. way)
+		{
+			if (!eAlive) { return; }
+			let tmp = ((i+base_x)/way-0.5)*muki + 0.5;
+			
+			let sx = tmp * GetStgFrameWidth;
+			let sy = ObjMove_GetY(objEnemy) - 32 + rand(-96, 0);
+			let angle = 90;
+			let ss = speed;
+			
+			let to_speed = [2.5, 3, 1, 3][Difficult];
+			let to_angle = angle;
+			let to_way = [1, 1, 6, 1][Difficult];
+			let graphic = [BGW_FROG_RED, BGW_FROG_RED, BGW_FROG_BLUE, BGW_FROG_RED][Difficult];
+			let graphic2 = [BGW_KUNAI_RED, BGW_KUNAI_RED, BGW_WATER_BLUE, BGW_KUNAI_RED][Difficult];
+			let shot_type = [0, 0, 1, 0][Difficult];
+
+			KaeruShoot(sx, sy, ss, angle, graphic, 15,
+				to_speed, to_angle, to_way, shot_type, 45, graphic2, timer);
+
+			let timer_rate = ObjEnemyBossScene_GetInfo(objScene, INFO_TIMERF) / ObjEnemyBossScene_GetInfo(objScene, INFO_ORGTIMERF);
+			let life_rate = GetBossLifeRate(objEnemy);
+			let rt = min(timer_rate, life_rate);
+			wait(wt*(max(rt*1.25-0.25,0)*0.9+0.1));
+		}
+		KaeruSet(speed, timer, -muki, way, wt);
+	}
+
+	task KaeruShoot(x, y, speed, angle, graphic, delay,
+		to_speed, to_angle, to_way, shot_type, to_way_angle, to_graphic, timer)
+	{
+		let obj = CreateShotA2(x, y, -speed, angle, speed*2/timer, speed, graphic, 0);
+		My_RaiseShotEffectA(obj, timer/2);
+		wait(delay+timer);
+		if (!Obj_IsDeleted(obj))
+		{
+			CallSound(sndShot1);
+			if (shot_type == 0)
+			{
+				let pa = GetAngleToPlayer(obj);
+				ascent(j in 0 .. to_way)
+				{
+					let ba = pa + (j-(to_way-1)/2)*to_way_angle;
+					ascent(i in 0 .. 3)
+					{
+						let sa = ba + ((i-1)/2)*120;
+						CreateShotA2(ObjMove_GetX(obj)+cos(sa)*4, ObjMove_GetY(obj)+sin(sa)*4,
+							0, ba, to_speed/120, to_speed, to_graphic, delay);
+					}
+				}
+				ascent(i in 0 .. 3)
+				{
+					ascent(j in 0 .. 2)
+					{
+						let sa = pa+180 + (i-1)*60 + (j-0.5)*20;
+						KaeruShoot_Dummy(ObjMove_GetX(obj), ObjMove_GetY(obj), 5, sa);
+						KaeruShoot_Dummy(ObjMove_GetX(obj), ObjMove_GetY(obj), 4, sa);
+					}
+				}
+			}
+			else
+			{
+				let pa = 90;
+				ascent(j in 0 .. to_way)
+				{
+					let sx = (j-(to_way-1)/2+rand(-0.25,0.25))*0.05;
+					let sy = to_speed * rand(0.95, 1);
+					CreateShotB2(ObjMove_GetX(obj), ObjMove_GetY(obj),
+						0, 0, sx/120, sy/120, sx, sy, to_graphic, delay);
+				}
+				ascent(i in 0 .. 3)
+				{
+					ascent(j in 0 .. 2)
+					{
+						let sa = pa+180 + (i-1)*60 + (j-0.5)*25;
+						KaeruShoot_Dummy(ObjMove_GetX(obj), ObjMove_GetY(obj), 4, sa);
+						KaeruShoot_Dummy(ObjMove_GetX(obj), ObjMove_GetY(obj), 2, sa);
+					}
+				}
+			}
+			DeleteBulletEffect(obj);
+		}
+		/*
+		let obj = CreateShotA2(x, y, speed, angle, -speed/timer, 0, graphic, delay);
+		wait(delay+timer);
+		if (!Obj_IsDeleted(obj))
+		{
+			CallSound(sndShot1);
+			ascent(j in 0 .. to_way)
+			{
+				let ba = angle + (j-(to_way-1)/2)*to_way_angle;
+				ascent(i in 0 .. 3)
+				{
+					let sa = ba + (i-1)*120;
+					CreateShotA2(ObjMove_GetX(obj)+cos(sa)*4, ObjMove_GetY(obj)+sin(sa)*4,
+						0, ba, to_speed/120, to_speed, to_graphic, delay);
+				}
+			}
+			DeleteBulletEffect(obj);
+		}
+		*/
+	}
+
+	task KaeruShoot_Dummy(x, y, speed, angle)
+	{
+		let graphic = [BGW_KUNAI_WHITE, BGW_KUNAI_WHITE, ADD_BGW_FIRE_SKY, BGB_KUNAI_SKY][Difficult];
+		let obj = CreateShotA2(x, y, speed, angle, -speed/60, speed/3, graphic, 0);
+	//	wait(120);
+	//	DeleteBulletEffect(obj);
+	}
+}
+
+
+// Lunatic!
+task TShot_Hard()
+{
+	TGamaAura();
+	CallSound(sndBoon);
+	// 開幕
+	ascent(i in 0 .. 3)
+	{
+		OpeningKaeru(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy)-32-i*32, CenX, -64-i*64, 3, -90, 6+i*2, 1);
+		wait(10);
+	}
+	wait(75-2*10);
+	TChain();
+	CallSpellCard(true);	//スペカ起動
+	
+	task TChain()
+	{
+		let muki = 1;
+		let wt = 150;
+		let timer = 360;
+		
+		let t = 0;
+		while(eAlive)
+		{
+			let angle = 90+180-45*muki;
+			let sx = ObjMove_GetX(objEnemy)+96*muki;
+			let sy = ObjMove_GetY(objEnemy);
+			if (t > 0) { TShot_sub(sx, sy, muki); }
+			ChainWinder(sx, sy,
+				12, angle, angle+210*muki, timer, muki, ADD_BGW_RICE_M_GREEN, 24, 8);
+			muki = -muki;
+			CallSound(sndShot7);
+			wait(wt);
+			wt = max(90, 90+(wt-90)*0.8);
+			t++;
+		}
+	}
+	
+	task OpeningKaeru(x, y, add_x, add_y, ss, add_angle, way, wt)
+	{
+		let to_speed = 9;
+		let timer = 90;
+
+		ascent(i in 0 .. way)
+		{
+			let tmp = (i+0.5)/way;
+			let sa = -90 - tmp*add_angle;
+			let sa2 = -90 + tmp*add_angle;
+			let sx = x;
+			let sy = y + tmp*add_y;
+			KaeruShoot(sx-tmp*add_x, sy, ss, sa, BGW_FROG_RED, 15,
+				to_speed, 0, 3, 45, BGW_KUNAI_RED, timer);
+			KaeruShoot(sx+tmp*add_x, sy, ss, sa2, BGW_FROG_RED, 15,
+				to_speed, 0, 3, 45, BGW_KUNAI_RED, timer);
+			wait(wt);
+		}
+	}
+	
+	task TShot_sub(x, y, muki)
+	{
+		let to_speed = 9;
+		let timer = 90;
+		let way = 15;
+		let ba = atan2(y-GetPlayerY, x-GetPlayerX) + 45*muki;
+		ascent(i in 0 .. way)
+		{
+			if (!eAlive) { return; }
+			let sa = ba + (i-(way-1)/2)*240/way*muki + 180;
+			KaeruShoot(x, y, 3, sa, BGW_FROG_RED, 15,
+				to_speed, 0, 3, 45, BGW_KUNAI_RED, timer);
+			wait(5);
+		}
+	}
+
+	task KaeruShoot(x, y, speed, angle, graphic, delay,
+		to_speed, to_angle, to_way, to_way_angle, to_graphic, timer)
+	{
+		let obj = CreateShotA2(x, y, -speed, angle, speed/timer, speed, graphic, 0);
+		ObjMove_AddPatternA2(obj, timer/2, NO_CHANGE, 90, speed*2/timer, 0, speed);
+		My_RaiseShotEffectA(obj, timer/2);
+		wait(delay+timer);
+		if (!Obj_IsDeleted(obj))
+		{
+			CallSound(sndShot1);
+			let pa = GetAngleToPlayer(obj)+to_angle;
+			ascent(j in 0 .. to_way)
+			{
+				let ba = pa + (j-(to_way-1)/2)*to_way_angle;
+				ascent(i in 0 .. 3)
+				{
+					let sa = ba + (i-1)*120;
+					CreateShotA2(ObjMove_GetX(obj)+cos(sa)*4, ObjMove_GetY(obj)+sin(sa)*4,
+						0, ba, to_speed/120, to_speed, to_graphic, delay);
+				}
+			}
+			ascent(i in 0 .. 3)
+			{
+				ascent(j in 0 .. 2)
+				{
+					let sa = pa+to_angle+180 + (i-1)*60 + (j-0.5)*20;
+					KaeruShoot_Dummy(ObjMove_GetX(obj), ObjMove_GetY(obj), 5, sa);
+					KaeruShoot_Dummy(ObjMove_GetX(obj), ObjMove_GetY(obj), 4, sa);
+				}
+			}
+			DeleteBulletEffect(obj);
+		}
+	}
+
+	task KaeruShoot_Dummy(x, y, speed, angle)
+	{
+		let obj = CreateShotA2(x, y, speed, angle, -speed/60, speed/3, BGW_KUNAI_WHITE, 0);
+	//	wait(120);
+	//	DeleteBulletEffect(obj);
+	}
+
+}
+
+task ChainWinder(x, y, speed, angle, to_angle, timer, muki, graphic, len, len2)
+{
+//	let graphic = ADD_BGW_SCALE_WHITE;
+//	let speed = 12;
+	let add_angle = 1.5*muki;
+//	let len = 24;
+//	let len2 = 15;
+	let chain_way = 7;
+	
+	let st = 0;
+	let shot_span = 4;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		let tmp = sin((t+1)/timer*90);
+
+		let sa = angle+(to_angle-angle)*tmp;
+		let sx = x + cos(sa)*24;
+		let sy = y + sin(sa)*24;
+		let ss = speed * min(1, 0.2+tmp*4);
+		let add_a = t*add_angle;
+		ChainShot(sx, sy, ss, sa, graphic, 15, add_a, len, chain_way, len2);
+		yield;
+	}
+}
+
+task ChainShot(x, y, speed, angle, graphic, delay, add_angle, timer, chain_way, timer2)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, delay);
+	wait(delay);
+	let ref_ct = 0;
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (t > timer)
+		{
+			ascent(i in 0 .. chain_way)
+			{
+				let sa = angle + add_angle + i*360/chain_way;
+				ChainShot_Kama(ObjMove_GetX(obj), ObjMove_GetY(obj), speed, sa, graphic, timer2);
+			}
+			Obj_Delete(obj);
+			break;
+		}
+		if (ref_ct < 1)
+		{
+			if (ObjMove_GetX(obj) < 0) {
+				ObjMove_SetAngle(obj, 180-ObjMove_GetAngle(obj));
+				ObjMove_SetPosition(obj, -ObjMove_GetX(obj)-speed*cos(ObjMove_GetAngle(obj)), ObjMove_GetY(obj)-speed*sin(ObjMove_GetAngle(obj)));
+				ref_ct++;
+			} else if (ObjMove_GetX(obj) > GetStgFrameWidth) {
+				ObjMove_SetAngle(obj, 180-angle);
+				ObjMove_SetPosition(obj, GetStgFrameWidth*2-ObjMove_GetX(obj)-speed*cos(ObjMove_GetAngle(obj)), ObjMove_GetY(obj)-speed*sin(ObjMove_GetAngle(obj)));
+				ref_ct++;
+			}
+		}
+		t++;
+		yield;
+	}
+}
+task ChainShot_Kama(x, y, speed, angle, graphic, timer)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, 0);
+	ObjMove_AddPatternA3(obj, timer, 0, -angle*10, 0, 0, speed, BGW_SHURIKEN_WHITE);
+	wait(timer+1);
+	if (!Obj_IsDeleted(obj))
+	{
+		ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+		ObjRender_SetColor(obj, 48, 64, 160);
+		ObjShot_FadeDelete(obj);
+	}
+}
+
+//反射弾
+task CreateRefrectShotA1(x, y, speed, angle, graphic, delay)
+{
+	let obj = My_CreateShotA1(x, y, speed, angle, graphic, delay);
+	if (x < 0 || GetStgFrameWidth > GetStgFrameWidth || y < 0) { return; }
+	
+	while(!Obj_IsDeleted(obj))
+	{
+		if (ObjMove_GetY(obj) < 0) {
+			CreateShotA1(ObjMove_GetX(obj), -ObjMove_GetY(obj),
+				speed, 360-angle, graphic, 10);
+			break;
+		}
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+
+
+// オーラえへくと
+task TGamaAura()
+{
+	let scale = 1;
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityBoss-1);
+	ObjPrim_SetTexture(objImg, imgEffectIchiyou3);
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+	ObjSprite2D_SetSourceRect(objImg, 0, 0, 256, 256);
+	ObjSprite2D_SetDestCenter(objImg);
+	
+	let t = 0;
+	ascent(t in 0 .. 45)
+	{
+		let tmp = sin((t+1)/45*90);
+		ObjRender_SetScaleXYZ(objImg, scale*(3-tmp*2), scale*(tmp^2), 1);
+		ObjRender_SetPosition(objImg, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0);
+		t++;
+		yield;
+	}
+	while(eAlive)
+	{
+		if (t%90 < 30 && t%3 == 0)
+		{
+			let sc = scale * (1.5 - (t%90)/40);
+			TGamaAura_sub(sc);
+		}
+		ObjRender_SetPosition(objImg, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0);
+		t++;
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+task TGamaAura_sub(scale)
+{
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityBoss-1);
+	ObjPrim_SetTexture(objImg, imgEffectIchiyou3);
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+	ObjSprite2D_SetSourceRect(objImg, 0, 0, 256, 256);
+	ObjSprite2D_SetDestCenter(objImg);
+	ObjRender_SetColor(objImg, 48, 16, 0);
+	
+	ascent(t in 0 .. 30)
+	{
+		let tmp = sin((t+1)/30*90);
+		let tmp_scale = scale * (tmp/2 + 1);
+		ObjRender_SetScaleXYZ(objImg, tmp_scale, tmp_scale, tmp_scale);
+		ObjRender_SetAlpha(objImg, (1-tmp)*255);
+		if (!Obj_IsDeleted(objEnemy)) { ObjRender_SetPosition(objImg, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy)-3*t, 0); }
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+

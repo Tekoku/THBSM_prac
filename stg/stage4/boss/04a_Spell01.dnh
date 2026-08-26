@@ -1,0 +1,308 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["転生の炎"]
+#Text["転生の炎"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mokou.dnh"
+
+let FAMILIAR_DAMAGE = 0;
+let FAMILIAR_DAMAGE_COUNT = 0;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(35);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MOKOU);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(31), [0,0,1,2][Difficult], 
+			GetCurrentScriptDirectory()~"04a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	TCheckLife_S04();
+	SetAction(objEnemy, ACT_SHOT1, 60*99);
+	// 翼
+	
+	ObjMove_SetPosition(objEnemy, CenX, 100);
+	SetEnemyVisible(objEnemy, false);
+	ascent(i in 0 .. 15)
+	{
+		ObjRender_SetAlpha(GetBossImageID(objEnemy), 255*(i+1)/15);
+		yield;
+	}
+	PhoenixEffect(objEnemy);
+	SetEnemyVisible(objEnemy, true);
+	CallSpellCard(true);	//スペカ起動
+	
+	ObjMove_SetAngle(objEnemy, 90);
+	ObjMove_SetSpeed(objEnemy, 0.075);
+
+	ascent(i in 0 .. 3)
+	{
+		SetFamilier01(90-150-i*30, 1, i*30);
+		SetFamilier01(90+150+i*30, -1, i*30);
+	}
+	
+	wait(330+120);
+	while(eAlive)
+	{
+		CallSound(sndPower2);
+		wait(120);
+		if (!eAlive) { return; }
+		SetFamilier01(90-210, 1, 0);
+		SetFamilier01(90+210, -1, 0);
+		wait(360-120);
+	}
+
+}
+
+// 体力チェック
+task TCheckLife_S04()
+{
+	while(eAlive)
+	{
+		ObjEnemy_AddLife(objEnemy, -FAMILIAR_DAMAGE);
+		FAMILIAR_DAMAGE = 0;
+		FAMILIAR_DAMAGE_COUNT = 0;
+		yield;
+	}
+}
+
+// 使い魔
+task SetFamilier01(iniAngle, iniValue, iniDelay)
+{
+	let BASE_ANGLE = iniAngle;
+	
+	let eSize = ENEMY_S;
+	let eColor = EFF_RED;
+	let item_count = 0;
+	let item_star = 0;
+	
+	let objFamilier = MakeEnemyFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 600, eSize);
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawMokouCircle(objFamilier);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 32, 0);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TCheckFamilierLife();
+		TMove();
+		TShot();
+		TWinder();
+	}
+	
+	// 移動
+	task TMove()
+	{
+		let base_r = 0;
+	//	let base_angle = iniAngle;
+		let add_angle = 1 * iniValue;
+		let add_angle2 = [0.02, 0.025, 0.025, 0.025][Difficult] * iniValue;
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier))
+		{
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objEnemy)+base_r*cos(BASE_ANGLE), ObjMove_GetY(objEnemy)+base_r*sin(BASE_ANGLE));
+			if (t < 90) { base_r = sin((t+1)/120*90)*64; }
+			else { base_r += 30/t; }
+			BASE_ANGLE += (add_angle+add_angle2);
+			add_angle *= 0.99;
+			t++;
+			yield;
+		}
+	}
+	
+	// ワインダー
+	task TWinder()
+	{
+		let graphic = [ADD_BGW_FIRE_RED, ADD_BGW_FIRE_RED, ADD_BGW_FIRE_RED, ADD_BGW_FIRE_BLUE][Difficult];
+		
+		while(CanShotBullet(objFamilier))
+		{
+			CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), -6, BASE_ANGLE, 6/30, 12, graphic, 0);
+			wait(3);
+			if (!CanShotBullet(objFamilier)) { break; }
+			CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), -6, BASE_ANGLE+5, 6/30, 12, graphic, 0);
+			CreateShotA2(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), -6, BASE_ANGLE-5, 6/30, 12, graphic, 0);
+			wait(3);
+		}
+	}
+
+	// ショット
+	task TShot()
+	{
+		let way = [1, 1, 3, 3][Difficult];
+		let to_speed = [2.5, 3, 3, 4][Difficult];
+		let to_wt = [6, 5, 12, 10][Difficult];
+		let to_graphics = [BGB_BALL_BS_WHITE, BGW_BALL_BS_WHITE, BGW_BALL_SS_WHITE];
+		let fire_graphic = BGW_FIRE_ORANGE;
+		let to_timer = [90, 120, 120, 120][Difficult];
+
+		if (Difficult >= D_LUNA)
+		{
+			to_graphics = [BGW_FIRE_SKY, BGW_FIRE_BLUE, BGW_FIRE_BLUE];
+			fire_graphic = BGW_FIRE_WHITE;
+		}
+		else if (Difficult >= D_HARD)
+		{
+			to_graphics = [BGW_FIRE_RED, BGW_FIRE_RED, BGW_FIRE_RED];
+			fire_graphic = BGW_FIRE_WHITE;
+		}
+		
+		wait(120+iniDelay);
+		while(CanShotBullet(objFamilier))
+		{
+			let angle = GetAngleToPlayer(objFamilier);
+			ascent(i in 0 .. way)
+			{
+				let sa = angle + (i-(way-1)/2)*60;
+				BigFrameShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+					12, sa, to_speed, to_graphics, to_wt, to_timer);
+			}
+			CreateShotWay(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+				4, angle+180, fire_graphic, 0, 5, 30, 0);
+			CreateShotWay(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+				3, angle+180, fire_graphic, 0, 6, 30, 0);
+			CallSound(sndShot7);
+			CallSound(sndFire);
+			wait(240);
+		}
+	}
+	
+	// 体力チェック
+	task TCheckFamilierLife()
+	{
+		let beforeLife = ObjEnemy_GetInfo(objFamilier, INFO_LIFE);
+		while(CanShotBullet(objFamilier))
+		{
+			let nowLife = ObjEnemy_GetInfo(objFamilier, INFO_LIFE);
+			FAMILIAR_DAMAGE += (beforeLife-nowLife)/(FAMILIAR_DAMAGE_COUNT+1);
+			FAMILIAR_DAMAGE_COUNT++;
+			beforeLife = nowLife;
+			yield;
+		}
+	}
+}
+
+task BigFrameShot(x, y, speed, angle, to_speed, to_graphics, to_wt, to_timer)
+{
+	let obj = CreateShotA2(x, y, -4, angle, 4/30, 0, BGW_LIGHT_L_RED, 0);
+	ObjMove_AddPatternA2(obj, 30, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+	Obj_SetVisible(obj, false);
+	ObjShot_SetIntersectionEnable(obj, false);
+	
+	let st = 0;
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		if (Difficult >= D_LUNA)
+		{
+			FrameLaserLuna(ObjMove_GetX(obj), ObjMove_GetY(obj), ObjMove_GetAngle(obj),
+				BGW_SCALE_BLUE, BGW_SCALE_YELLOW, ObjMove_GetSpeed(obj)*6, 15);
+		}
+		else
+		{
+			FrameLaser(ObjMove_GetX(obj), ObjMove_GetY(obj), ObjMove_GetAngle(obj),
+				BGW_SCALE_RED, BGW_SCALE_SKY, ObjMove_GetSpeed(obj)*6, 15);
+		}
+		
+		if (t > 30 && t < to_timer && t%to_wt == 0 && ObjMove_GetY(obj) < GetStgFrameHeight)
+		{
+			let ss = rand(to_speed/2, to_speed);
+			let sa = 90 + st*180 + rand(-15,15);
+			let sg = to_graphics[st%length(to_graphics)];
+			let objsub = CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, sa, ss/120, ss, sg, 10);
+			st++;
+		}
+		t++;
+		yield;
+	}
+}
+
+task FrameLaser(x, y, angle, graphic, graphic2, l_len, timer)
+{
+	let obj = [CreateStraightLaserA1(x-l_len*cos(angle)/2, y-l_len*sin(angle)/2, angle, l_len, 48, timer+10, graphic2, 0),
+		CreateStraightLaserA1(x-l_len*cos(angle)/2, y-l_len*sin(angle)/2, angle, l_len, 32, timer+10, graphic, 0)];
+	ascent(i in 0 .. 2)
+	{
+		ObjStLaser_SetSource(obj[i], false);
+		ObjShot_SetItemChange(obj[i], false);
+		ObjLaser_SetGrazeInvalidFrame(obj[i], 1200);
+	}
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI()+1);
+	ObjRender_SetBlendType(obj[0], BLEND_SUBTRACT);
+	ObjRender_SetColor(obj[0], 64, 96, 96);
+	Obj_SetRenderPriorityI(obj[1], GetShotRenderPriorityI()+2);
+	ObjRender_SetBlendType(obj[1], BLEND_ADD_ARGB);
+	ObjRender_SetColor(obj[1], 255, 128, 128);
+	ObjShot_SetIntersectionEnable(obj[0], false);
+	wait(10);
+	descent(i in 0 .. timer)
+	{
+		if (Obj_IsDeleted(obj[0])) { break; }
+		let tmp = (i+1)/timer;
+		ObjLaser_SetRenderWidth(obj[0], tmp*32);
+		ObjLaser_SetRenderWidth(obj[1], tmp*16);
+		yield;
+	}
+	ascent(i in 0 .. 2)
+	{
+		Obj_Delete(obj[i]);
+	}
+}
+
+task FrameLaserLuna(x, y, angle, graphic, graphic2, l_len, timer)
+{
+	let obj = [CreateStraightLaserA1(x-l_len*cos(angle)/2, y-l_len*sin(angle)/2, angle, l_len, 48, timer+10, graphic2, 0),
+		CreateStraightLaserA1(x-l_len*cos(angle)/2, y-l_len*sin(angle)/2, angle, l_len, 32, timer+10, graphic, 0)];
+	ascent(i in 0 .. 2)
+	{
+		ObjStLaser_SetSource(obj[i], false);
+		ObjShot_SetItemChange(obj[i], false);
+		ObjLaser_SetGrazeInvalidFrame(obj[i], 1200);
+	}
+	Obj_SetRenderPriorityI(obj[0], GetShotRenderPriorityI()+1);
+	ObjRender_SetBlendType(obj[0], BLEND_SUBTRACT);
+	ObjRender_SetColor(obj[0], 96, 96, 64);
+	Obj_SetRenderPriorityI(obj[1], GetShotRenderPriorityI()+2);
+	ObjRender_SetBlendType(obj[1], BLEND_ADD_ARGB);
+	ObjRender_SetColor(obj[1], 128, 128, 255);
+	ObjShot_SetIntersectionEnable(obj[0], false);
+	wait(10);
+	descent(i in 0 .. timer)
+	{
+		if (Obj_IsDeleted(obj[0])) { break; }
+		let tmp = (i+1)/timer;
+		ObjLaser_SetRenderWidth(obj[0], tmp*32);
+		ObjLaser_SetRenderWidth(obj[1], tmp*16);
+		yield;
+	}
+	ascent(i in 0 .. 2)
+	{
+		Obj_Delete(obj[i]);
+	}
+}

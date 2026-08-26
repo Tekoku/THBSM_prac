@@ -1,0 +1,48 @@
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 1);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	objEnemy  = CreateBossTalk(BOSS_ID_MOKOU);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// タイムアウトなら強制終了
+	if (GetAreaCommonData(CAREA_STAGE, "BeforeTimeout", false))
+	{
+		Obj_Delete(objScene);
+		Boss_Finalize(objEnemy, false, false);
+		return;
+	}
+	
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 爆発！
+	BossFinalExplode(objEnemy, false);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);
+	ObjMove_SetPosition(objEnemy, CenX, 100);
+	wait(60);
+	EffectEntryBoss(objEnemy, [EFF_RED, EFF_ORANGE, EFF_YELLOW], [CenX, 100]);
+	wait(90);
+	Boss_Finalize(objEnemy, false, false);
+}
+

@@ -1,0 +1,283 @@
+// ねづーりん共通関数
+let NEZU_OPTION_EFFECT = false;	// カリスマえへくと展開中
+
+// ダメージ軽減率を自機別に設定
+task NezuOption_SetDamageRate(objFamilier)
+{
+	let shot_rate = 100;
+	let spell_rate = 25;
+	
+	alternative(GetPlayerTypeEx())
+	case (PLAYER_REIMU_A)  { shot_rate = 100; spell_rate = 25; }
+	case (PLAYER_REIMU_B)  { shot_rate = 125; spell_rate = 25; }
+	case (PLAYER_MARISA_A) { shot_rate =  50; spell_rate = 25; }
+	case (PLAYER_MARISA_B) { shot_rate = 100; spell_rate = 25; }
+	case (PLAYER_SANAE_A)  { shot_rate =  70; spell_rate = 25; }
+	case (PLAYER_SANAE_B)  { shot_rate = 100; spell_rate = 25; }
+	
+	ObjEnemy_SetDamageRate(objFamilier, shot_rate, spell_rate);
+}
+
+// 反転ショット
+function CreateDarkShotsA1(x, y, speed, angle, graphic, graphic2, delay, scale)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, delay);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+//	ObjShot_SetIntersectionEnable(obj, false);
+	let obj2 = CreateShotA1(x, y, speed, angle, graphic2, delay);
+	ObjRender_SetBlendType(obj2, BLEND_SUBTRACT);
+	Obj_SetRenderPriorityI(obj2, GetShotRenderPriorityI+1);
+	ObjShot_SetItemChange(obj2, false);
+	return([obj, obj2]);
+}
+function CreateDarkShotsA2(x, y, speed, angle, add_s, max_s, graphic, graphic2, delay, scale)
+{
+	let obj = CreateShotA2(x, y, speed, angle, add_s, max_s, graphic, delay);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+//	ObjShot_SetIntersectionEnable(obj, false);
+	let obj2 = CreateShotA2(x, y, speed, angle, add_s, max_s, graphic2, delay);
+	ObjRender_SetBlendType(obj2, BLEND_SUBTRACT);
+	Obj_SetRenderPriorityI(obj2, GetShotRenderPriorityI+1);
+	ObjShot_SetItemChange(obj2, false);
+	return([obj, obj2]);
+}
+
+// かりすまえへくと
+function NezuCharismaOption(objBase, flgDelele)
+{
+	// フラグ関係
+	if (GetPlayMode() == GAME_SPELL) { flgDelele = true; }
+	let flgOpeningEffect = Obj_GetValueD(objScene, "NEZU_OPTION_DELETED", true);
+	Obj_SetValue(objScene, "NEZU_OPTION_DELETED", flgDelele);
+
+	NEZU_OPTION_EFFECT = true;
+
+	if (IsDrawEffect() < 1) { return; }
+	
+	_NezuCharismaOption(objBase, flgDelele, flgOpeningEffect);
+
+	// 初回展開時
+	if (flgOpeningEffect)
+	{
+		CallSoundDelay(sndBoon, 60, objBase);
+		wait(60);
+	}
+}
+task _NezuCharismaOption(objBase, flgDelele, flgOpeningEffect)
+{
+	let scale = 0.66;
+	let pos = [[0, 0],
+		[-136*scale, -88*scale], [-128*scale, -84*scale], [-96*scale, 130*scale], [-98*scale, 74*scale]];
+	
+	let obj = [ObjPrim_Create(OBJ_SPRITE_2D),
+		ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D),
+		ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+	
+	ascent(i in 0 .. length(obj))
+	{
+		Obj_SetRenderPriorityI(obj[i], priorityAura-2);
+		ObjPrim_SetTexture(obj[i], imgEffectNezuMC);
+		ObjRender_SetScaleXYZ(obj[i], scale, scale, 1);
+	}
+	// 座標せっつ
+	Obj_SetRenderPriorityI(obj[0], priorityAura-1);
+	ObjSprite2D_SetSourceRect(obj[0], 0, 0, 320, 512);
+	ObjSprite2D_SetDestRect(obj[0], -160, -256-48, 160, 256-48);
+	ObjSprite2D_SetSourceRect(obj[1], 320, 0, 512, 192);
+	ObjSprite2D_SetDestRect(obj[1], -192, -192, 0, 0);
+	ObjSprite2D_SetSourceRect(obj[2], 0, 512, 384, 832);
+	ObjSprite2D_SetDestRect(obj[2], -384, -320+128, 0, 0+128);
+	ObjSprite2D_SetSourceRect(obj[3], 0, 832, 384, 1024);
+	ObjSprite2D_SetDestRect(obj[3], -384, 0-128, 0, 192-128);
+	ObjSprite2D_SetSourceRect(obj[4], 320, 192, 512, 384);
+	ObjSprite2D_SetDestRect(obj[4], -192, 0, 0, 192);
+	ObjSprite2D_SetSourceRect(obj[5], 320, 0, 512, 192);
+	ObjSprite2D_SetDestRect(obj[5], 192, -192, 0, 0);
+	ObjSprite2D_SetSourceRect(obj[6], 0, 512, 384, 832);
+	ObjSprite2D_SetDestRect(obj[6], 384, -320+128, 0, 0+128);
+	ObjSprite2D_SetSourceRect(obj[7], 0, 832, 384, 1024);
+	ObjSprite2D_SetDestRect(obj[7], 384, 0-128, 0, 192-128);
+	ObjSprite2D_SetSourceRect(obj[8], 320, 192, 512, 384);
+	ObjSprite2D_SetDestRect(obj[8], 192, 0, 0, 192);
+	
+	let bx = ObjMove_GetX(objBase);
+	let by = ObjMove_GetY(objBase);
+	let t = 0;
+	while(eAlive && !Obj_IsDeleted(objBase))
+	{
+		bx = ObjMove_GetX(objBase);
+		by = ObjMove_GetY(objBase);
+		let a = aTime(objBase);
+		let tmp = [sin(a), sin(a-45), sin(a-90), sin(a-135)];
+		if (t < 240 && flgOpeningEffect)
+		{
+			// くじゃくっぽくふぁさーって感じ
+			if (t < 90)
+			{
+				let tmp = 1-sin((t+1)/90*90);
+				let tmp_c = (1-tmp)^2*255;
+				let bx = ObjMove_GetX(objBase);
+				let by = ObjMove_GetY(objBase);
+				ObjRender_SetAlpha(obj[0], min(255, (1-tmp)*512));
+				ObjRender_SetPosition(obj[0], bx, by-256*tmp+32*tmp^2, 0);
+				ObjRender_SetColor(obj[0], tmp_c, tmp_c, tmp_c);
+			}
+			else
+			{
+				ObjRender_SetPosition(obj[0], bx, by, 0);
+			}
+			ascent(i in 1 .. 5)
+			{
+				let op_tmp = 1-sin(min(1,(t-45+1-(4-i)*0)/180)*90);
+				let ra = 30+i*32;
+				let tmp_pos = Rotate2D_XY(pos[i][0], pos[i][1], op_tmp*ra);
+				ObjRender_SetPosition(obj[i], bx+tmp_pos[0], by+tmp_pos[1], 0);
+				ObjRender_SetAngleXYZ(obj[i], op_tmp*90, tmp[i-1]*30, tmp[i-1]*10+op_tmp*ra);
+				ObjRender_SetPosition(obj[i+4], bx-tmp_pos[0], by+tmp_pos[1], 0);
+				ObjRender_SetAngleXYZ(obj[i+4], -op_tmp*90, -tmp[i-1]*30, -tmp[i-1]*10-op_tmp*ra);
+				if (t-45 > (4-i)*0)
+				{
+					Obj_SetVisible(obj[i], true);
+					Obj_SetVisible(obj[i+4], true);
+				} else {
+					Obj_SetVisible(obj[i], false);
+					Obj_SetVisible(obj[i+4], false);
+				}
+			}
+		}
+		else
+		{
+			ObjRender_SetPosition(obj[0], bx, by, 0);
+			ascent(i in 1 .. 5)
+			{
+				ObjRender_SetPosition(obj[i], bx+pos[i][0], by+pos[i][1], 0);
+				ObjRender_SetAngleXYZ(obj[i], 0, tmp[i-1]*30, tmp[i-1]*10);
+				ObjRender_SetPosition(obj[i+4], bx-pos[i][0], by+pos[i][1], 0);
+				ObjRender_SetAngleXYZ(obj[i+4], 0, -tmp[i-1]*30, -tmp[i-1]*10);
+			}
+		}
+		t++;
+		yield;
+	}
+	if (flgDelele)
+	{
+		descent(i in 0 .. 120)
+		{
+			let dtmp = 1-sin(i/120*90);
+			let a = aTime(objBase);
+			let tmp = [sin(a), sin(a-45), sin(a-90), sin(a-135)];
+			ObjRender_SetPosition(obj[0], bx, by+dtmp*128, 0);
+			ObjRender_SetAngleXYZ(obj[0], dtmp*60, dtmp*90, 0);
+			ObjRender_SetAlpha(obj[0], (1-dtmp)*255);
+			ascent(i in 1 .. 5)
+			{
+				ObjRender_SetPosition(obj[i], bx+pos[i][0], by+pos[i][1]+dtmp*(32+32*i), 0);
+				ObjRender_SetAngleXYZ(obj[i], dtmp*(45+15*i), tmp[i-1]*30-dtmp*(15+15*i), tmp[i-1]*10);
+				ObjRender_SetAlpha(obj[i], (1-dtmp)*255);
+
+				ObjRender_SetPosition(obj[i+4], bx-pos[i][0], by+pos[i][1]+dtmp*(32+32*i), 0);
+				ObjRender_SetAngleXYZ(obj[i+4], dtmp*(45+15*i), -tmp[i-1]*30+dtmp*(15+15*i), -tmp[i-1]*10);
+				ObjRender_SetAlpha(obj[i+4], (1-dtmp)*255);
+			}
+			t++;
+			yield;
+		}
+	}
+	// 1フレームだけ待機
+	yield;
+	ascent(i in 0 .. length(obj)) { Obj_Delete(obj[i]); }
+}
+
+// 人魂オーラ
+task NezuCharismaAura(objBase)
+{
+	if (IsDrawEffect() < 2) { return; }
+	
+	wait(8);
+	while(eAlive)
+	{
+		if (NEZU_OPTION_EFFECT) { return; }
+		if (Obj_IsVisible(GetBossImageID(objBase)))
+		{
+			let pr = randEffect(0, 72^2)^0.5;
+			let pa = randEffect(0,360);
+			NezuCharismaAuraSingle(ObjMove_GetX(objBase)+pr*cos(pa), ObjMove_GetY(objBase)+pr*sin(pa)/2+16, -90+randEffect(-45,45));
+		}
+		wait(8);
+	}
+}
+task NezuCharismaAuraSingle(x, y, angle)
+{
+	let scale = 6;
+	let xscale = rand_dir();
+
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjPrim_SetTexture(obj, imgEffectNezuMC);
+	Obj_SetRenderPriorityI(obj, priorityAura+1);
+	ObjRender_SetScaleXYZ(obj, scale, scale, 1);
+	ObjSprite2D_SetSourceRect(obj, 448, 960, 512, 1024);
+	ObjSprite2D_SetDestCenter(obj);
+//	ObjRender_SetAngleZ(obj, 15*xscale);
+	
+	let vx = cos(angle)*1.5;
+	let vy = sin(angle)*1.5;
+	let bx = x;
+	let by = y;
+	ascent(t in 0 .. 120)
+	{
+		let tmp = (t+1)/120;
+		let tmp2 = cos(1-t/120*90);
+		let tmp_a = tmp * tmp2 * 450;
+		let tmp_s = tmp2^3 * tmp * scale;
+		let tmp_c = 255 - sin(t*30)*128;
+		ObjRender_SetAlpha(obj, tmp_a);
+		ObjRender_SetPosition(obj, bx, by, 0);
+		ObjRender_SetScaleXYZ(obj, tmp_s*xscale, tmp_s, 1);
+		ObjRender_SetColor(obj, tmp_c, tmp_c, 255);
+		bx += tmp*vx; by += tmp*vy;
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+// 煙えへくと
+task SetNezuSmoke(x, y, scale, is_reverse)
+{
+	loop(15)
+	{
+		if (!eAlive) { return; }
+		NezuSmokeSingle(x+randEffect(-32,32), y+randEffect(-32,32), randEffect(0,3), randEffect(0,360), 105, scale, is_reverse);
+		wait(2);
+	}
+}
+task NezuSmokeSingle(x, y, speed, angle, timer, scale, is_reverse)
+{
+	let objEffect = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objEffect, 69);
+	ObjPrim_SetTexture(objEffect, imgEffectNezuMC);
+	ObjSprite2D_SetSourceRect(objEffect, 448, 896, 512, 960);
+	ObjSprite2D_SetDestCenter(objEffect);
+	
+	let vx = cos(angle)*scale*64;
+	let vy = sin(angle)*scale*64;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { break; }
+		let tmp = (t+1)/timer;
+		if (is_reverse) { tmp = 1-tmp; }
+		let tmp2 = sin(tmp*90);
+		let tmp3 = 1-cos(tmp*90);
+		
+		let ix = x + vx*tmp3^2;
+		let iy = y + vy*tmp3^2;
+		let tmp_s = (1+tmp)/2 * scale;
+		let tmp_a = (1-tmp)*tmp2*512;
+		ObjRender_SetPosition(objEffect, ix, iy, 0);
+		ObjRender_SetAlpha(objEffect, tmp_a);
+		ObjRender_SetScaleXYZ(objEffect, tmp_s, tmp_s, 1);
+		yield;
+	}
+	Obj_Delete(objEffect);
+}

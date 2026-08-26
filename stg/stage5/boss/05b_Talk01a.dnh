@@ -1,0 +1,300 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["5面　ボス会話"]
+#Text["5面　ボス会話"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Nezu.dnh"
+
+let objEnemy2;
+let CHANGED_BOSS_ID = BOSS_ID_NEZU_M;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	
+	// アニメリセット
+	Reset_aTime(CHANGED_BOSS_ID);
+	Reset_aTime(BOSS_ID_NEZU);
+	
+	Boss_Init();	//初期設定
+	
+	// 変身した状態
+	objEnemy2  = CreateBossTalkEx(CHANGED_BOSS_ID);
+	ObjMove_SetPosition(objEnemy2, CenX, 105);
+	Obj_SetVisible(GetBossImageID(objEnemy2), false);	// ボス非表示
+
+	objEnemy  = CreateBossTalk(BOSS_ID_NEZU);
+	ObjMove_SetPosition(objEnemy, CenX, 105);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	// ボス非表示
+	NezuCharismaAura(objEnemy);	// オーラえへくと
+	
+	// ボスID一時上書き（名前表示用）
+	Boss_SetIDtoObj(objScene, CHANGED_BOSS_ID);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	EnterBoss();
+	wait(60);
+
+	StartTalk();
+
+	wait(60);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(CHANGED_BOSS_ID, true);
+	let cutinBoss2   = CreateTalkObject(BOSS_ID_NEZU, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+	ChangeTalkTexture(cutinBoss1, I_UPSET);
+	SetImageFoward(cutinBoss1, true);
+	SetImageVisible(cutinBoss2, false);
+	BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "くそ、こんな強いとは予想外だぜ。");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "何を狐につままれたような顔をしている？[r]本物の魔理沙の方が余程強いわよ");
+		}
+		case(2)
+		{
+			// 表示キャラ入れ替え
+			SetImageVisible(cutinBoss1, true);
+			SetImageVisible(cutinBoss2, false);
+
+			ChangeTalkTexture(cutinBoss1, I_ANGER);
+			SetTalkEx(cutinBoss1, "そうまで言われちゃ黙ってられねえ。");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NOTICE);
+			SetImageVisible(cutinBoss1, false);
+			SetTalkEx(cutinBoss1, "");
+			// ボス変身えへくと
+			ChangeBoss();
+			wait(180);
+			// ボスID一時上書き（名前表示用）
+			Boss_SetIDtoObj(objScene, BOSS_ID_NEZU);
+
+			// 表示キャラ入れ替え
+			SetImageVisible(cutinBoss2, true);
+
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss2, I_NORMAL);
+			SetTalkEx(cutinBoss2, "やっぱりお主の事、もっと[r]ちゃんと警戒する必要があったのう。");
+			SetBossName(cutinBoss1);	// ボスネーム表示
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "異変は初めて？[r]博麗の巫女も舐められたもんね。");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinBoss2, I_NOTICE);
+			SetTalkEx(cutinBoss2, "あぁー舐めておったわ。");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinBoss2, I_NOTICE);
+			SetTalkEx(cutinBoss2, "今頃は守矢のヒヨッコと[r]仲良く潰し合ってるもんだとな。");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "残念ね、争いは同じ[ruby rb=\"力量\" rt=\"レベル\"]の者同士[r]でしか発生しないの。");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinBoss2, I_UPSET);
+			SetTalkEx(cutinBoss2, "ではこの禰津とお主が？　同じ？");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinBoss2, I_NOTICE);
+			SetTalkEx2(cutinBoss2, "喝！", -96, -128);
+			SetFukidashiType(cutinBoss2, FUKIDASHI_ANGER);	// 吹き出しタイプ変更
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss2, I_NOTICE);
+			SetTalkEx(cutinBoss2, "先刻の台詞を返してやるわ。[r]この禰津も舐められた物よ。");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "さっきの忍者かぶれで思い出した。[r]確か戦国時代に、いい狐殺しの歌があったのよね。");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "夏はきつ　ねに鳴く蝉の　唐衣――");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinBoss2, I_UPSET);
+			SetTalkEx(cutinBoss2, "…貴様！");
+			SetFukidashiType(cutinBoss2, FUKIDASHI_ANGER);	// 吹き出しタイプ変更
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx2(cutinPlayer1, "乗って来たわね。いいわ、[r]そのまま怒りに身を任せるのよ。[r]こういう小賢しい手合いは冷静さを失わせれば…", -32, 0);
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_THINK);	// 吹き出しタイプ変更
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinBoss2, I_SMILE);
+			SetTalkEx2(cutinBoss2, "ふん、お主の作戦など顔に書いてあるわ。[r]これくらい演技してやれば騙され油断するか？", 32, 0);
+			SetFukidashiType(cutinBoss2, FUKIDASHI_THINK);	// 吹き出しタイプ変更
+		}
+		case(16)
+		{
+			//BGM
+			PlayMusicWithName(11, 180, 30);
+
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss2, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "私は妖怪を御す幻想郷の巫女。[r]あんたは巫女に倒されるみじめな妖怪。");
+		}
+		case(17)
+		{
+			ChangeTalkTexture(cutinBoss2, I_NORMAL);
+			SetTalkEx(cutinBoss2, "夏狐が鳴くを聞けば、[r]巫女の身にとて禍が起こる。");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			ChangeTalkTexture(cutinBoss2, I_NORMAL);
+			// 吹き出しリセット
+			SetFukidashiType(cutinPlayer1, FUKIDASHI_NORMAL);
+			SetFukidashiType(cutinBoss2, FUKIDASHI_NORMAL);
+			// 吹き出し削除
+			DeleteAllFukidashi();
+			// 会話
+			_SetTalk(cutinPlayer1, "生まれ持ったその役割、[r]おのれおのれが身の上に刻め！", -16, -48);
+			_SetTalk(cutinBoss2, "禰津が紡ぐ夏の呪詛、[r]弾幕と共にその身に刻め！", 16, 32);
+			// カットインを前面に出す
+			ChangeImageFowardEx([cutinPlayer1, cutinBoss2]);
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 煙えへくと（集中）
+	SetNezuSmoke(ObjMove_GetX(objEnemy2), ObjMove_GetY(objEnemy2), 2, true);
+	CallSound(sndPower3);
+	wait(60);
+	RaiseBoss(objEnemy2, 30);	// 変身ボス登場
+	CallSound(sndBoon);
+}
+
+// 変身モーション
+task ChangeBoss()
+{
+	// 煙えへくと（拡散）
+	SetNezuSmoke(ObjMove_GetX(objEnemy2), ObjMove_GetY(objEnemy2), 2, false);
+	CallSound(sndPower2);
+	wait(60);
+	HideBoss(objEnemy2, 30);	// ボス隠れる
+	wait(30);
+	// 煙えへくと（集中）
+	SetNezuSmoke(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 2, true);
+	CallSound(sndPower3);
+	wait(60);
+	RaiseBoss(objEnemy, 30);	// 真ボス登場
+	CallSound(sndBoon);
+}
+
+task RaiseBoss(objBase, timer)
+{
+	let objImg = GetBossImageID(objBase);
+
+	Obj_SetVisible(objImg, true);
+	ascent(i in 0 .. timer)
+	{
+		let tmp = (i+1)/timer*255;
+		ObjRender_SetAlpha(objImg, tmp);
+		yield;
+	}
+}
+
+task HideBoss(objBase, timer)
+{
+	let objImg = GetBossImageID(objBase);
+
+	Obj_SetVisible(objImg, true);
+	descent(i in 0 .. timer)
+	{
+		let tmp = (i+1)/timer*255;
+		ObjRender_SetAlpha(objImg, tmp);
+		yield;
+	}
+	Obj_SetVisible(objImg, false);
+}

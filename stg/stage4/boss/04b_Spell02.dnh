@@ -1,0 +1,911 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["地に潜る不気味な巫女"]
+#Text["地に潜る不気味な巫女"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Ichiyou.dnh"
+
+let objDoton = [];
+let DOTON_DUMMY = BGW_COIN_RED;
+let DOTON_TYPE = 0;
+
+let pathBossTexture = "";
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(600);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(60);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 40;		//ダメージ透過率
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_ICHIYOU);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(33), [3,3,4,5][Difficult], 
+			GetCurrentScriptDirectory()~"04b_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+	if (Difficult >= D_HARD) { DOTON_TYPE = 1; }
+
+	// テクスチャ代入
+	pathBossTexture = Boss_GetBossImage(objEnemy);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 120);
+	wait(60);
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+	
+	if (Difficult <= D_NORM) { DotonMode(); }
+	else if (Difficult <= D_HARD) { FutonMode(); }
+	else { DarktonMode(); }
+}
+
+// ======================================= ノーマル以下
+task DotonMode()
+{
+	let timer = 240;
+	let move_timer = [135, 120, 1, 1][Difficult];
+	let move_count = [3, 4, 1, 1][Difficult];
+	
+	NinjutuCharge(objEnemy, 90, [192, 192, 0]);
+	BossCharge(objEnemy);
+	SetAction(objEnemy, ACT_SHOT1, 120);
+	wait(60);
+	if (!eAlive) { return; }
+
+	let alltime = 3*10 + 30 + (move_count+1)*move_timer;
+	// モーション
+	SetAction(objEnemy, ACT_SHOT2, alltime);
+	let objDummy = DummyEnemy(alltime);
+	
+	// ダメージ軽減
+	ObjEnemy_SetDamageRate(objEnemy, dIni_Shot/2, dIni_Shot*dIni_Spell/2);
+
+	ascent(i in 0 .. 10)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i+1)/10;
+		let r = tmp^0.5 * 48;
+		let a = rand(0, 360);
+		DotonEffect(ObjMove_GetX(objEnemy)+r*cos(a), ObjMove_GetY(objEnemy)+r*sin(a), timer+30);
+		wait(3);
+	}
+	wait(30);
+	let eX = ObjMove_GetX(objEnemy);
+	let eY = ObjMove_GetY(objEnemy);
+	let eR = 240;
+	loop(move_count)
+	{
+		if (!eAlive) { return; }
+		let eA = GetAngleToPlayer(objEnemy);
+		DotonShot(eX, eY, eA, eR, timer, move_timer);
+		eX += cos(eA)*eR;
+		eY += sin(eA)*eR;
+		MoveTo(objEnemy, eX, eY, move_timer);
+		DotonSubShot(eA, move_timer);
+		SetAction(objDummy, ACT_MOVE, move_timer);
+		wait(move_timer);
+	}
+	local
+	{
+		if (!eAlive) { return; }
+		let eA = GetAngleToPlayer(objEnemy);
+		let eR = GetObjectDistance(objEnemy, objPlayer);
+		let eff_timer = trunc(move_timer*0.75);
+		DotonShot(eX, eY, eA, eR, timer, eff_timer);
+		eX += cos(eA)*eR;
+		eY += sin(eA)*eR;
+		MoveTo(objEnemy, eX, eY, move_timer);
+		DotonSubShot(eA, move_timer);
+		SetAction(objDummy, ACT_MOVE, move_timer);
+		wait(move_timer);
+	}
+	
+	// 戻す
+	ObjEnemy_SetDamageRate(objEnemy, dIni_Shot, dIni_Shot*dIni_Spell);
+	wait(90);
+	if (!eAlive) { return; }
+	ShurikenMode();
+}
+task ShurikenMode()
+{
+	let timer = 120;
+	
+	let eX = CenX + [80, -80][ObjMove_GetX(objEnemy) > CenX];
+	let eY = 160;
+	
+	let speed = 12;
+	let graphic = BGW_SHURIKEN_WHITE;
+	let shot_span = 15;
+	let shot_ct = 9;
+	
+	MoveTo(objEnemy, eX, eY, timer);
+	SetAction(objEnemy, ACT_MOVE, timer);
+	ascent(t in 0 .. timer)
+	{
+		if (t%3 == 0 && t%shot_span < shot_ct)
+		{
+			let tmp = (t+1)/timer;
+			let sa = GetAngleToPlayer(objEnemy);
+			S01Suriken(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed, sa, graphic, 45);
+		}
+		yield;
+	}
+	if (!eAlive) { return; }
+	DotonMode();
+}
+
+// 土遁時ショット
+task DotonSubShot(angle, timer)
+{
+	let speed = 1.5;
+	let graphic = BGW_BALL_BS_YELLOW;
+	let way = [2, 4, 1, 1][Difficult];
+	let way_angle = [120, 90, 1, 1][Difficult];
+	let wt = [12, 12, 1, 1][Difficult];
+	
+	let speed2 = 2;
+	let graphic2 = [BGW_SHURIKEN_RED, BGW_SHURIKEN_ORANGE];
+	let way2 = [3, 4, 1, 1][Difficult];
+	let way2b = 2;
+	let way_angle2 = 15;
+	let count2 = 3;
+	
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0)
+		{
+			ascent(i in 0 .. way)
+			{
+				let sa = angle + (i-(way-1)/2)*way_angle;
+				S02Shot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), speed, sa, graphic, 30);
+			}
+		}
+		if (t%4 == 0)
+		{
+			CallSound(sndShot3);
+		}
+		yield;
+	}
+	if (eAlive)
+	{
+		ascent(k in 0 .. count2)
+		{
+			let ss = speed2 * (1 - k*0.2);
+			let tmp_way = way2b + k;
+			ascent(i in 0 .. way2)
+			{
+				let ba = GetAngleToPlayer(objEnemy) + (i+0.5)*360/way2;
+				ascent(j in 0 .. tmp_way)
+				{
+					let sa = ba + (j-(tmp_way-1)/2)*way_angle2;
+					S02ShotB(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), ss, sa, graphic2[k%2], 30);
+				}
+			}
+		}
+		CallSound(sndShot7);
+	}
+}
+
+// 進入禁止エリア
+task DotonShot(x, y, angle, len, timer, timer2)
+{
+	let sizeX = 48;
+	let sizeY = len;
+	let rX = 0;
+	let rY = 0;
+	let c = cos(angle);
+	let s = sin(angle);
+	
+	let obj = CreateShotA1(x, y, 0, 0, DOTON_DUMMY, 0);
+	SetShotDisabled(obj);
+	Obj_SetVisible(obj, false);
+	ObjShot_SetAutoDelete(obj, false);
+	
+	objDoton = objDoton ~ [obj];
+	
+	let t = 0;
+	while(!Obj_IsDeleted(obj) && t < timer)
+	{
+		if (t < 30)
+		{
+			let tmp = sin((t+1)/30*90);
+			rX = tmp*sizeX/2;
+		}
+		if (t < timer2)
+		{
+			let tmp = t/(timer2-1);
+			if (t%5 == 0)
+			{
+				let er = tmp*sizeY;
+				let ex = x + rand(-sizeX, sizeX)/2 + er*cos(angle);
+				let ey = y + rand(-sizeX, sizeX)/2 + er*sin(angle);
+				if (ey < GetStgFrameHeight+32)
+				{
+					DotonEffect(ex, ey, timer-t/2);
+				}
+			}
+			rY = tmp*sizeY;
+		}
+		if (!IsPlayerSpellActive() && GetPlayerState() == STATE_NORMAL)
+		{
+			// --- 衝突判定
+			let d = CalcCross(rY*c, rY*s, GetPlayerX-x, GetPlayerY-y) / rY;
+			if (absolute(d) < rX)
+			{
+				// 線分に接触
+				if (CalcDot(GetPlayerX-x, GetPlayerY-y, rY*c, rY*s) * CalcDot(GetPlayerX-x-rY*c, GetPlayerY-y-rY*s, rY*c, rY*s) <= 0)
+				{
+					let tmp_r = (rX-absolute(d)) * [1, -1][d > 0];
+					ObjMove_SetPosition(objPlayer,
+						GetPlayerX + s*tmp_r,
+						GetPlayerY - c*tmp_r);
+				}
+				// 端の点
+				else if (((x-GetPlayerX)^2+(y-GetPlayerY)^2)^0.5 < rX)
+				{
+					let tmp_r = rX - ((x-GetPlayerX)^2+(y-GetPlayerY)^2)^0.5;
+					let tmp_a = atan2(y-GetPlayerY, x-GetPlayerX);
+					ObjMove_SetPosition(objPlayer,
+						GetPlayerX - tmp_r*cos(tmp_a),
+						GetPlayerY - tmp_r*sin(tmp_a));
+				}
+				else if ((((x+rY*c)-GetPlayerX)^2+((y+rY*s)-GetPlayerY)^2)^0.5 < rX)
+				{
+					let tmp_r = rX - (((x+rY*c)-GetPlayerX)^2+((y+rY*s)-GetPlayerY)^2)^0.5;
+					let tmp_a = atan2(y+rY*s-GetPlayerY, x+rY*c-GetPlayerX);
+					ObjMove_SetPosition(objPlayer,
+						GetPlayerX - tmp_r*cos(tmp_a),
+						GetPlayerY - tmp_r*sin(tmp_a));
+				}
+			}
+		}
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. length(objDoton))
+	{
+		if (objDoton[i] == obj) { objDoton = erase(objDoton, i); break; }
+	}
+	Obj_Delete(obj);
+}
+
+// 岩えへくと
+task DotonEffect(x, y, timer)
+{
+	let scale = 0.75;
+	
+	let objEffect = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objEffect, 39);
+	ObjPrim_SetTexture(objEffect, imgEffectIchiyou);
+	ObjSprite2D_SetSourceRect(objEffect, 0, 0, 128, 128);
+	ObjSprite2D_SetDestCenter(objEffect);
+	ObjRender_SetAngleZ(objEffect, rand(0, 360));
+	ObjRender_SetPosition(objEffect, x, y, 0);
+	ObjRender_SetAlpha(objEffect, 128);
+	
+	let t = 0;
+	let r = 0;
+	while(eAlive && !Obj_IsDeleted(objEffect) && t < timer)
+	{
+		if (t < 30)
+		{
+			r = sin((t+1)/30*90)*scale;
+			ObjRender_SetScaleXYZ(objEffect, r, r, 1);
+		}
+		t++;
+		yield;
+	}
+	while(r > 0)
+	{
+		r -= 0.1*scale;
+		ObjRender_SetScaleXYZ(objEffect, r, r, 1);
+		yield;
+	}
+	Obj_Delete(objEffect);
+}
+
+// ======================================= ハード以上
+task FutonMode()
+{
+	let timer = 360;
+	let move_timer = 120;
+	let move_count = 3;
+	
+	let gway = [1, 1, 4, 5][Difficult];
+	
+	NinjutuCharge(objEnemy, 90, [192, 192, 0]);
+	BossCharge(objEnemy);
+	SetAction(objEnemy, ACT_SHOT1, 120);
+	wait(60);
+	if (!eAlive) { return; }
+
+	let alltime = 3*10 + 30 + (move_count+1)*move_timer + 30*move_count;
+	// モーション
+	SetAction(objEnemy, ACT_SHOT2, alltime);
+	let objDummy = DummyEnemy(alltime);
+	
+	// ダメージ軽減
+	ObjEnemy_SetDamageRate(objEnemy, dIni_Shot/2, dIni_Shot*dIni_Spell/2);
+
+	ascent(i in 0 .. 10)
+	{
+		if (!eAlive) { return; }
+		let tmp = (i+1)/10;
+		let r = tmp^0.5 * 48;
+		let a = rand(0, 360);
+		let eff_timer = trunc(move_timer*0.75);
+		FutonEffect(ObjMove_GetX(objEnemy)+r*cos(a), ObjMove_GetY(objEnemy)+r*sin(a), eff_timer);
+		wait(3);
+	}
+//	wait(30);
+	let eX = ObjMove_GetX(objEnemy);
+	let eY = ObjMove_GetY(objEnemy);
+	let eR = 240;
+	loop(move_count)
+	{
+		if (!eAlive) { return; }
+		CallSound(sndPower3);
+		wait(30);
+		if (!eAlive) { return; }
+		let eA = GetAngleToPlayer(objEnemy);
+		let eR = 240;
+		let eff_timer = trunc(move_timer*0.75);
+		ascent(i in 0 .. gway)
+		{
+			FutonShot(eX, eY, eA+i*360/gway, 240*3, move_timer, eff_timer);
+		}
+		eX += cos(eA)*eR;
+		eY += sin(eA)*eR;
+		MoveTo(objEnemy, eX, eY, move_timer);
+		FutonSubShot(eA, move_timer);
+		SetAction(objDummy, ACT_MOVE, move_timer);
+		wait(move_timer-15);
+	}
+	local
+	{
+		if (!eAlive) { return; }
+		CallSound(sndPower3);
+		wait(30);
+		let eA = GetAngleToPlayer(objEnemy);
+		let eR = GetObjectDistance(objEnemy, objPlayer);
+		let eff_timer = trunc(move_timer*0.75);
+		ascent(i in 0 .. gway)
+		{
+			FutonShot(eX, eY, eA+i*360/gway, 240*3, timer, eff_timer);
+		}
+		eX += cos(eA)*eR;
+		eY += sin(eA)*eR;
+		MoveTo(objEnemy, eX, eY, move_timer);
+		FutonSubShot(eA, move_timer);
+		SetAction(objDummy, ACT_MOVE, move_timer);
+		wait(move_timer-30);
+	}
+	
+	// 戻す
+	ObjEnemy_SetDamageRate(objEnemy, dIni_Shot, dIni_Shot*dIni_Spell);
+	wait(90);
+	if (!eAlive) { return; }
+	ShurikenModeHard();
+}
+
+task DarktonMode()
+{
+	let timer = 360;
+	let move_timer = 75;
+	let move_count = 4;
+	
+	let gway = [1, 1, 4, 4][Difficult];
+	
+	NinjutuCharge(objEnemy, 90, [192, 192, 0]);
+	BossCharge(objEnemy);
+	SetAction(objEnemy, ACT_SHOT1, 120);
+	wait(60);
+	if (!eAlive) { return; }
+
+	let alltime = 3*10 + 30 + (move_count+1)*move_timer + 30*move_count;
+	// モーション
+	SetAction(objEnemy, ACT_SHOT2, alltime);
+	let objDummy = DummyEnemy(alltime);
+	
+	// ダメージ軽減
+	ObjEnemy_SetDamageRate(objEnemy, dIni_Shot/2, dIni_Shot*dIni_Spell/2);
+
+	let eX = ObjMove_GetX(objEnemy);
+	let eY = ObjMove_GetY(objEnemy);
+	let eR = 240;
+	ascent(t in 0 .. move_count)
+	{
+		if (!eAlive) { return; }
+		CallSound(sndPower3);
+		wait(30);
+		if (!eAlive) { return; }
+		let eA = GetAngleToPlayer(objEnemy);
+		let eR = min(240, ((ObjMove_GetY(objEnemy)-GetPlayerY)^2+(ObjMove_GetX(objEnemy)-GetPlayerX)^2)^0.5);
+		ascent(i in 0 .. gway)
+		{
+			DarktonShot(eX, eY, eA+i*360/gway, 240*3, move_timer*(move_count-t)+300, 90);
+		}
+		DarktonSubShot(move_timer);
+		eX += cos(eA)*eR;
+		eY += sin(eA)*eR;
+		MoveTo(objEnemy, eX, eY, move_timer);
+		FutonSubShot(eA, move_timer);
+		SetAction(objDummy, ACT_MOVE, move_timer);
+		wait(move_timer);
+	}
+	
+	// 戻す
+	ObjEnemy_SetDamageRate(objEnemy, dIni_Shot, dIni_Shot*dIni_Spell);
+	wait(60);
+	if (!eAlive) { return; }
+	ShurikenModeHard();
+}
+
+task ShurikenModeHard()
+{
+	let timer = 120;
+	
+	let eX = CenX + [80, -80][ObjMove_GetX(objEnemy) > CenX];
+	let eY = 160;
+	
+	let speed = 12;
+	let graphic = BGW_SHURIKEN_WHITE;
+	let shot_span = 18;
+	let shot_ct = 15;
+	
+	MoveTo(objEnemy, eX, eY, timer);
+	SetAction(objEnemy, ACT_MOVE, timer);
+	ascent(t in 0 .. timer)
+	{
+		if (t%3 == 0 && t%shot_span < shot_ct)
+		{
+			let muki = [1, -1][trunc(t/shot_span)%2];
+			let tmp = (t+1)/timer;
+			let sa = GetAngleToPlayer(objEnemy);
+//			let sa = GetAngleToPlayer(objEnemy) + (t%shot_ct-(shot_ct-1)/2)*1*muki;
+			S01Suriken(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed, sa, graphic, 45);
+		}
+		yield;
+	}
+	if (!eAlive) { return; }
+	if (Difficult <= D_HARD) { FutonMode(); }
+	else { DarktonMode(); }
+}
+// 風遁時ショット
+task FutonSubShot(angle, timer)
+{
+	let speed = 1.5;
+	let graphic = BGW_BALL_BS_YELLOW;
+	let way = 4;
+	let wt = 3;
+	
+	let speed2 = 2;
+	let graphic2 = [BGW_SHURIKEN_RED, BGW_SHURIKEN_PURPLE];
+	let way2 = 3;
+	let way_angle2 = 15;
+	let count2 = 10;
+	
+	let st = 0;
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		/*
+		if (t%wt == 0 && st < 12)
+		{
+			let sa = GetAngleToPlayer(objEnemy);
+			let add_sa = ((st/12)^2)*180;
+			S01Suriken(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				12, sa+add_sa, BGW_SHURIKEN_RED, 45);
+			S01Suriken(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				12, sa-add_sa, BGW_SHURIKEN_RED, 45);
+			st++;
+		}
+		if (t%4 == 0)
+		{
+			CallSound(sndShot3);
+		}
+		*/
+		yield;
+	}
+	if (eAlive)
+	{
+		let base_angle = GetAngleToPlayer(objEnemy);
+	}
+}
+
+// 進入禁止エリア
+task FutonShot(x, y, angle, len, timer, timer2)
+{
+	let timer3 = timer2*2;	// 進入禁止エリアの進行速度
+	let sizeX = 48;
+	let sizeY = len;
+	let rX = 0;
+	let rY = 0;
+	let c = cos(angle);
+	let s = sin(angle);
+	
+	let obj = CreateShotA1(x, y, 0, 0, DOTON_DUMMY, 0);
+	SetShotDisabled(obj);
+	Obj_SetVisible(obj, false);
+	ObjShot_SetAutoDelete(obj, false);
+	
+	objDoton = objDoton ~ [obj];
+	
+	let t = 0;
+	while(!Obj_IsDeleted(obj) && t < timer)
+	{
+		if (t < 30)
+		{
+			let tmp = sin((t+1)/30*90);
+			rX = tmp*sizeX/2;
+		}
+		if (t < timer2)
+		{
+			let tmp = t/(timer2-1);
+			let er = tmp*sizeY;
+			let ex = x + er*cos(angle);
+			let ey = y + er*sin(angle);
+			if (ex > 0 && ex < GetStgFrameWidth && ey > 0 && ey < GetStgFrameHeight)
+			{
+				if (t%3 == 0)
+				{
+					FutonEffect(ex+rand(-sizeX, sizeX)/2, ey+rand(-sizeX, sizeX)/2, timer-t/2);
+				}
+				// 追加ショット
+				ascent(i in 0 .. 2)
+				{
+					let sa = angle + (i-0.5)*45 + t*45;
+					SFutonShot(ex, ey, 1, sa, BGW_KUNAI_GREEN, 30);
+				}
+			}
+//			rY = tmp*sizeY;
+		}
+		if (t < timer3)
+		{
+			let tmp = t/(timer3-1);
+			rY = tmp*sizeY;
+		}
+		if (!IsPlayerSpellActive() && GetPlayerState() == STATE_NORMAL)
+		{
+			// --- 衝突判定
+			let d = CalcCross(rY*c, rY*s, GetPlayerX-x, GetPlayerY-y) / rY;
+			if (absolute(d) < rX)
+			{
+				// 線分に接触
+				if (CalcDot(GetPlayerX-x, GetPlayerY-y, rY*c, rY*s) * CalcDot(GetPlayerX-x-rY*c, GetPlayerY-y-rY*s, rY*c, rY*s) <= 0)
+				{
+					let tmp_r = (rX-absolute(d)) * [1, -1][d > 0];
+					ObjMove_SetPosition(objPlayer,
+						GetPlayerX + s*tmp_r,
+						GetPlayerY - c*tmp_r);
+				}
+				// 端の点
+				else if (((x-GetPlayerX)^2+(y-GetPlayerY)^2)^0.5 < rX)
+				{
+					let tmp_r = rX - ((x-GetPlayerX)^2+(y-GetPlayerY)^2)^0.5;
+					let tmp_a = atan2(y-GetPlayerY, x-GetPlayerX);
+					ObjMove_SetPosition(objPlayer,
+						GetPlayerX - tmp_r*cos(tmp_a),
+						GetPlayerY - tmp_r*sin(tmp_a));
+				}
+				else if ((((x+rY*c)-GetPlayerX)^2+((y+rY*s)-GetPlayerY)^2)^0.5 < rX)
+				{
+					let tmp_r = rX - (((x+rY*c)-GetPlayerX)^2+((y+rY*s)-GetPlayerY)^2)^0.5;
+					let tmp_a = atan2(y+rY*s-GetPlayerY, x+rY*c-GetPlayerX);
+					ObjMove_SetPosition(objPlayer,
+						GetPlayerX - tmp_r*cos(tmp_a),
+						GetPlayerY - tmp_r*sin(tmp_a));
+				}
+			}
+		}
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. length(objDoton))
+	{
+		if (objDoton[i] == obj) { objDoton = erase(objDoton, i); break; }
+	}
+	Obj_Delete(obj);
+}
+
+// 風遁、Hard以上
+task FutonEffect(x, y, timer)
+{
+	let scale = 0.75;
+	
+	let objEffect = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objEffect, 39);
+	ObjPrim_SetTexture(objEffect, imgEffectIchiyou);
+	ObjSprite2D_SetSourceRect(objEffect, 0, 128, 128, 256);
+	ObjSprite2D_SetDestCenter(objEffect);
+	ObjRender_SetPosition(objEffect, x, y, 0);
+	ObjRender_SetAlpha(objEffect, 160);
+	
+	let t = 0;
+	let r = 0;
+	while(eAlive && !Obj_IsDeleted(objEffect) && t < timer)
+	{
+		if (t < 30)
+		{
+			r = sin((t+1)/30*90)*scale;
+			ObjRender_SetScaleXYZ(objEffect, r, r, 1);
+		}
+		t++;
+		yield;
+	}
+	while(r > 0)
+	{
+		r -= 0.1*scale;
+		ObjRender_SetScaleXYZ(objEffect, r, r, 1);
+		yield;
+	}
+	Obj_Delete(objEffect);
+}
+
+// 進入禁止エリア
+task DarktonShot(x, y, angle, len, timer, timer2)
+{
+	let objEffect = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objEffect, 39);
+	ObjPrim_SetTexture(objEffect, imgEffectIchiyou);
+	ObjRender_SetPosition(objEffect, x, y, 0);
+	ObjRender_SetAngleZ(objEffect, angle-90);
+
+	let sizeX = 48;
+	let sizeY = len;
+	let rX = 0;
+	let rY = 0;
+	let c = cos(angle);
+	let s = sin(angle);
+	
+	let effSize = 0;
+	
+	let obj = CreateShotA1(x, y, 0, 0, DOTON_DUMMY, 0);
+	SetShotDisabled(obj);
+	Obj_SetVisible(obj, false);
+	ObjShot_SetAutoDelete(obj, false);
+	
+	objDoton = objDoton ~ [obj];
+	
+	let t = 0;
+	while(!Obj_IsDeleted(obj) && t < timer)
+	{
+		if (t < 60)
+		{
+			let tmp = sin((t+1)/60*90);
+			effSize = tmp*600;
+		}
+		if (t < timer2)
+		{
+			let tmp = t/(timer2-1);
+			rY = tmp*sizeY;
+			rX = tmp*sizeX/2;
+		}
+		if (!IsPlayerSpellActive() && GetPlayerState() == STATE_NORMAL)
+		{
+			// --- 衝突判定
+			let d = CalcCross(rY*c, rY*s, GetPlayerX-x, GetPlayerY-y) / rY;
+			if (absolute(d) < rX)
+			{
+				// 線分に接触
+				if (CalcDot(GetPlayerX-x, GetPlayerY-y, rY*c, rY*s) * CalcDot(GetPlayerX-x-rY*c, GetPlayerY-y-rY*s, rY*c, rY*s) <= 0)
+				{
+					let tmp_r = (rX-absolute(d)) * [1, -1][d > 0];
+					ObjMove_SetPosition(objPlayer,
+						GetPlayerX + s*tmp_r,
+						GetPlayerY - c*tmp_r);
+				}
+				// 端の点
+				else if (((x-GetPlayerX)^2+(y-GetPlayerY)^2)^0.5 < rX)
+				{
+					let tmp_r = rX - ((x-GetPlayerX)^2+(y-GetPlayerY)^2)^0.5;
+					let tmp_a = atan2(y-GetPlayerY, x-GetPlayerX);
+					ObjMove_SetPosition(objPlayer,
+						GetPlayerX - tmp_r*cos(tmp_a),
+						GetPlayerY - tmp_r*sin(tmp_a));
+				}
+				else if ((((x+rY*c)-GetPlayerX)^2+((y+rY*s)-GetPlayerY)^2)^0.5 < rX)
+				{
+					let tmp_r = rX - (((x+rY*c)-GetPlayerX)^2+((y+rY*s)-GetPlayerY)^2)^0.5;
+					let tmp_a = atan2(y+rY*s-GetPlayerY, x+rY*c-GetPlayerX);
+					ObjMove_SetPosition(objPlayer,
+						GetPlayerX - tmp_r*cos(tmp_a),
+						GetPlayerY - tmp_r*sin(tmp_a));
+				}
+			}
+		}
+		// エフェクト部分
+		ObjSprite2D_SetSourceRect(objEffect, 256, 0, 384, effSize);
+		ObjSprite2D_SetDestRect(objEffect, 48, effSize, -48, 0);
+
+		t++;
+		yield;
+	}
+	ascent(i in 0 .. length(objDoton))
+	{
+		if (objDoton[i] == obj) { objDoton = erase(objDoton, i); break; }
+	}
+	Obj_Delete(obj);
+	descent(t in 0 .. 10)
+	{
+		let tmp = (t+1)/10;
+		ObjRender_SetScaleX(objEffect, tmp);
+		ObjSprite2D_SetSourceRect(objEffect, 256, 0, 384, effSize);
+		ObjSprite2D_SetDestRect(objEffect, 48, effSize, -48, 0);
+		yield;
+	}
+	Obj_Delete(objEffect);
+}
+
+// 闇遁時ショット
+task DarktonSubShot(timer)
+{
+	let speed = 4;
+	let graphic = BGB_KUNAI_BLUE;
+	let graphic2 = BGW_KUNAI_WHITE;
+	let way = 8;
+	let way2 = 3;
+	let wt = 8;
+	
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { return; }
+		if (t%wt == 0)
+		{
+			let angle = GetAngleToPlayer(objEnemy);
+			ascent(j in 0 .. 3)
+			{
+				let ba = angle + (j-1)*45/2;
+				ascent(i in 0 .. way2)
+				{
+					let sa = ba + i*3;
+					let ss = speed * (1-i*0.1);
+					CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, sa, ss/90, ss, graphic, 15);
+					if (i > 0)
+					{
+						let sa = ba - i*3;
+						CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, sa, ss/90, ss, graphic, 15);
+					}
+				}
+			}
+		}
+		if (t%4 == 0)
+		{
+			CallSound(sndShot3);
+		}
+		yield;
+	}
+	if (eAlive)
+	{
+		let angle = GetAngleToPlayer(objEnemy);
+		ascent(j in 0 .. way)
+		{
+			ascent(k in 0 .. 3)
+			{
+				let ba = angle + (j+k/2)*360/way;
+				ascent(i in 0 .. way2)
+				{
+					let sa = ba + i*3;
+					let ss = speed * (1-i*0.1) * (1-k/3);
+					CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, sa, ss/90, ss, graphic2, 15);
+					if (i > 0)
+					{
+						let sa = ba - i*3;
+						CreateShotA2(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, sa, ss/90, ss, graphic2, 15);
+					}
+				}
+			}
+		}
+		CallSound(sndShot7);
+	}
+}
+
+// ======================================= 共通
+function DummyEnemy(timer)
+{
+	let objParent = CreateShotA1(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 0, 0, BGW_BALL_S_RED, 0);
+	_DummyEnemy(objParent, timer);
+	return(objParent);
+}
+task _DummyEnemy(objParent, timer)
+{
+	SetShotDisabled(objParent);
+	ObjShot_SetAutoDelete(objParent, false);
+	Obj_SetVisible(objParent, false);
+	//初期設定
+	Boss_SetIDtoObj(objParent, BOSS_ID_ICHIYOU_H);
+
+	//タスク起動
+	Boss_AnimeTimer(objParent);	//アニメ状態管理タスク
+	BossAnime_Initialize(objParent);	//ボス描画タスク
+
+	let objImg = GetBossImageID(objParent);
+//	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+	Obj_SetRenderPriorityI(objImg, priorityBoss+1);
+	
+	let alpha = 0;
+	let t = 0;
+	while(eAlive && t < timer)
+	{
+		if (!Obj_IsDeleted(objEnemy))
+		{
+			ObjMove_SetPosition(objParent, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy));
+		}
+		alpha = min(255, alpha+15);
+		ObjRender_SetAlpha(objImg, alpha*(sin(t*60)*0.33+0.75));
+		ObjRender_SetPosition(objImg, ObjMove_GetX(objParent), ObjMove_GetY(objParent) + sin(aTime(objEnemy)*2)*aPosition(objEnemy), 0);
+		t++;
+		yield;
+	}
+	while(alpha > 0)
+	{
+		if (!Obj_IsDeleted(objEnemy))
+		{
+			ObjMove_SetPosition(objParent, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy));
+		}
+		ObjRender_SetAlpha(objImg, alpha);
+		ObjRender_SetPosition(objImg, ObjMove_GetX(objParent), ObjMove_GetY(objParent) + sin(aTime(objEnemy)*2)*aPosition(objEnemy), 0);
+		alpha -= 15;
+		yield;
+	}
+	Obj_Delete(objImg);
+	Obj_Delete(objParent);
+}
+
+task S01Suriken(x, y, speed, angle, graphic, delay)
+{
+	let obj = SurikenShoot(x, y, speed, angle, graphic, delay, true);
+	if (Obj_IsDeleted(obj)) { return; }
+	CallSound(sndShuriken);
+}
+function S02Shot(x, y, speed, angle, graphic, delay)
+{
+	let obj = CreateShotA2(x, y, 0, angle, -speed/30, speed/4, graphic, 0);
+	ObjMove_AddPatternA2(obj, 30, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+	My_RaiseShotEffectA(obj, delay);
+}
+task S02ShotB(x, y, speed, angle, graphic, delay)
+{
+	let obj = CreateShotA1(x, y, speed, angle, graphic, 0);
+	My_RaiseShotEffectA(obj, delay);
+	
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		ObjRender_SetAngleZ(obj, t*8);
+		t++;
+		yield;
+	}
+}
+task SFutonShot(x, y, speed, angle, graphic, delay)
+{
+	wait(30);
+	if (!eAlive) { return; }
+	let obj = CreateShotA1(x, y, 5, angle, graphic, 0);
+	ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, 0, 12, 5);
+	ObjMove_AddPatternA2(obj, 60, NO_CHANGE, NO_CHANGE, (speed-5)/15, 0, speed);
+	ObjMove_AddPatternA2(obj, 120, NO_CHANGE, NO_CHANGE, speed/120, 0, speed*3);
+	My_RaiseShotEffectA(obj, delay);
+	CallSound(sndShot3);
+}

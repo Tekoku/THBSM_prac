@@ -1,0 +1,154 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["一曜通常"]
+#Text["一曜通常2"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Ichiyou.dnh"
+
+let SURIKEN_ID = [];
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3000);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(50);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_ICHIYOU);	//ボスセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 120);
+	wait(60);
+	
+	let speed = [6, 8, 10, 12][Difficult];
+	let way = [18, 18, 24, 24][Difficult];
+	let way_rate = [0.95, 1, 1, 1][Difficult];
+	let way2 = [15, 18, 18, 26][Difficult];
+
+	let t = 0;
+	let muki = 1;
+	while(eAlive)
+	{
+		local
+		{
+			let tmp_way = way*way_rate;
+			let way_angle = 360/way * muki;
+			let base_angle = GetAngleToPlayer(objEnemy);
+			if (t <= 0) { tmp_way = way*0.75; }
+			tmp_way = trunc(tmp_way/3)*3;
+			
+			ascent(i in 0 .. tmp_way)
+			{
+				if (!eAlive) { return; }
+				let sa = base_angle+180 + (i+0.5-(tmp_way-1)/2)*way_angle;
+				A01Suriken(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					12, sa, BGW_SHURIKEN_RED, 60, BGB_SCALE_WHITE);
+				wait(2);
+			}
+		}
+		wait(60);
+		let ct = length(SURIKEN_ID);
+		let tmp_id = SURIKEN_ID;
+		ascent(i in 0 .. ct)
+		{
+			if (!eAlive) { return; }
+			if (i%3 == 0)
+			{
+				wait(30);
+				if (!eAlive) { return; }
+				EnemyRandomMove(objEnemy, 120, 48);
+			}
+			A01Kunai(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				12, BGW_KUNAI_BLUE, 60, tmp_id[i], way2, speed);
+			wait(5);
+		}
+		wait(15);
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 120, 48);
+		wait(30);
+		t++;
+		muki = -muki;
+	}
+}
+
+task A01Suriken(x, y, speed, angle, graphic, delay, to_graphic)
+{
+	let obj = SurikenShoot(x, y, speed, angle, graphic, delay, true);
+	if (Obj_IsDeleted(obj)) { return; }
+	CallSound(sndShuriken);
+	
+	Obj_SetValue(obj, "TO_G", to_graphic);
+	SURIKEN_ID = SURIKEN_ID ~ [obj];
+	
+	while(!Obj_IsDeleted(obj))
+	{
+		if (!CheckDispIN(obj, -8))
+		{
+			ObjMove_SetAcceleration(obj, 0);
+			ObjMove_SetSpeed(obj, 0);
+			break;
+		}
+		yield;
+	}
+}
+
+task A01Kunai(x, y, speed, graphic, delay, to_obj, to_way, to_speed)
+{
+	if (!Obj_IsDeleted(to_obj))
+	{
+		let to_a = atan2(ObjMove_GetY(to_obj)-y, ObjMove_GetX(to_obj)-x);
+		let to_r = ((x-ObjMove_GetX(to_obj))^2+(y-ObjMove_GetY(to_obj))^2)^0.5;
+
+		let obj = SurikenShoot(x, y, speed, to_a, graphic, delay, false);
+		if (Obj_IsDeleted(obj)) { return; }
+		CallSound(sndShuriken);
+		
+		let r = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			r += ObjMove_GetSpeed(obj);
+			if (r > to_r)
+			{
+				if (!Obj_IsDeleted(to_obj))
+				{
+					let to_g = Obj_GetValueD(to_obj, "TO_G", 1);
+					CreateShotCircleA2(ObjMove_GetX(to_obj), ObjMove_GetY(to_obj),
+						to_speed, to_a, -to_speed/30, to_speed/8, to_g, 10, to_way, 4);
+					DeleteBulletEffect(to_obj);
+					Obj_Delete(obj);
+				}
+				CallSound(sndShot1);
+				break;
+			}
+			yield;
+		}
+	}
+	ascent(i in 0 .. length(SURIKEN_ID))
+	{
+		if (SURIKEN_ID[i] == to_obj)
+		{
+			SURIKEN_ID = erase(SURIKEN_ID, i);
+			break;
+		}
+	}
+}
+

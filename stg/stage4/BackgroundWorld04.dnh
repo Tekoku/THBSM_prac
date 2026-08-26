@@ -1,0 +1,285 @@
+//　Stage1
+//--------------------------------------------------------------------------------
+//--------------------------------------------------------------------------------
+
+#include "./../../lib/wor_function.dnh"
+
+let flagEnd = false;
+let flgScriptValue = 0;
+
+//　ステージの背景テクスチャ
+let world04_path;
+
+let STAGE_SCENE = 0;
+let POS_X = 0;
+let POS_Y = 0;
+let LIGHT_Z = 1000;
+let Z_SPEED = 0;
+
+@Event
+{
+	alternative(GetEventType())
+	case(ev_NextStageScene)
+	{
+		STAGE_SCENE++;
+		if (STAGE_SCENE > 2) { Wor04_SetSpeed(4, 360); }
+		else if (STAGE_SCENE > 1) { Wor04_SetSpeed(12, 240); }
+		else if (STAGE_SCENE > 0) { Wor04_SetSpeed(4, 240); }
+	}
+	case(ev_CloseScript)
+	{
+		//背景削除
+		flagEnd = true;
+		//ブラックアウト
+		BlackOut( world_layer+1, 120, false, [0, 0, 0] );
+		CloseMine(300);
+	}
+}
+
+@Initialize
+{
+	init();	//初期設定
+	
+	// 画像パスをセット
+	world04_path = LoadingImageFile_StgWorld(4);
+
+	// 背景スクリプト起動
+	if (IsDrawBackground() >= 2) { SetWorld04a(); }
+	else if (IsDrawBackground() >= 1) { BackGroundLite(); }
+}
+
+@MainLoop
+{
+	yield;
+}
+
+
+task BackGroundLite
+{
+	let obj = ObjPrim_Create(OBJ_SPRITE_2D);
+	let alpha = 0;
+	Obj_SetRenderPriorityI(obj,world_layer);
+	ObjRender_SetColor(obj,255,255,255);
+	ObjPrim_SetTexture(obj,world04_path[0]);
+	ObjSprite2D_SetSourceRect(obj,0,0,384,448);
+	ObjSprite2D_SetDestRect(obj,0,0,384,448);
+
+	while(alpha<255)
+	{
+		alpha+=5;
+		ObjRender_SetAlpha(obj,alpha);
+		yield;
+	}
+	while(!flagEnd)
+	{
+		yield;
+	}
+	Obj_Delete(obj);
+}
+
+task SetWorld04a()
+{
+	TBG01;
+	TBG02;
+
+	SetCameraFocusX(0);
+	SetCameraFocusY(-250);
+	SetCameraFocusZ(0);
+	SetCameraRadius(490);
+
+	SetCameraAzimuthAngle(90);
+	SetCameraElevationAngle(-25);
+	
+	SetFogParam(0, 1200, 0, 0, 0);
+	
+	TBamboo();
+	
+	Wor04_SetSpeed(12, 240);
+	
+	let t = 0;
+	while(!flagEnd)
+	{
+		if (t < 600)
+		{
+			let tmp = 1 - sin((t+1)/600*90);
+			SetCameraFocusY(-250 + 600*tmp);
+			SetCameraElevationAngle(-25 + 60*tmp);
+			SetFogParam(0, 1200*min(1,1.5-tmp*1.5), 0, 0, 0);
+			POS_Y = 120*tmp^2;
+		}
+		else
+		{
+			LIGHT_Z = LIGHT_Z - 20;
+			if (LIGHT_Z < -4000) { LIGHT_Z = 1000; }
+		}
+		if( t%4 == 0 )
+		{
+			CreateSoulLight( [randEffect(-360, 360), randEffect(-480, -240), randEffect(-800, -200)],
+				[0,2,Z_SPEED/2],
+				0.5, 255, 5, [64,64,randEffect(64,255)] );
+		}
+		t++;
+		yield;
+	}
+}
+
+
+task TBG01
+{
+	let alpha = 0;
+	let ID = [ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D), ObjPrim_Create(OBJ_SPRITE_2D)];
+	ObjPrim_SetTexture(ID[0], world04_path[3]);
+	ObjPrim_SetTexture(ID[1], world04_path[4]);
+	ObjPrim_SetTexture(ID[2], world04_path[6]);
+	ascent(i in 0 .. 3)
+	{
+		Obj_SetRenderPriorityI(ID[i], world_layer);
+		ObjSprite2D_SetSourceRect(ID[i], 0,0,384,448);
+		ObjSprite2D_SetDestRect(ID[i], 0,0,384,448);
+		ObjRender_SetColor(ID[i], 0, 0, 0);
+	}
+	ObjRender_SetBlendType(ID[1], BLEND_ADD_ARGB);
+	ObjRender_SetAlpha(ID[1], 0);
+	ObjRender_SetAlpha(ID[0], 0.4*384);
+	ObjRender_SetColor(ID[2], 0, 0, 0);
+
+	wait(120);
+	while(alpha<255)
+	{
+		alpha += 1;
+		ascent(i in 0 .. 2)
+		{
+//			ObjSprite2D_SetSourceRect(ID[i], 0+POS_X,0+POS_Y,384+POS_X,448+POS_Y);
+			ObjRender_SetColor(ID[i], alpha, alpha, alpha);
+		}
+		ObjRender_SetColor(ID[2], alpha, alpha, alpha);
+		yield;
+	}
+	let t = 0;
+	while(!flagEnd)
+	{
+		let c = 384 * (0.4+sin(t)*0.6);
+		let c2 = 384 * (0.4-cos(t)*0.6);
+		ObjRender_SetAlpha(ID[0], c);
+		ObjRender_SetAlpha(ID[1], c2);
+//		ascent(i in 0 .. 2)
+//		{
+//			ObjSprite2D_SetSourceRect(ID[i], 0+POS_X,0+POS_Y,384+POS_X,448+POS_Y);
+//		}
+		t += 2;
+		yield;
+	}
+	ascent(i in 0 .. 3) { Obj_Delete(ID[i]); }
+}
+
+task TBG02
+{
+	//初期設定
+	let ID = [ObjPrim_Create(OBJ_SPRITE_3D), ObjPrim_Create(OBJ_SPRITE_3D)];
+	
+	ascent(i in 0 .. 2)
+	{
+		ObjPrim_SetTexture(ID[i], world04_path[5]);
+		Obj_SetRenderPriorityI(ID[i], world_layer+1);
+		ObjSprite3D_SetDestRect(ID[i], -512, -256*3, 512, 256);
+		ObjRender_SetPosition(ID[i], 0, -i*100, 0);
+		ObjRender_SetAngleXYZ(ID[i], 90, 0, 0);
+		ObjRender_SetAlpha(ID[i], 0);
+	}
+//	Obj_SetVisible(ID[1], false);
+	
+	let st = 0;
+	let t = 0;
+	while(!flagEnd)
+	{
+		if (st < 600)
+		{
+			let tmp = sin((t+1-240)/360*90);
+			ascent(i in 0 .. 2)
+			{
+				ObjRender_SetAlpha(ID[i], 108*tmp);
+			}
+			st++;
+		}
+		ObjSprite3D_SetSourceRect(ID[0], 0+t, 0-t*4, 1024+t, 1024-t*4);
+		ObjSprite3D_SetSourceRect(ID[1], 0-t, 0-t*2, 1024-t, 1024-t*2);
+		t += Z_SPEED/8;
+		yield;
+	}
+	ascent(i in 0 .. 2) { Obj_Delete(ID[i]); }
+}
+
+task TBamboo()
+{
+	let minZ = -1000;
+	let maxZ = 500;
+	
+	ascent(i in 0 .. 6)
+	{
+		let tmp = i/6;
+		let x = [250, 200, 280, 240, 180, 220][i%6];
+		let z = minZ + (maxZ-minZ)*tmp;
+		_TBamboo(x-100, 0, z, 15, minZ, maxZ, x*2);
+	}
+	ascent(i in 0 .. 6)
+	{
+		let tmp = (i+0.5)/6;
+		let x = [240, 180, 220, 250, 200, 280][i%6];
+		let z = minZ + (maxZ-minZ)*tmp;
+		_TBamboo(-x+100, 0, z, -15, minZ, maxZ, -x*2);
+	}
+}
+
+task _TBamboo(baseX, baseY, baseZ, baseA, minZ, maxZ, addX)
+{
+	//初期設定
+	let ID = [ObjPrim_Create(OBJ_SPRITE_3D), ObjPrim_Create(OBJ_SPRITE_3D)];
+	
+	ObjPrim_SetTexture(ID[0], world04_path[1]);
+	ObjPrim_SetTexture(ID[1], world04_path[2]);
+	Obj_SetRenderPriorityI(ID[0], world_layer);
+	Obj_SetRenderPriorityI(ID[1], world_layer+1);
+	ascent(i in 0 .. 2)
+	{
+		ObjSprite3D_SetSourceDestRect(ID[i], 0, 0, 256, 512);
+		ObjRender_SetPosition(ID[i], baseX, baseY, baseZ);
+		ObjRender_SetAngleX(ID[i], 180);
+		ObjRender_SetAngleY(ID[i], -baseA);
+		ObjRender_SetScaleXYZ(ID[i], 2, 2, 1);
+	}
+	ObjRender_SetZWrite(ID[0], true);
+	ObjRender_SetZTest(ID[0], true);
+	ObjRender_SetBlendType(ID[0], BLEND_ALPHA);
+	ObjRender_SetBlendType(ID[1], BLEND_ADD_ARGB);
+	ObjRender_SetFogEnable(ID[1], false);
+	ObjRender_SetColor(ID[0], 128, 128, 128);
+//	Obj_SetVisible(ID[1], false);
+	
+	while(!flagEnd)
+	{
+		baseZ += Z_SPEED;
+		let tmp = (maxZ+minZ-baseZ)/(minZ-maxZ);
+		ascent(i in 0 .. 2)
+		{
+			ObjRender_SetZ(ID[i], baseZ);
+			ObjRender_SetX(ID[i], baseX+tmp*addX);
+		}
+		let alpha = min(255, tmp*512) * max(0, 800-absolute(baseZ-LIGHT_Z))/800;
+		ObjRender_SetAlpha(ID[1], alpha);
+		if (baseZ > maxZ) { baseZ += (minZ - maxZ); }
+		yield;
+	}
+	ascent(i in 0 .. 2) { Obj_Delete(ID[i]); }
+}
+
+// 速度チェンジ
+task Wor04_SetSpeed(to_speed, timer)
+{
+	let from_speed = Z_SPEED;
+	ascent(t in 0 .. timer)
+	{
+		let tmp = (1-cos((t+1)/timer*180))/2;
+		Z_SPEED = from_speed*(1-tmp) + to_speed*tmp;
+		yield;
+	}
+}

@@ -1,0 +1,101 @@
+
+let pathSE_Smoke = seDIR ~ "smoke03.wav";
+
+// ’e‰æ‘œ
+let BGW_FROG_GREEN		= 592;
+let BGW_FROG_BLUE		= 593;
+let BGW_FROG_RED		= 591;
+let pathShotFrog	= GetCurrentScriptDirectory() ~ "lib_bullet_frog.dnh";
+
+
+task NinjutuCharge(objEnemy, timer, color)
+{
+	_NinjutuCharge(objEnemy, timer, 2, 0, 0, 3, color);
+}
+
+task _NinjutuCharge(objEnemy, timer, scale, offset_x, offset_y, add_angle, color)
+{
+	let objBase = ObjPrim_Create(OBJ_SPRITE_2D);
+	ObjRender_SetPosition(objBase, ObjMove_GetX(objEnemy)+offset_x, ObjMove_GetY(objEnemy)+offset_y, 0);
+	
+	ascent(i in 0 .. 8)
+	{
+		let oa = (i+0.5)*360/8;
+		let or = scale*64;
+		_NinjutuCharge_sub1(objBase, timer, scale, or, oa, add_angle, color);
+	}
+	
+	descent(t in 0 .. timer)
+	{
+		if (!eAlive) { break; }
+		let tmp = sin((t+1)/timer*90);
+		ObjRender_SetPosition(objBase,
+			ObjMove_GetX(objEnemy)+tmp*offset_x,
+			ObjMove_GetY(objEnemy)+tmp*offset_y, 0);
+		yield;
+	}
+	Obj_Delete(objBase);
+}
+
+task _NinjutuCharge_sub1(parent, timer, scale, offset_r, offset_a, add_angle, color)
+{
+	let objEffect = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objEffect, 69);
+	ObjPrim_SetTexture(objEffect, imgEffectCircle);
+	ObjSprite2D_SetSourceRect(objEffect, 0, 0, 128, 128);
+	ObjSprite2D_SetDestCenter(objEffect);
+	ObjRender_SetBlendType(objEffect, BLEND_INV_DESTRGB);
+
+	descent(t in 0 .. timer)
+	{
+		if (Obj_IsDeleted(parent)) { break; }
+		let tmp = sin((t+1)/timer*90);
+		let tmp_s = (1-tmp)*scale * min(1, tmp*5);
+		let tmp_r = sin((t+1)/timer*180)*offset_r;
+		ObjRender_SetPosition(objEffect,
+			ObjRender_GetX(parent)+tmp_r*cos(offset_a),
+			ObjRender_GetY(parent)+tmp_r*sin(offset_a), 0);
+		ObjRender_SetScaleXYZ(objEffect, tmp_s, tmp_s, 1);
+		ObjRender_SetColor(objEffect, color[0]*(1-tmp)*2, color[1]*(1-tmp)*2, color[2]*(1-tmp)*2);
+		offset_a += add_angle*tmp;
+		yield;
+	}
+	Obj_Delete(objEffect);
+}
+
+// ‰Œ‚¦‚Ö‚­‚Æ
+task SetIchiyouSmoke(x, y, scale)
+{
+	loop(15)
+	{
+		if (!eAlive) { return; }
+		IchiyouSmokeSingle(x, y, rand(0,3), rand(0,360), 90, scale);
+		wait(2);
+	}
+}
+task IchiyouSmokeSingle(x, y, speed, angle, timer, scale)
+{
+	let objEffect = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objEffect, 69);
+	ObjPrim_SetTexture(objEffect, imgEffectIchiyou);
+	ObjSprite2D_SetSourceRect(objEffect, 128, 128, 256, 256);
+	ObjSprite2D_SetDestCenter(objEffect);
+	ObjRender_SetAngleZ(objEffect, rand(0, 360));
+	
+	let vx = cos(angle);
+	let vy = sin(angle);
+	ascent(t in 0 .. timer)
+	{
+		if (!eAlive) { break; }
+		let tmp = (t+1)/timer;
+		let vs = (1-tmp)*speed;
+		let tmp_s = (1+tmp*2)/3 * scale;
+		let tmp_a = (1-tmp)*255;
+		ObjRender_SetPosition(objEffect, x, y, 0);
+		ObjRender_SetAlpha(objEffect, tmp_a);
+		ObjRender_SetScaleXYZ(objEffect, tmp_s, tmp_s, 1);
+		x +=vs*vx; y += vs*vy;
+		yield;
+	}
+	Obj_Delete(objEffect);
+}

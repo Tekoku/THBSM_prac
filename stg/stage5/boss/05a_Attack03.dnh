@@ -1,0 +1,293 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ねずーりん早苗通常"]
+#Text["ねずーりん早苗通常"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Nezu.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2400);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(35);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_NEZU_S);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 105, 30);
+	wait(45);
+	
+	let wt = 270;
+	
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		SetRollFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), rand(0,360), muki);
+		CallSound(sndBoon);
+		wait(120);
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 120, 48);
+		wait(wt-120);
+		muki = -muki;
+	}
+}
+
+task SetRollFamilier(x, y, angle, muki)
+{
+	let way = 5;
+	let add_angle = 1 * muki;
+	let timer = 180;
+	
+	let objBase = CreateShotA1(x, y, 0, 0, BGW_BALL_S_RED, 0);
+	Obj_SetValue(objBase, "ANGLE", angle);
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	
+	ascent(i in 0 .. way)
+	{
+		SetFamilier01(objBase, 1, i*360/way, muki, i, timer);
+	}
+	
+	let t = 0;
+	while(!Obj_IsDeleted(objBase))
+	{
+		ObjMove_SetPosition(objBase, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy));
+		if (t < 60)
+		{
+			let tmp = sin((t+1)/60*90);
+			Obj_SetValue(objBase, "R", tmp*96);
+		}
+		else if (t < 60+timer)
+		{
+		}
+		else
+		{
+			break;
+		}
+		Obj_SetValue(objBase, "ANGLE", angle);
+		angle += add_angle;
+		t++;
+		yield;
+	}
+	Obj_Delete(objBase);
+}
+
+
+// 使い魔
+task SetFamilier01(objBase, iniSpeed, iniAngle, iniMuki, iniValue, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let item_count = 0;
+	let item_star = 0;
+	let baseAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 200, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	NezuOption_SetDamageRate(objFamilier);	// ダメージ軽減率自機別設定
+	SetDropItemCount(objFamilier, item_count, item_star);
+	SetEnemyVisible(objFamilier, false);
+	DrawHitodama(objFamilier, eColor);
+//	TCheckDispINOut(objFamilier, 16);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TShot();
+		
+		let t = 0;
+		while (CanShotBullet(objFamilier))
+		{
+			if (t == 15)
+			{
+				SetEnemyVisible(objFamilier, true);
+			}
+			if (Obj_IsDeleted(objBase))
+			{
+				EraseEnemy(objFamilier);
+				break;
+			}
+			let a = iniAngle + Obj_GetValueD(objBase, "ANGLE", 0);
+			let r = Obj_GetValueD(objBase, "R", 0);
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objBase)+cos(a)*r, ObjMove_GetY(objBase)+sin(a)*r);
+			t++;
+			yield;
+		}
+	}
+	
+	task TShot()
+	{
+		wait(75);
+		
+		let speed = [2, 2.5, 2.75, 3][Difficult];
+		let way = [1, 1, 2, 3][Difficult];
+		let way_angle = [1, 1, 7.5, 7.5][Difficult];
+		let wt = 5;
+		let graphic = BGW_BILL_PURPLE;
+		let to_speed = 3;
+		
+		let timer = iniTimer-15;
+		let shot_timer = [timer-60, timer, timer, timer][Difficult];
+		
+		let t = 0;
+		while(CanShotBullet(objFamilier) && t < timer)
+		{
+			if (t < shot_timer)
+			{
+				let tmp = t/iniTimer;
+				
+				let ss = speed * (1+tmp);
+				let ba = GetAngleToPlayer(objFamilier);
+				ascent(i in 0 .. way)
+				{
+					let sa = ba + (i-(way-1)/2)*way_angle;
+					SnakeShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+						ss, sa, graphic, 0, to_speed);
+				}
+				CallSound(sndShot2);
+			}
+			t += wt;
+			wait(wt);
+		}
+		if (CanShotBullet(objFamilier))
+		{
+			let sa = iniAngle + Obj_GetValueD(objBase, "ANGLE", 0);
+			StarShot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), sa, 0);
+			CallSound(sndShot5);
+		}
+	}
+}
+
+task StarShot(x, y, angle, shot_type)
+{
+	let pos_x = [];
+	let pos_y = [];
+	ascent(i in 0 .. 6)
+	{
+		let a = i*144 + angle;
+		pos_x = pos_x~[cos(a)];
+		pos_y = pos_y~[sin(a)];
+	}
+	
+	let way = [8, 10, 15, 15][Difficult];
+	let size = 2;
+	let speed = [2, 2.5, 2.5, 2.5][Difficult];
+	
+	let graphic = BGW_RICE_S_RED;
+	let fgraphics = [BGW_RICE_S_RED, BGW_RICE_S_BLUE];
+	if (shot_type)
+	{
+		graphic = BGW_RICE_S_PURPLE;
+		fgraphics = [BGW_RICE_S_PURPLE, BGW_RICE_S_SKY];
+	}
+	
+	ascent(i in 0 .. 5)
+	{
+		ascent(j in 0 .. way)
+		{
+			let tmp = j/way;
+			let vx = pos_x[i]*(1-tmp) + pos_x[i+1]*tmp;
+			let vy = pos_y[i]*(1-tmp) + pos_y[i+1]*tmp;
+	//		let bs = (vx^2+vy^2)^0.5;
+	//		let sa = atan2(vy, vx);
+			DarkShotA03(x, y, vx, vy, speed, graphic, 0, size, fgraphics, shot_type);
+		}
+	}
+}
+
+task DarkShotA03(x, y, vx, vy, speed, graphic, delay, fs, fgraphics, shot_type)
+{
+	let obj = CreateShotB2(x, y, vx*fs, vy*fs, -vx*fs/60, -vy*fs/60, vx/100, vy/100, fgraphics[0], delay);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	ObjRender_SetScaleXYZ(obj, 1.2, 1.2, 1);
+//	ObjShot_SetIntersectionEnable(obj, false);
+	let obj2 = CreateShotB2(x, y, vx*fs, vy*fs, -vx*fs/60, -vy*fs/60, vx/100, vy/100, fgraphics[1], delay);
+	ObjRender_SetBlendType(obj2, BLEND_SUBTRACT);
+	Obj_SetRenderPriorityI(obj2, GetShotRenderPriorityI+1);
+	ObjShot_SetItemChange(obj2, false);
+
+	wait(60+delay);
+	if (!Obj_IsDeleted(obj))
+	{
+		CreateShotB2(ObjMove_GetX(obj), ObjMove_GetY(obj),
+			0, 0, vx*speed/60, vy*speed/60, vx*speed, vy*speed, graphic, 0);
+		Obj_Delete(obj);
+		Obj_Delete(obj2);
+		CallSound(sndShot2);
+	}
+}
+
+task SnakeShot(x, y, speed, angle, graphic, delay, to_speed)
+{
+	let obj = My_CreateShotA1(x, y, speed, angle, graphic, delay);
+
+	let vx = cos(angle);
+	let vy = sin(angle);
+	
+	let t = 0;
+	let base_dot = vx*(GetPlayerX-x) + vy*(GetPlayerY-y);
+	while (!Obj_IsDeleted(obj))
+	{
+		let tmp_dot = vx*(GetPlayerX-ObjMove_GetX(obj)) + vy*(GetPlayerY-ObjMove_GetY(obj));
+		if (tmp_dot * base_dot < 0)
+		{
+			let add_angle = 90;
+			let tmp_cross = vx*(GetPlayerY-ObjMove_GetY(obj)) - vy*(GetPlayerX-ObjMove_GetX(obj));
+			if (tmp_cross < 0) { add_angle = -add_angle; }
+			SnakeShot_sub(ObjMove_GetX(obj), ObjMove_GetY(obj), to_speed, angle+add_angle, graphic, 15);
+			Obj_Delete(obj);
+			CallSound(sndShot3);
+			break;
+		}
+		t++;
+		yield;
+	}
+}
+
+task SnakeShot_sub(x, y, speed, angle, graphic, delay)
+{
+	let obj = CreateDarkShotsA2(x, y, 0, angle, speed/45, speed, graphic, graphic, 0, 1.15);
+	My_RaiseShotEffectA(obj[0], delay);
+	My_RaiseShotEffectA(obj[1], delay);
+
+	ObjShot_SetIntersectionEnable(obj[1], false);
+	ascent(i in 0 .. delay)
+	{
+		let tmp_s = 1 + (delay-i-1)/delay*3;
+		let tmp_a = (i+1)/delay*192;
+		ObjRender_SetScaleXYZ(obj[0], tmp_s*1.15, tmp_s*1.15, 1);
+		ObjRender_SetScaleXYZ(obj[1], tmp_s, tmp_s, 1);
+		ObjRender_SetAlpha(obj[0], tmp_a);
+		ObjRender_SetAlpha(obj[1], tmp_a);
+		yield;
+	}
+	if (!Obj_IsDeleted(obj))
+	{
+		ObjShot_SetIntersectionEnable(obj[1], true);
+		ObjRender_SetAlpha(obj[0], 255);
+		ObjRender_SetAlpha(obj[1], 255);
+	}
+}

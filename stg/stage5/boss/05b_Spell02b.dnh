@@ -1,0 +1,275 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ミラーマッチ（魔理沙）"]
+#Text["ミラーマッチ（魔理沙）"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Nezu.dnh"
+
+let objLASERS = [];
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(75);		}
+	BossEvent();
+}
+
+@Initialize {
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_NEZU_M);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(45), [12,12,13,13][Difficult], 
+			GetCurrentScriptDirectory()~"05a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	if (GetPlayMode() == GAME_SPELL)
+	{
+		standBy(objEnemy, CenX, 140, 45+45);
+		wait(60);
+	}
+	else
+	{
+		standBy(objEnemy, CenX, 140, 45);
+		wait(15);
+	}
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+	
+	let wt = [120, 60, 120, 30][Difficult];
+	
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		wait(90);
+		ascent(i in 0 .. 2)
+		{
+			if (!eAlive) { return; }
+			let angle = rand(0,360);
+			SetRollFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), angle, 96, 0.75-i*0.25, 180, muki);
+			CallSound(sndBoon);
+			muki = -muki;
+			wait(120);
+		}
+		muki = -muki;
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 120, 48);
+		wait(wt);
+	}
+}
+
+task SetRollFamilier(x, y, angle, max_r, add_r, shot_offset, muki)
+{
+	let way = 6;
+	let add_angle = 0.6 * muki;
+	let timer = 360;
+//	let max_r = 160;
+	
+	let objBase = CreateShotA1(x, y, 0, 0, BGW_BALL_S_RED, 0);
+	Obj_SetValue(objBase, "ANGLE", angle);
+	SetShotDisabled(objBase);
+	Obj_SetVisible(objBase, false);
+	
+	ascent(i in 0 .. way)
+	{
+		SetFamilier01(objBase, 1, i*360/way, muki, max_r, shot_offset, timer);
+	}
+	
+	let r = 0;
+	let t = 0;
+	while(!Obj_IsDeleted(objBase))
+	{
+	//	ObjMove_SetPosition(objBase, ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy));
+		if (t < 120)
+		{
+			let tmp = sin((t+1)/120*90);
+			r = tmp*max_r;
+			angle += add_angle;
+			Obj_SetValue(objBase, "R", r);
+		}
+		else if (t < 60+timer)
+		{
+			let tmp = (t-120)/timer;
+			angle += add_angle*(1-tmp);
+			r += add_r*min(1, tmp*2);
+			Obj_SetValue(objBase, "R", r);
+		}
+		else
+		{
+			break;
+		}
+		Obj_SetValue(objBase, "ANGLE", angle);
+		t++;
+		yield;
+	}
+	Obj_Delete(objBase);
+}
+
+
+// 使い魔
+task SetFamilier01(objBase, iniSpeed, iniAngle, iniMuki, iniValue, iniValue2, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let item_count = 0;
+	let item_star = 0;
+	let baseAngle = iniAngle;
+	
+	let objFamilier = MakeEnemyFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), 500, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	NezuOption_SetDamageRate(objFamilier);	// ダメージ軽減率自機別設定
+	SetDropItemCount(objFamilier, item_count, item_star);
+	SetEnemyVisible(objFamilier, false);
+	DrawHitodama(objFamilier, eColor);
+//	TCheckDispINOut(objFamilier, 16);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TShot();
+		
+		let t = 0;
+		while (CanShotBullet(objFamilier))
+		{
+			if (t == 15)
+			{
+				SetEnemyVisible(objFamilier, true);
+			}
+			if (Obj_IsDeleted(objBase))
+			{
+				EraseEnemy(objFamilier);
+				break;
+			}
+			let a = iniAngle + Obj_GetValueD(objBase, "ANGLE", 0);
+			let r = Obj_GetValueD(objBase, "R", 0);
+			ObjMove_SetPosition(objFamilier, ObjMove_GetX(objBase)+cos(a)*r, ObjMove_GetY(objBase)+sin(a)*r);
+			t++;
+			yield;
+		}
+	}
+	
+	task TShot()
+	{
+		wait(60);
+		
+		if (!CanShotBullet(objFamilier)) { return; }
+		
+		TLaser();
+		
+		let speed = [1.25, 1.5, 1, 1][Difficult];
+		let way = [4, 4, 4, 5][Difficult];
+		let fs = [2, 2, 2.5, 3][Difficult];
+		let way2 = [7, 9, 7, 7][Difficult];
+		let graphic = BGB_SCALE_SKY;
+
+		let ba = iniAngle + Obj_GetValueD(objBase, "ANGLE", 0) + iniValue2;
+		ascent(i in 0 .. way2)
+		{
+			let sa = ba + i*360/way2;
+			let ss = speed;
+			S02Shot(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), ss, sa, graphic, 15, fs, way);
+		}
+	}
+	
+	task TLaser()
+	{
+		let laser_way = [3, 3, 5, 5][Difficult];
+		let way_angle = [135, 135, 80, 80][Difficult];
+		
+		let obj = [];
+		let offset_angle = [];
+		
+		// 効果音
+		CallSound(sndLaser1);
+		CallSoundDelay(sndLaser2, 120, objFamilier);
+		
+		ascent(i in 0 .. laser_way)
+		{
+			let tmp_obj = My_CreateStraightLaserA1(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier),
+				0, 0, 12, 99999, BGW_BEAM_BLUE, 120, true);
+			ObjShot_SetAutoDelete(tmp_obj, false);
+			obj = obj ~ [tmp_obj];
+			offset_angle = offset_angle ~ [trunc((i+1)/2)*([1,-1][i%2])*way_angle];
+		}
+		
+		let tmp_len = 0;
+		let tmp_w = 0;
+		let tmp_offset = 0;
+		let t = 0;
+		while(!Obj_IsDeleted(objFamilier) && !Obj_IsDeleted(objBase))
+		{
+			let tmp_len = Obj_GetValueD(objBase, "R", 0);
+			if (t < 60)
+			{
+				tmp_offset = sin((t+1)/60*90);
+				tmp_len *= tmp_offset;
+			}
+
+			let a = iniAngle+180+iniValue2 + Obj_GetValueD(objBase, "ANGLE", 0);
+			ascent(i in 0 .. length(obj))
+			{
+				ObjStLaser_SetAngle(obj[i], a+offset_angle[i]*tmp_offset);
+				ObjLaser_SetLength(obj[i], tmp_len);
+				ObjMove_SetPosition(obj[i], ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier));
+			}
+			
+			t++;
+			yield;
+		}
+		
+		ascent(i in 0 .. length(obj))
+		{
+			Obj_Delete(obj[i]);
+		}
+	}
+}
+
+// くさび形
+task S02Shot(x, y, speed, angle, graphic, delay, fs, way)
+{
+	ascent(j in 0 .. 2)
+	{
+		let vx1 = cos(angle)*fs;
+		let vy1 = sin(angle)*fs;
+		let vx2 = cos((j-0.5)*120+angle)*fs;
+		let vy2 = sin((j-0.5)*120+angle)*fs;
+
+		let to_vx1 = cos(angle)*speed;
+		let to_vy1 = sin(angle)*speed;
+		let to_vx2 = cos(-(j-0.5)*30+angle)*speed;
+		let to_vy2 = sin(-(j-0.5)*30+angle)*speed;
+		ascent(i in 0 .. way)
+		{
+			let tmp = i/way;
+			let vx = vx1*(1-tmp) + vx2*tmp;
+			let vy = vy1*(1-tmp) + vy2*tmp;
+			let to_vx = to_vx1*(1-tmp) + to_vx2*tmp;
+			let to_vy = to_vy1*(1-tmp) + to_vy2*tmp;
+
+			let obj = CreateShotB2(x, y, vx, vy, -vx/60, -vy/60, 0, 0, graphic, 0);
+			ObjMove_AddPatternB2(obj, 59, NO_CHANGE, NO_CHANGE, to_vx/60, to_vy/60, to_vx, to_vy);
+			My_RaiseShotEffectA(obj, delay);
+		}
+	}
+}

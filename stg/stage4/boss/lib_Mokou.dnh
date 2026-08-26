@@ -1,0 +1,114 @@
+
+// -------------------- 魔法陣描画 -------------------- //
+task DrawMokouCircle(obj)
+{
+	let scale = 0.75;
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityZako);
+	ObjRender_SetBlendType(objImg, BLEND_ALPHA);
+	ObjPrim_SetTexture(objImg, imgEffectMCircleS);
+	ObjSprite2D_SetSourceRect(objImg, 0, 0, 64, 64);
+	ObjSprite2D_SetDestCenter(objImg);
+	ObjRender_SetColor(objImg, 255, 0, 0);
+	ObjRender_SetScaleXYZ(objImg, scale, scale, scale);
+
+	Obj_SetValue(obj, "IMAGE_ID", objImg);	//IDを記録
+
+	let ct = 0;
+	let count = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		let ex = round(ObjMove_GetX(obj));
+		let ey = round(ObjMove_GetY(obj));
+		ObjRender_SetPosition(objImg, ex, ey, 0);
+		if (count < 30)
+		{
+			let tmp = sin((count+1)/30*90);
+			let tmp_s = tmp * scale;
+			ObjRender_SetScaleXYZ(objImg, tmp_s, tmp_s, tmp_s);
+			ObjRender_SetAngleZ(objImg, (1-tmp)*720);
+		}
+		else if (count%15 == 0)
+		{
+			DrawMokouCircle_sub(obj, scale);
+		}
+		count++;
+		yield;
+	}
+	//撃破後処理（保留）
+	descent(t in 0 .. 15)
+	{
+		let tmp = sin((t+1)/15*90) * scale;
+		ObjRender_SetScaleXYZ(objImg, tmp, tmp, 1);
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+task DrawMokouCircle_sub(obj, scale)
+{
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityZako);
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+	ObjPrim_SetTexture(objImg, imgEffectMCircleS);
+	ObjSprite2D_SetSourceRect(objImg, 64, 0, 128, 64);
+	ObjSprite2D_SetDestCenter(objImg);
+	ObjRender_SetColor(objImg, 160, 64, 64);
+
+	Obj_SetValue(obj, "IMAGE_ID", objImg);	//IDを記録
+
+	ascent(t in 0 .. 30)
+	{
+		if (Obj_IsDeleted(obj)) { break; }
+		let tmp = cos((t+1)/30*90)*scale;
+		ObjRender_SetPosition(objImg, ObjMove_GetX(obj), ObjMove_GetY(obj), 0);
+		ObjRender_SetScaleXYZ(objImg, tmp, tmp, 1);
+		yield;
+	}
+	Obj_Delete(objImg);
+}
+
+
+// -------------------- もえろーもえろー -------------------- //
+task PhoenixEffect(objTarget)
+{
+	let t = 0;
+	while(!Obj_IsDeleted(objTarget))
+	{
+		if (t%2 == 0 && t%60 < 10)
+		{
+			_PhoenixEffect(objTarget);
+		}
+		t++;
+		yield;
+	}
+}
+task _PhoenixEffect(objTarget)
+{
+	let scale = 1;
+	
+	//エフェクトオブジェクトを作成
+	let objImg = ObjPrim_Create(OBJ_SPRITE_2D);
+	Obj_SetRenderPriorityI(objImg, priorityBoss-1);
+	ObjRender_SetBlendType(objImg, BLEND_ADD_ARGB);
+	ObjPrim_SetTexture(objImg, imgEffectMokou);
+	ObjSprite2D_SetSourceRect(objImg, 0, 0, 256, 128);
+	ObjSprite2D_SetDestCenter(objImg);
+	ObjRender_SetColor(objImg, 64, 24, 16);
+	ObjRender_SetScaleXYZ(objImg, scale, scale, scale);
+
+	ascent(t in 0 .. 60)
+	{
+		if (Obj_IsDeleted(objTarget)) { break; }
+		let tmp = (t+1)/60;
+		let tmp_s = scale * (1+tmp);
+		let tmp_a = (1-tmp)*255;
+		ObjRender_SetScaleXYZ(objImg, tmp_s, tmp_s, 1);
+		ObjRender_SetPosition(objImg, ObjMove_GetX(objTarget), ObjMove_GetY(objTarget), 0);
+		ObjRender_SetAlpha(objImg, tmp_a);
+		yield;
+	}
+	Obj_Delete(objImg);
+}

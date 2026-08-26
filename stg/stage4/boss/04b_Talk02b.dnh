@@ -1,0 +1,115 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["4面　ボス会話後半"]
+#Text["4面　ボス会話後半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Ichiyou.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_ICHIYOU);
+	Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_ICHIYOU, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_MARISA, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinBoss1, I_BORO2);
+	SetImageFoward(cutinBoss1, true);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "こんな馬鹿な。分身に霧隠、鎖鎌に大蝦蟇、[r]我らの不思議忍法が破られるなんて…");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_WORRY);
+			SetTalkEx(cutinPlayer1, "そもそもお前ら本当は何が得意だったんだよ。");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO1);
+			SetTalkEx(cutinBoss1, "じょ、情報収集とか…");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "それはあれだ、本末転倒って奴だ。");
+		}
+		case(4)
+		{
+			ChangeTalkTexture(cutinBoss1, I_BORO2);
+			SetTalkEx(cutinBoss1, "せ、世間は忍者に[r]こういうの期待してるって調べたから…");
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "忍者って創造神なのに色々大変だなぁ");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}

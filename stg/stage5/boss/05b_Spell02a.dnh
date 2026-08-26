@@ -1,0 +1,391 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["ミラーマッチ（霊夢）"]
+#Text["ミラーマッチ（霊夢）"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Nezu.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(3200);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(75);		}
+	BossEvent();
+}
+
+@Initialize {
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_NEZU_R);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(45), [12,12,13,13][Difficult], 
+			GetCurrentScriptDirectory()~"05a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	if (GetPlayMode() == GAME_SPELL)
+	{
+		standBy(objEnemy, CenX, 140, 45+45);
+		wait(60);
+	}
+	else
+	{
+		standBy(objEnemy, CenX, 140, 45);
+		wait(15);
+	}
+	CallSpellCard(true);	//スペカ起動
+	wait(60);
+	
+	let way = [8, 10, 10, 10][Difficult];
+	let wt = [240, 180, 210, 180][Difficult];
+	
+	if (Difficult >= D_HARD) { TShot_sub_Hard(); }
+	
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		BossCharge(objEnemy);
+		wait(90);
+		if (!eAlive) { return; }
+		if (Difficult <= D_NORM) { TShot_sub(); }
+		wait(45);
+		if (!eAlive) { return; }
+		SetRollFamilier(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), rand(0,360), way, muki);
+		CallSound(sndBoon);
+		wait(90);
+		if (!eAlive) { return; }
+		EnemyRandomMove(objEnemy, 140, 48);
+		wait(wt-90);
+		muki = -muki;
+	}
+}
+
+task TShot_sub()
+{
+	let speed = [3, 4, 4, 4][Difficult];
+	let way = [5, 7, 1, 1][Difficult];
+	let way_angle = 180/way;
+	let count =  [12, 16, 1, 1][Difficult];
+	let wt = 5;
+	
+	let angle = GetAngleToPlayer(objEnemy);
+	let graphic = BGW_BILL_RED;
+	let graphic2 = BGW_BILL_SKY;
+	
+	ascent(i in 0 .. count)
+	{
+		if (!eAlive) { return; }
+		let tmp = i/(count-1);
+		let ss = speed * (1-tmp/2);
+		NormalShotWay(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+			ss, angle, graphic, graphic2, 15, way, way_angle);
+		CallSound(sndShot3);
+		wait(wt);
+	}
+}
+
+// Hard以上はホーミング
+task TShot_sub_Hard()
+{
+	let speed = 3;
+	let way = 7;
+	let way_angle = 45;
+	let wt = [999, 999, 180, 150][Difficult];
+	let wt_min = [999, 999, 90, 60][Difficult];
+	
+	let muki = rand_dir();
+	
+	wait(90);
+	while(eAlive)
+	{
+		ascent(i in 0 .. way)
+		{
+			if (!eAlive) { return; }
+			let sa = GetAngleToPlayer(objEnemy) + (i-(way-1))*way_angle*muki;
+			S02HormingShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+				speed, sa,BGW_BILL_RED, 0, 0);
+			CallSound(sndShot7);
+			wait(5);
+		}
+		wait(wt);
+		wt = (wt-wt_min)*0.75 + wt_min;
+		muki = -muki;
+	}
+}
+
+// ノーマルショット的な
+task NormalShotWay(x, y, speed, angle, graphic, graphic2, delay, way, way_angle)
+{
+	let muki = 1;
+	ascent(i in 0 .. way)
+	{
+		let sa = angle + (i-(way-1)/2)*way_angle;
+		let vx = cos(sa+90)*8;
+		let vy = sin(sa+90)*8;
+		let sx = x + 12*cos(sa);
+		let sy = y + 12*sin(sa);
+		loop(2)
+		{
+			CreateDarkShotsA1(sx+vx*muki, sy+vy*muki, speed, sa, graphic, graphic2, 0, 1.25);
+			//My_RaiseShotEffectA(obj, delay);
+			muki = -muki;
+		}
+	}
+}
+
+
+task SetRollFamilier(x, y, angle, way, muki)
+{
+	let timer = 120;
+	ascent(i in 0 .. way)
+	{
+		let tmp_t = timer + ((i*3)%way)*15;
+		SetFamilier01(x, y, 1, i*360/way, muki, i, tmp_t);
+	}
+}
+
+// 使い魔
+task SetFamilier01(iniX, iniY, iniSpeed, iniAngle, iniMuki, iniValue, iniTimer)
+{
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let item_count = 0;
+	let item_star = 0;
+	
+	let objFamilier = MakeEnemyFamilier(iniX, iniY, 100, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	NezuOption_SetDamageRate(objFamilier);	// ダメージ軽減率自機別設定
+	SetDropItemCount(objFamilier, item_count, item_star);
+	SetEnemyVisible(objFamilier, false);
+	DrawHitodama(objFamilier, eColor);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		TMove();
+		TShot();
+	}
+
+	task TMove()
+	{
+		let speed = 8;
+		let add_r = iniSpeed;
+		let add_a = 4*iniMuki;
+		
+		let r = 0;
+		let angle = iniAngle;
+
+		let t = 0;
+		if (1)
+		{
+			// Hard以上で追尾
+			while (CanShotBullet(objFamilier) && t < iniTimer)
+			{
+				if (!CheckDispIN(objFamilier, 0))
+				{
+					ObjEnemy_SetLife(objFamilier, 0);
+					CallSound(sndShot1);
+					EraseEnemy(objFamilier);
+					break;
+				}
+				if (t == 60)
+				{
+					SetEnemyVisible(objFamilier, true);
+				}
+				
+				if (t < 90)
+				{
+					let tmp = (t+1)/90;
+					r += add_r*(1-tmp)*2.5;
+					angle += add_a*32/(r+32)*(2-tmp)*2;
+				}
+				else if (t < iniTimer-30)
+				{
+					angle += add_a*32/(r+32)*2;
+				}
+				else if (t < iniTimer)
+				{
+					let tmp = (iniTimer-t)/30;
+					angle += add_a*32/(r+32)*2*tmp;
+				}
+
+				ObjMove_SetPosition(objFamilier, iniX+cos(angle)*r, iniY+sin(angle)*r);
+				t++;
+				yield;
+			}
+			
+			if (!CanShotBullet(objFamilier)) { return; }
+			// 追尾
+			let to_angle = GetAngleToPlayer(objFamilier);
+			ObjMove_AddPatternA2(objFamilier, 0, 0, to_angle, speed/480, 0, speed);
+			ObjMove_AddPatternA2(objFamilier, 30, 0, to_angle, speed/180, 0, speed);
+			
+			t = 0;
+			while (CanShotBullet(objFamilier))
+			{
+				if (!CheckDispIN(objFamilier, 0))
+				{
+					ObjEnemy_SetLife(objFamilier, 0);
+					CallSound(sndShot1);
+					EraseEnemy(objFamilier);
+					break;
+				}
+				t++;
+				yield;
+			}
+		}
+		else
+		{
+			// 追尾しない
+			while (CanShotBullet(objFamilier))
+			{
+				if (!CheckDispIN(objFamilier, 0))
+				{
+					ObjEnemy_SetLife(objFamilier, 0);
+					EraseEnemy(objFamilier);
+					CallSound(sndShot1);
+					break;
+				}
+				if (t == 60)
+				{
+					SetEnemyVisible(objFamilier, true);
+				}
+				
+				if (t < 90)
+				{
+					let tmp = (t+1)/90;
+					r += add_r*(1-tmp)*2.5;
+					angle += add_a*32/(r+32)*(2-tmp)*2;
+				}
+				else if (t < 120)
+				{
+					angle += add_a*32/(r+32)*2;
+				}
+				else if (t < 240)
+				{
+					let tmp = (t-120)/120;
+					r += add_r*tmp;
+					angle += add_a*32/(r+32)*(2-1*tmp);
+				}
+				else
+				{
+					r += add_r;
+					angle += add_a*32/(r+32);
+				}
+
+				ObjMove_SetPosition(objFamilier, iniX+cos(angle)*r, iniY+sin(angle)*r);
+				t++;
+				yield;
+			}
+		}
+	}
+	
+	
+	task TShot()
+	{
+		let speed = [1.25, 1.5, 1.75, 2][Difficult];
+		let way = [10, 12, 12, 12][Difficult];
+		let max_r = [28, 32, 32, 32][Difficult];
+
+		let base_angle = rand(0, 360);
+		let muki = iniMuki;
+
+		let graphic = [ADD_BGW_FIRE_RED, ADD_BGW_FIRE_YELLOW, ADD_BGW_FIRE_SKY, ADD_BGW_FIRE_BLUE];
+		let to_graphic = [BGW_BALL_BS_WHITE, BGW_BALL_BS_WHITE, BGW_BALL_BS_WHITE, BGW_BALL_BS_WHITE];
+		
+		ascent(i in 0 .. way)
+		{
+			let sa = base_angle + i*360/way;
+			RollingShot(objFamilier, speed, sa, 5*muki, max_r, 90*muki, graphic[i%length(graphic)], to_graphic[i%length(graphic)]);
+		}
+	}
+	task RollingShot(objParent, speed, angle, add_angle, max_r, offset_angle, graphic, to_graphic)
+	{
+		let obj = CreateShotA1(ObjMove_GetX(objParent), ObjMove_GetY(objParent), 0, angle, graphic, 0);
+		Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI+2);
+		My_RaiseShotEffectA(obj, 45);
+		
+		let r = 0;
+		let a = angle;
+		let t = 0;
+		while(!Obj_IsDeleted(obj))
+		{
+			if (Obj_IsDeleted(objParent))
+			{
+				My_CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), 0, ObjMove_GetAngle(obj), speed/90, speed, to_graphic, 15);
+				ObjShot_FadeDelete(obj);
+				break;
+			}
+			if (t < 60)
+			{
+				let tmp = (t+1)/60;
+				r = (2-tmp)*max_r;
+			}
+			ObjMove_SetPosition(obj, ObjMove_GetX(objParent)+r*cos(a), ObjMove_GetY(objParent)+r*sin(a));
+			ObjMove_SetAngle(obj, a+offset_angle);
+			a += add_angle;
+			t++;
+			yield;
+		}
+	}
+}
+
+task S02HormingShot(x, y, speed, angle, graphic, delay, offset_angle)
+{
+	let scale = 2;
+	let horming_power = 1;
+	
+	let objs = [];
+
+	ascent(i in 0 .. 2)
+	{
+		objs = objs ~ [CreateShotA2(x, y, speed, angle, -speed/30*3/4, speed/4, graphic, delay)];
+		ObjMove_AddPatternA2(objs[i], 30, NO_CHANGE, NO_CHANGE, speed/120, 0, speed);
+		Obj_SetRenderPriorityI(objs[i], GetShotRenderPriorityI+i+1);
+	}
+	ObjRender_SetBlendType(objs[0], BLEND_ADD_ARGB);
+	ObjRender_SetScaleXYZ(objs[0], scale*1.25, scale*1.25, 1);
+	ObjRender_SetBlendType(objs[1], BLEND_SUBTRACT);
+	ObjShot_SetItemChange(objs[1], false);
+	ObjRender_SetScaleXYZ(objs[1], scale, scale, 1);
+
+	wait(delay);
+	
+	let timer = 180;
+	let move_angle = angle;
+	let st = 0;
+	let t = 0;
+	while (CanShotBullet(objs[0]) && t < timer)
+	{
+		let pow = horming_power * (1-t/timer);
+		move_angle = GetHormingAngle(ObjMove_GetX(objs[0]), ObjMove_GetY(objs[0]), move_angle-offset_angle, pow) + offset_angle;
+		ObjMove_SetAngle(objs[0], move_angle);
+		ObjMove_SetAngle(objs[1], move_angle);
+		if (t > 30 && t%3 == 0)
+		{
+			let ss = 1 + min(6, st/5);
+			CreateDarkShotsA1(ObjMove_GetX(objs[0]), ObjMove_GetY(objs[0]), ss, move_angle+180, graphic, graphic, 0, 1.25);
+			st++;
+		}
+		t++;
+		yield;
+	}
+}

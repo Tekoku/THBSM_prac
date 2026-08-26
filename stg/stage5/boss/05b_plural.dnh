@@ -1,0 +1,155 @@
+//#東方弾幕風[Plural]
+#ScriptVersion[3]
+#Title["6面ボス 連続再生"]
+#Text[""]
+#System["./../../../system/System.dnh"]
+
+
+#include"./../../../lib/lib_Boss.dnh"
+#include"./../../../lib/lib_ChapterSkip.dnh"
+
+let objBossScene;
+let objTalkScene02;
+let dir = GetCurrentScriptDirectory();
+let dest = GetStartChapter(5);
+SetDivLoadEnabledPre(5);
+let divload = GetDivLoadEnabled(5) && !GetPracFull();	// practice tool: no divload on FULL (keeps talk before ns1)
+let boss_div1;
+
+@Initialize
+{
+	TPlural();
+}
+
+@Event
+{
+	alternative( GetEventType() )
+	//　ボス登場イベント
+	case( ev_ResistBoss )
+	{
+		ResistSceneScript();
+	}
+}
+
+@MainLoop
+{
+	yield;
+}
+
+// 裏でボスシーンをロード
+task TPlural
+{
+	// ボスシーンを作成します。
+	objBossScene = ObjEnemyBossScene_Create();
+	
+	// ボスシーンの初期設定
+	BossScene_SetInit(objBossScene,
+		BOSS_ID_NEZU,	// ボスID
+		[CenX, -128],		// 初期座標
+	);
+
+	// 会話
+	if(dest < 9 || GetPracFull())
+	{
+	alternative(GetPlayerType())
+	case(PLAYER_REIMU_A)  { ObjEnemyBossScene_Add(objBossScene, 0, dir ~ "05b_Talk01a.dnh"); }
+	case(PLAYER_MARISA_A) { ObjEnemyBossScene_Add(objBossScene, 0, dir ~ "05b_Talk01b.dnh"); }
+	case(PLAYER_SANAE_A)  { ObjEnemyBossScene_Add(objBossScene, 0, dir ~ "05b_Talk01c.dnh"); }
+	}
+	
+	// practice tool: boss attack units (spell2 is player-dependent)
+	let s2;
+	alternative(GetPlayerType())
+	case(PLAYER_REIMU_A)  { s2 = "05b_Spell02a.dnh"; }
+	case(PLAYER_MARISA_A) { s2 = "05b_Spell02b.dnh"; }
+	case(PLAYER_SANAE_A)  { s2 = "05b_Spell02c.dnh"; }
+
+	let files = ["05b_Attack01.dnh", "05b_Spell01.dnh", s2, "05b_Attack02.dnh", "05b_Spell03.dnh", "05b_Attack03.dnh", "05b_Spell04.dnh"];
+	let sht   = [0, 0, 1, 2, 2, 3, 3];
+	let extraB = ["", "", "05b_Spell02_pre.dnh", "", "", "", ""];
+	let extraA = ["", "", "05b_Spell02_post.dnh", "", "", "", ""];
+	if(divload)
+	{
+		boss_div1 = ObjEnemyBossScene_Create();
+		BossScene_SetInit(boss_div1,
+			BOSS_ID_NEZU,
+			[CenX, -128],
+		);
+		ChapterSkip_AddDivEx(objBossScene, boss_div1, dest, 9, sht, files, dir, 5, extraB, extraA);
+	}
+	else
+	{
+		ChapterSkip_AddFromEx(objBossScene, dest, 9, sht, files, dir, extraB, extraA);
+	}
+	ObjEnemyBossScene_LoadInThread(objBossScene);
+}
+
+// ボスシーンの起動
+task ResistSceneScript
+{
+//	if (!IsReplay()) { CDM_SetCharacterDataFlag(BOSS_ID_SETUJO); }	// 解説フラグON
+	
+	// ここでボスシーンを作成。（会話２）
+	objTalkScene02 = ObjEnemyBossScene_Create();
+	alternative(GetPlayerType())
+	case(PLAYER_REIMU_A)  { ObjEnemyBossScene_Add(objTalkScene02, 0, dir ~ "05b_Talk02a.dnh"); }
+	case(PLAYER_MARISA_A) { ObjEnemyBossScene_Add(objTalkScene02, 0, dir ~ "05b_Talk02b.dnh"); }
+	case(PLAYER_SANAE_A)  { ObjEnemyBossScene_Add(objTalkScene02, 0, dir ~ "05b_Talk02c.dnh"); }
+	ObjEnemyBossScene_LoadInThread(objTalkScene02);
+
+	if(divload)
+	{
+		BossEffect_ResetMagicCircle();
+		ObjEnemyBossScene_Regist(boss_div1);
+		SetRawdel(true);
+		while(!Obj_IsDeleted(boss_div1))
+		{
+			yield;
+		}
+		SetRawdel(false);
+	}
+
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+	
+	// ボスシーン開始
+	ObjEnemyBossScene_Regist(objBossScene);
+
+	//敵ボスシーンが終了するまで待機
+	while(!Obj_IsDeleted(objBossScene))
+	{
+		yield;
+	}
+	wait(30);
+	
+	// ラスワチェック
+	if (GetLastWordBorder() >= 1 || GetStartChapter(5) > 1)
+	{
+		// ボスシーンを作成します。
+		let objLastWord = ObjEnemyBossScene_Create();
+		ObjEnemyBossScene_Add(objLastWord, 0, dir ~ "05b_SpellLW.dnh");
+		ObjEnemyBossScene_LoadInThread(objLastWord);
+		wait(150);
+		ObjEnemyBossScene_Regist(objLastWord);
+
+		// ラスワが終了するまで待機
+		while(!Obj_IsDeleted(objLastWord))
+		{
+			yield;
+		}
+	}
+	
+	// 会話シーン２開始
+	ObjEnemyBossScene_Regist(objTalkScene02);
+	// 会話シーン２が終了するまで待機
+	while(!Obj_IsDeleted(objTalkScene02))
+	{
+		yield;
+	}
+
+	// 連続再生終了通知
+	FinalizePlural();
+
+	//スクリプト終了
+	CloseScript(GetOwnScriptID());
+}

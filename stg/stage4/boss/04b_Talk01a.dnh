@@ -1,0 +1,219 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["4面　ボス会話前半"]
+#Text["4面　ボス会話前半"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+#include"./lib_Ichiyou.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_ICHIYOU);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_ICHIYOU);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(120);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+	Boss_Finalize(objEnemy, false, false);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_ICHIYOU, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_REIMU, false);
+	
+	// 初期設定
+	SetImageFoward(cutinPlayer1, true);
+	SetImageVisible(cutinBoss1, false);
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "持たざる者のなけなしの、そして無限大の欲。");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "これだけの力を独り占めすれば[r]さぞや何でも出来て気持ち良いわね。");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "藤原道長の歌に確かそういうのが…[r]あれは確か望月の…");
+		}
+		case(3)
+		{
+			SetImageVisible(cutinBoss1, false);	// ボス画像出現フラグ
+			
+			SetTalkEx2(cutinBoss1, "この世をば　我が世とぞ思ふ　望月の", -32, -280);
+		}
+		case(4)
+		{
+			SetTalkEx(cutinBoss1, "");
+			EnterBoss();
+			wait(45);
+			BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+			SetImageVisible(cutinBoss1, true);	// ボス画像出現フラグ
+
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "欠けたることも　なしと思へば");
+			SetBossName(cutinBoss1);	// ボスネーム表示
+		}
+		case(5)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET_SMILE);
+			SetTalkEx(cutinPlayer1, "分かってるよ、[r]誰か知らんけど出しゃばらなくてもさあ");
+		}
+		case(6)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "ですよね。御堂関白の[r]鼻持ちならぬ自信が窺える有名な歌。");
+		}
+		case(7)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "しかし時にふと思うのです。");
+		}
+		case(8)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+			SetTalkEx(cutinPlayer1, "望月の欠ける事さえなければ[r]この世は私の物。");
+		}
+		case(9)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "実は晩年の道長が無常観を歌った[r]物なのでは、ってか？");
+		}
+		case(10)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE2);
+			SetTalkEx(cutinBoss1, "ぜんぜん思いません。が、我々にとっては[r]まさにそのような心境ですねぇ");
+		}
+		case(11)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "その恰好、さては忍者か。忍者で望月。[r]成る程、ようやく星が星座に見えて来たわ");
+		}
+		case(12)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "いかにも、私は甲賀望月の血の者。");
+		}
+		case(13)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "こんなに毎日忍んでいたのに、[r]随分お詳しいのですね");
+		}
+		case(14)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_SMILE);
+			SetTalkEx(cutinPlayer1, "歩き巫女より飛ぶ巫女の方が[r]物知りに決まってるでしょ。");
+		}
+		case(15)
+		{
+			ChangeTalkTexture(cutinBoss1, I_UPSET);
+			SetTalkEx(cutinBoss1, "当家では空を飛ぶ変な巫女の[r]育成は行っておりません。");
+		}
+		case(16)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "さあお話はここまでです。");
+		}
+		case(17)
+		{
+			//BGM
+			PlayMusicWithName(9, 180, 30);
+
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "望月の欠けたる事さえ無くば…[r]きっとこの世は我らの物！");
+		}
+		case(18)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "残念ね、あんたは既に永夜の術中。");
+		}
+		case(19)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_DOYA);
+			SetTalkEx(cutinPlayer1, "この夜は今は我が夜、[r]貴方は所詮その中で足掻く望月よ！");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task EnterBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	SetIchiyouSmoke(CenX, 100, 1.5);
+	// 効果音
+	My_LoadPlaySE(pathSE_Smoke);
+	
+	let objImg = GetBossImageID(objEnemy);
+	ObjMove_SetPosition(objEnemy, CenX, 100);
+	ascent(i in 0 .. 45)
+	{
+		let alpha = (i+1)/45*255;
+		ObjRender_SetAlpha(objImg, alpha);
+		yield;
+	}
+}

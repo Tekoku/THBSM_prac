@@ -1,0 +1,139 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["4面　道中会話C2"]
+#Text["4面　道中会話C2"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./../../../lib/lib_talk.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult( 0);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(-1);	}
+	BossEvent();
+}
+
+@Initialize {
+	// アニメリセット
+	Reset_aTime(BOSS_ID_MOKOU);
+	
+	Boss_Init();	//初期設定
+	
+	objEnemy  = CreateBossTalk(BOSS_ID_MOKOU);
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+
+}
+
+// メインタスク
+task Task_Main()
+{
+	// 魔法陣リセット
+	BossEffect_ResetMagicCircle();
+
+	// 会話準備
+	StartTalk();
+
+	wait(30);
+
+	//会話処理
+	FuncTalk();
+	
+	//次のシーンへ
+	FinishTalk(true);
+}
+
+// 会話処理
+function FuncTalk()
+{
+	// オブジェクト作成
+	let cutinBoss1   = CreateTalkObject(BOSS_ID_MOKOU, true);
+	let cutinPlayer1 = CreateTalkObject(BOSS_ID_SANAE, false);
+	
+	// 初期設定
+	ChangeTalkTexture(cutinPlayer1, I_NORMAL);
+	SetImageFoward(cutinBoss1, true);
+	BossScene_SetNameVisible(objScene, true);	//ボスネーム表示状態
+	wait(15);
+	
+	let talkID = 0;
+	loop
+	{
+		let talkType = FuncTalkSingle(talkID);
+		if (talkType == 0) { break; }
+		talkID = max(0, talkID+WaitNext());
+	}
+
+	// 会話処理単発（巻き戻しも出来るように）
+	function FuncTalkSingle(talkID)
+	{
+		let talk_type = 1;
+		alternative(talkID)
+		case(0)
+		{
+			ChangeTalkTexture(cutinBoss1, I_SMILE);
+			SetTalkEx(cutinBoss1, "しがない案内人だが、実は死が無いのだよ。");
+		}
+		case(1)
+		{
+			ChangeTalkTexture(cutinPlayer1, I_UPSET);
+			SetTalkEx(cutinPlayer1, "せめてこの竹林の有様について[r]教えて頂ければ。");
+		}
+		case(2)
+		{
+			ChangeTalkTexture(cutinBoss1, I_NORMAL);
+			SetTalkEx(cutinBoss1, "月の都がベビーブームを迎えたか、[r]はたまた罪人が溢れているのか。");
+		}
+		case(3)
+		{
+			ChangeTalkTexture(cutinBoss1, I_DOYA);
+			SetTalkEx(cutinBoss1, "良いか、大三角星からの魔力の流れを正確に[r]辿れ。道を踏み外せばたちまち戻れなくなるぞ");
+		}
+		case(4)
+		{
+			// ボス退室
+			AwayBoss();
+			SetImageVisible(cutinBoss1, false);
+			
+			ChangeTalkTexture(cutinPlayer1, I_SURPRISE);
+			SetTalkEx(cutinPlayer1, "それって異変を解決したらどう帰って来れば…[r]ってもういない！");
+		}
+		others
+		{
+			return(0);
+		}
+		return(talk_type);
+	}
+}
+
+// 登場モーション
+task AwayBoss()
+{
+	if (Obj_GetValueD(objEnemy, "BOSS_MOVED", false)) { return; }
+	Obj_SetValue(objEnemy, "BOSS_MOVED", true);
+
+	// 登場モーション
+	ObjMove_SetDestAtWeightSpeedUp(objEnemy, CenX, 240, 30, 0.1, 0.1, 8);
+	ascent(i in 0 .. 75)
+	{
+		let tmp = sin((i+1)/75*90);
+		let tmp_s = 1 - tmp/2;
+		let tmp_c = 255 - tmp*255;
+		let tmp_a = min(255, (1-tmp)*1024);
+		ObjRender_SetScaleXYZ(GetBossImageID(objEnemy), tmp_s, tmp_s, tmp_s);
+		ObjRender_SetColor(GetBossImageID(objEnemy), tmp_c, tmp_c, tmp_c);
+		ObjRender_SetAlpha(GetBossImageID(objEnemy), tmp_a);
+		yield;
+	}
+	Obj_SetVisible(GetBossImageID(objEnemy), false);
+	while(!FINISH_TALK) { yield; }
+	Boss_Finalize(objEnemy, false, false);
+}

@@ -1,0 +1,362 @@
+#東方弾幕風[Stage]
+#ScriptVersion[3]
+#Title["Stage4道中"]
+#Text["Stage4道中"]
+#System["./../../system/System.dnh"]
+
+#include "./../../lib/lib_Common.dnh"
+#include "./../../lib/lib_Stage.dnh"
+#include "./../../lib/lib_Zako.dnh"
+#include "./Road04_Zako.dnh"
+
+
+@Initialize
+{
+	STAGE_ID = 4;		//ステージID記録
+	NEXT_STAGE_ID = 5;	//次のステージIDを記録
+	SetLastWordBorder(1333);	//ラスワ条件
+	StageInit();
+	TStage();
+}
+
+@Event()
+{
+	StageEvent();
+}
+
+@Loading
+{
+}
+
+@MainLoop
+{
+	yield;
+}
+
+task TStage
+{
+	// 保険
+	yield;
+	
+	let dir = GetCurrentScriptDirectory();
+	let pathBG	= dir ~ "BackgroundWorld04.dnh";	//背景
+	let pathMBoss	= dir ~ "boss/04a_plural.dnh";	//中ボス
+	let pathBoss	= dir ~ "boss/04b_plural.dnh";	//中ボス
+
+	//　中ボスロード
+	// practice tool: chapter skip
+	let dest = GetStartChapter(4);
+	if(dest <= 5)
+	{
+		StartScriptInThread(pathMBoss);
+	}
+	else
+	{
+		StartScriptInThread(pathBoss);
+	}
+	//  背景配置
+	SetStageBackGround(pathBG);
+	
+	wait(30);
+	if(dest <= 6)
+	{
+		PlayMusicWithName(8, 120, 0);
+	}
+	else
+	{
+		PlayMusicWithName(9, 30, 30);
+	}
+	wait(90);
+
+	ChapterStart();
+// ------------------------ 前半
+	if(dest <= 1)
+	{
+		CHAPTER_1();
+	}
+	if(dest <= 2)
+	{
+		CHAPTER_2();
+	}
+	if(dest <= 3)
+	{
+		CHAPTER_3();
+	}
+
+// ------------------------ 中ボス
+	if(dest <= 5)
+	{
+		CHAPTER_MBOSS(pathBoss);
+	}
+
+// ------------------------ 後半
+	if(dest <= 6)
+	{
+		CHAPTER_4();
+	}
+
+// ------------------------ ボスだぞー！
+
+	// 背景イベント
+	// practice tool: wait for boss script ready when jumping directly to boss
+	if(dest >= 7){ wait(150); }
+	NotifyEventAll(ev_NextStageScene, 0);
+	wait(60);
+	CallBoss();
+
+	// 待機とロード
+	WaitForBossKilled();
+	wait(30);
+
+	StageEND();
+}
+
+function CHAPTER_1()
+{
+	WaitRoad(60);
+	SetEnemyF01(CenX+64, CenY-128, 3, 90+120, 1, 0);	// 星つき妖精
+	WaitRoad(105);
+	SetEnemyF01(CenX-64, CenY-64, 3, 90-120, 0, 0);	// 星つき妖精
+	WaitRoad(180);
+	DisplayStage04( 0, 90 );
+	WaitRoad(300);
+	F06(MaxX-48, MinY-32, 90+30, 8);	// 上下うねうね
+	WaitRoad(120);
+	SetEnemyF01(CenX-64, CenY-128, 3, 90-15, 0, 0);	// 星つき妖精
+	WaitRoad(105);
+	SetEnemyF01(CenX+64, CenY-128, 3, 90+15, 1, 0);	// 星つき妖精
+	WaitRoad(120);
+	F06(MinX+64, MinY-32, 90-30, 10);	// 上下うねうね
+	WaitRoad(105);
+	SetEnemyF01(CenX+64, CenY-32, 3, 90+120, 1, 0);	// 星つき妖精
+	WaitRoad(105);
+	SetEnemyF01(CenX-64, CenY-128, 3, 90-120, 0, 0);	// 星つき妖精
+	WaitRoad(120);
+	F06(MaxX-64, MinY-32, 90+30, 12);	// 上下うねうね
+	WaitRoad(25);
+	// Bamboo!
+	ascent(i in 0 .. 3)
+	{
+		F04(MinX+16+i*32, MinX+160+i*24, 90, 4, 6);
+		WaitRoad(85);
+		F04(MaxX-16-i*32, MaxX-160-i*24, 90, 4, 6);
+		WaitRoad(85);
+	}
+	WaitRoad(150);
+	ChapterFinish();
+	WaitRoad(30);
+}
+
+function CHAPTER_2()
+{
+	WaitRoad(60);
+	SetEnemyF07(CenX+64, CenY-128, 3, 90+30, 1, 0);	// 二連星妖精
+	WaitRoad(150);
+	F06(MinX+32, MinY-32, 90-30, 8);	// 上下うねうね
+	WaitRoad(60);
+	F06(MinX+128, MinY-32, 90-30, 6);	// 上下うねうね
+	WaitRoad(120);
+	SetEnemyF07(CenX-128, CenY-120, 3, 90-60, 1, 0);	// 二連星妖精
+	WaitRoad(120);
+	F06(MaxX-32, MinY-32, 90+30, 10);	// 上下うねうね
+	WaitRoad(120);
+	SetEnemyF07(CenX+96, CenY-128, 3, 90+45, 1, 0);	// 二連星妖精
+	WaitRoad(120);
+	F06(MinX+32, MinY-32, 90-30, 8);	// 上下うねうね
+	WaitRoad(60);
+	F06(MinX+128, MinY-32, 90-30, 6);	// 上下うねうね
+//	WaitRoad(30);
+	SetEnemyF05(MinX+128, MinY-32, 0.25, 90-15, 0, 1, 0);	// スターロード
+	WaitRoad(210);
+	SetEnemyF05(MaxX-160, MinY-32, 0.25, 90+15, 1, -1, 0);	// スターロード
+	WaitRoad(375);
+	ChapterFinish();
+}
+
+function CHAPTER_3()
+{
+	F02(MaxX-96, CenX-64, 180+30, 5);	// リズム妖精
+	WaitRoad(105);
+	SetEnemyF01(CenX-96, CenY-64, 3, 30, 0, 0);	// 星つき妖精
+	WaitRoad(60);
+	F02(MaxX-64, CenX-128, 180-30, 5);
+	WaitRoad(180);
+	SetEnemyF01(CenX-64, CenY-128, 3, 90+15, 1, 0);	// 星つき妖精
+	WaitRoad(105);
+	SetEnemyF01(CenX+64, CenY-128, 3, 90-15, 0, 0);	// 星つき妖精
+	WaitRoad(120);
+	F06(MinX+32, MinY-32, 90-30, 8);	// 上下うねうね
+	WaitRoad(60);
+	F06(MinX+128, MinY-32, 90-30, 8);	// 上下うねうね
+	WaitRoad(60);
+	F02(MaxX-96, CenX-64, 180+30, 5);	// リズム妖精
+	WaitRoad(105);
+	SetEnemyF01(CenX-96, CenY-64, 3, 30, 0, 0);	// 星つき妖精
+	WaitRoad(60);
+	F02(MaxX-64, CenX-128, 180-30, 5);	// リズム妖精
+	WaitRoad(180);
+	SetEnemyF01(CenX-64, CenY-128, 3, 90+15, 1, 0);	// 星つき妖精
+	WaitRoad(105);
+	SetEnemyF01(CenX+64, CenY-128, 3, 90-15, 0, 0);	// 星つき妖精
+	WaitRoad(120);
+	F06(MaxX-32, MinY-32, 90+30, 8);	// 上下うねうね
+	WaitRoad(25);
+	// Bamboo!
+	ascent(i in 0 .. 3)
+	{
+		F04(MinX+16+i*48, MinX+16+96+i*48, 90, 3, 6);
+		WaitRoad(42);
+		F04(CenX+i*48, CenX+96+i*48, 90, 3, 6);
+		WaitRoad(43);
+		if (i < 2) { F04(MaxX-16-i*48, MaxX-16-96-i*48, 90, 3, 6); }
+		WaitRoad(42);
+		if (i < 2) { F04(CenX-i*48, CenX-96-i*48, 90, 3, 6); }
+		WaitRoad(43);
+	}
+	WaitRoad(60);
+	ChapterFinish();
+	WaitRoad(90);
+}
+
+task CHAPTER_MBOSS(pathBoss)
+{
+	// 背景イベント
+	NotifyEventAll(ev_NextStageScene, 0);
+	// ボスがでたぞー
+	// practice tool: wait for midboss script ready when jumping directly to midboss
+	if(GetStartChapter(4) >= 4){ wait(150); }
+	CallBoss();
+	flgStopSetZako = true;
+	// 中ボスが消えてからボスをロード
+	StartScriptInThreadWaitBoss(pathBoss);
+	
+	// ボス撃破待ち
+	CheckBossKilled();
+	WaitForMiddleBossKilled();
+	
+	// 背景イベント
+	NotifyEventAll(ev_NextStageScene, 0);
+
+	flgStopSetZako = false;
+}
+
+function CHAPTER_4()
+{
+	let dest = GetStartChapter(4);
+	if(dest < 6)
+	{
+	WaitRoad(60*24-30);
+
+	SetEnemyF05(MinX+128, MinY-32, 0.25, 90-15, 0, 1, 0);	// スターロード
+	WaitRoad(240);
+	SetEnemyF05(MinX+160, MinY-32, 0.25, 90+15, 1, 1, 0);	// スターロード
+	WaitRoad(240);
+	SetEnemyF05(MaxX-160, MinY-32, 0.25, 90-15, 2, -1, 0);	// スターロード
+	WaitRoad(240);
+	SetEnemyF05(MaxX-128, MinY-32, 0.25, 90+15, 0, -1, 0);	// スターロード
+	WaitRoad(240);
+	SetEnemyF05(CenX, MinY-32, 0.25, 90, 1, 1, 0);	// スターロード
+	WaitRoad(240);
+	if (F05_count <= 0) { F06(MinX+32, MinY-32, 90-30, 8); }	// 上下うねうね
+	WaitRoad(120);
+	if (F05_count <= 0) { F06(MaxX-32, MinY-32, 90+30, 8); }	// 上下うねうね
+	WaitRoad(120);
+	if (F05_count <= 0) { SetEnemyF07(CenX-64, CenY-120, 3, 30, 1, 0); }	// 二連星妖精
+	WaitRoad(150);
+	F06(MaxX-32, MinY-32, 90+30, 8);	// 上下うねうね
+	WaitRoad(120);
+	SetEnemyF07(CenX+128, CenY-64, 3, 90+45, 0, 0);	// 二連星妖精
+	WaitRoad(90);
+	SetEnemyF07(CenX, CenY-128, 3, 90, 0, 0);	// 二連星妖精
+	WaitRoad(150);
+	SetEnemyF07(CenX-96, CenY-64, 3, 90-45, 0, 0);	// 二連星妖精
+
+	WaitForMiddleBossKilled();	// 中ボス撃破待ち
+	}
+
+	WaitRoad(120);
+	SetEnemyF05(CenX+64, MinY-32, 0.25, 90+10, 1, -1, 0);	// スターロード
+	WaitRoad(345);
+	SetEnemyF05(CenX-64, MinY-32, 0.25, 90-10, 2, 1, 0);	// スターロード
+	F02(MinX+64, CenX-32, 15, 5);	// リズム妖精
+	WaitRoad(60);
+	F02(MinX+64, CenX-96, 15, 5);	// リズム妖精
+	WaitRoad(345-60);
+	SetEnemyF05(CenX+32, MinY-32, 0.25, 90+15, 0, -1, 0);	// スターロード
+	F02(MaxX-64, CenX-32, 180-15, 5);	// リズム妖精
+	WaitRoad(60);
+	F02(MaxX-64, CenX-96, 180-15, 5);	// リズム妖精
+	WaitRoad(345-60);
+	SetEnemyF05(CenX-32, MinY-32, 0.25, 90-15, 0, 1, 0);	// スターロード
+	F02(MinX+64, CenX-32, 15, 5);	// リズム妖精
+	WaitRoad(60);
+	F02(MinX+64, CenX-96, 15, 5);	// リズム妖精
+	WaitRoad(345-60);
+	SetEnemyF05(CenX+128, MinY-32, 0.25, 90+15, 2, -1, 0);	// スターロード
+	SetEnemyF05(CenX-128, MinY-32, 0.25, 90-15, 2, 1, 0);	// スターロード
+	WaitRoad_Enemy(720);
+	ChapterFinish();
+}
+
+
+// 敵配置用
+let S01_SEED = 0;
+task S01(x, y, angle, count)
+{
+	ascent(i in 0 .. count)
+	{
+		SetEnemyS01(x+randStage(-32,32,i+S01_SEED*777), y+randStage(-32,32,i+S01_SEED*777), 5, angle, 0, 0);
+		wait(10);
+	}
+	S01_SEED++;
+}
+
+let F02_SEED = 0;
+task F02(x, y, angle, count)
+{
+	let eType = [0, 1][cos(angle) > 0];
+	let size = 24*count;
+	ascent(i in 0 .. count)
+	{
+		let ex = x + (i+randStage(-0.5,0.5,i*2+F02_SEED*777)-(count-1)/2) * 24;
+		let ey = y + randStage(-size/2, size/2, i*2+1+F02_SEED*777);
+		SetEnemyF02(ex, ey, 3, angle, eType, 0);
+	}
+	F02_SEED++;
+}
+
+task F03(x_min, x_max, angle, count)
+{
+	let ioffset = [0, 1][x_min>x_max];
+	ascent(i in 0 .. count)
+	{
+		let tmp = i/(count-1);
+		SetEnemyF03(x_min+(x_max-x_min)*tmp, MinY-16, 1.5, angle, (i+ioffset)%2, 0);
+		wait(10);
+	}
+}
+
+task F04(x_min, x_max, angle, count, wt)
+{
+	ascent(i in 0 .. count)
+	{
+		let ex = x_min + (x_max-x_min)*i/(count-1);
+		SetEnemyF04(ex, MinY-16, 2, angle, 0, 0);
+		wait(6);
+	}
+}
+
+
+let F06_SEED = 0;
+task F06(x, y, angle, count)
+{
+	let muki = [1, -1][cos(angle)>0];
+	ascent(i in 0 .. count)
+	{
+		SetEnemyF06(x+(i-(count-1)/2)*16*muki, y+randStage(-32,32,i+F06_SEED*777), 1.5, angle, 0, 0);
+		wait(8);
+	}
+	F06_SEED++;
+}
+
+

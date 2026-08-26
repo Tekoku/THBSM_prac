@@ -1,0 +1,278 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["燃え尽きろ"]
+#Text["燃え尽きろ"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Mokou.dnh"
+
+let FAMILIAR_DAMAGE = 0;
+let FAMILIAR_DAMAGE_COUNT = 0;
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(5500);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(99);		}
+	case(EV_REQUEST_IS_LAST_SPELL)	{ SetScriptResult(true);	}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_MOKOU);	//ボスセット
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(104), [3,3,4,5][Difficult], 
+			GetCurrentScriptDirectory()~"04a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+	
+	SetShotAutoDeleteClip(128, 128, 128, 128);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	let muki = 1;
+
+	// 開幕
+	local
+	{
+		ObjEnemyBossScene_SetSpellTimer(objScene, -1);	// タイマー停止
+		ObjMove_SetPosition(objEnemy, CenX, 120);
+
+		SetEnemyVisible(objEnemy, false);
+		BossEffect_DisableMagicCircle(objEnemy);
+		Obj_SetVisible(GetBossImageID(objEnemy), false);	//画像非表示
+
+		wait(60);
+		
+		let way = 32;
+		let timer = 120+150;
+
+		let speed = [1, 1.25, 1.5, 1.5][Difficult];
+		let sway = [8, 12, 15, 18][Difficult];
+		let base_angle = rand(0, 360);
+
+		CallSound(sndShot1);
+		EffectConcentrationCircle(objEnemy, 3, 45);
+		ascent(i in 0 .. way)
+		{
+			if (!eAlive) { return; }
+
+			let tmp = sin(i/(way-1)*90);
+			let sx = CenX;
+			let sy = 120;
+			let ss = speed;
+			let sa = 180-tmp*120;
+
+			let sr = tmp*500;
+			let sr_angle = base_angle + tmp*240*muki;
+			ShotFlameSquare(sx, sy,
+				ss, sa, BGW_FIRE_RED, 15, timer, sr, sway, sr_angle);
+			ShotFlameSquare(sx, sy,
+				ss, sa, BGW_FIRE_RED, 15, timer, sr, sway, sr_angle+90);
+			wait(2);
+			timer += 8;
+			if (i == 4)
+			{
+				wait(60);
+				if (!eAlive) { return; }
+
+				timer -= 60;
+				CallSound(sndShot1);
+				EffectConcentrationCircle(objEnemy, 3, 45);
+				EffectConcentrationCircle(objEnemy, 4.5, 60);
+			}
+			if (i == 8)
+			{
+				wait(90);
+				if (!eAlive) { return; }
+
+				timer -= 90;
+				CallSound(sndFlare);
+
+				ObjEnemyBossScene_SetSpellTimer(objScene, 99*60);	// タイマー開始
+				Obj_SetVisible(GetBossImageID(objEnemy), true);	//画像表示
+				CallSpellCard(true);	//スペカ起動
+				// ボス登場
+				SetEnemyVisible(objEnemy, true);
+				// どかーん！
+				TNuclear_sub(3);
+				CallSound(sndPower2);
+			}
+		}
+	}
+	wait(240);
+	TNuclear();
+
+	let wt = [420, 360, 300, 300][Difficult];
+	
+	while(eAlive)
+	{
+		muki = -muki;
+		
+			SetAction(objEnemy, ACT_MOVE, 60);
+		SetAction(objEnemy, ACT_MOVE, 120);
+		ObjMove_SetDestAtWeightSpeedUp(objEnemy, GetPlayerX, rand(120, 160),
+			15, 1, 0.1, 12);
+		wait(120);
+		if (!eAlive) { return; }
+		BossCharge(objEnemy);
+		SetAction(objEnemy, ACT_SHOT1, 240);
+		wait(120);
+		if (!eAlive) { return; }
+		CallSound(sndFlare);
+		TShot_sub(muki);
+		wait(wt);
+	}
+}
+
+task TShot_sub(muki)
+{
+	let way = 32;
+	let timer = 120;
+
+	let speed = [1, 1.25, 1.5, 1.5][Difficult];
+	let sway = [6, 9, 10, 12][Difficult];
+	
+	let base_angle = rand(0,360);
+	ascent(i in 0 .. way)
+	{
+		if (!eAlive) { return; }
+		
+		let tmp = sin(i/(way-1)*90);
+		let sx = ObjMove_GetX(objEnemy)*(1-tmp) + GetPlayerX*tmp;
+		let sy = ObjMove_GetY(objEnemy)*(1-tmp) + GetPlayerY*tmp;
+		let ss = speed;
+		let sa = tmp*180*muki;
+
+		let sr = tmp*360;
+		let sr_angle = base_angle - cos(i/(way-1)*90)*480*muki;
+		ShotFlameSquare(sx, sy,
+			ss, sa, BGW_FIRE_RED, 30, timer, sr, sway, sr_angle);
+		wait(2);
+		timer += 8;
+	}
+}
+
+task TNuclear
+{
+	wait(120);
+
+	let wt = [240, 180, 150, 120][Difficult];
+	while(eAlive)
+	{
+		TNuclear_sub(1);
+		wait(wt*(GetBossLifeRate(objEnemy)*0.7+0.3));
+	}
+}
+
+task TNuclear_sub(count_rate)
+{
+	let count = 8;
+
+	count = round(count*count_rate);
+	loop(count)
+	{
+		if (!eAlive) { return; }
+		let to_x = rand(0,GetStgFrameWidth);
+		let to_y = rand(0,GetStgFrameHeight);
+		while (CheckInPlayer(to_x, to_y, 128))
+		{
+			to_x = rand(0,GetStgFrameWidth);
+			to_y = rand(0,GetStgFrameHeight);
+		}
+		FlareShot(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy), to_x, to_y, 30);
+		wait(5);
+	}
+}
+
+
+task ShotFlameSquare(x, y, speed, angle, graphic, delay, timer, r, r_way, r_rotate)
+{
+	ascent(j in 0 .. r_way)
+	{
+		let tmp = j/r_way;
+		let vx = cos(tmp*360);
+		let vy = sin(tmp*360)/2;
+		let va = atan2(vy, vx);
+		let vpos = Rotate2D_XY(vx, vy, r_rotate);
+		
+		let sx = x + vpos[0]*r;
+		let sy = y + vpos[1]*r;
+		let ss = speed * (vx^2+vy^2)^0.5;
+		let sa = va + angle + r_rotate;
+		ShotFlame(sx, sy, ss, sa, graphic, delay, timer);
+	}
+	/*
+	let pos = [[0,1],[0.866,-0.5],[-0.866,-0.5]];
+	ascent(i in 0 .. 3)
+	{
+		let pos1 = pos[i];
+		let pos2 = pos[(i+1)%3];
+		ascent(j in 0 .. r_way)
+		{
+			let tmp = j/r_way;
+			let vx = pos1[0]*(1-tmp) + pos2[0]*tmp;
+			let vy = pos1[1]*(1-tmp) + pos2[1]*tmp;
+			let va = atan2(vy, vx);
+			let vpos = Rotate2D_XY(vx, vy, r_rotate);
+			
+			let sx = x + vpos[0]*r;
+			let sy = y + vpos[1]*r;
+			let ss = speed * (vx^2+vy^2)^0.5;
+			let sa = va + angle + r_rotate;
+			ShotFlame(sx, sy, ss, sa, graphic, delay, timer);
+		}
+	}
+	*/
+}
+
+task ShotFlame(x, y, speed, angle, graphic, delay, timer)
+{
+	if (CheckInPlayer(x, y, 48)) { return; }
+	let obj = CreateShotA1(x, y, speed/8, angle, graphic, delay);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI()+1);
+	ObjRender_SetBlendType(obj, BLEND_ADD_ARGB);
+	wait(timer+delay);
+	if (!Obj_IsDeleted(obj))
+	{
+		CreateShotA2(ObjMove_GetX(obj), ObjMove_GetY(obj), speed/8, angle, speed/60, speed, graphic, 0);
+		ObjMove_AddPatternA2(obj, 0, NO_CHANGE, NO_CHANGE, speed/60, 0, speed);
+		ObjShot_FadeDelete(obj);
+	//	CallSound(sndShot2);
+	}
+}
+
+task FlareShot(x, y, to_x, to_y, timer)
+{
+	let obj = CreateShotA1(x, y, 0, 0, BGW_LIGHT_L_RED, 0);
+	Obj_SetRenderPriorityI(obj, 49);
+	SetShotDisabled(obj);
+	ObjRender_SetAlpha(obj, 64);
+	MoveTo(obj, to_x, to_y, timer);
+	wait(timer+15);
+	if (!Obj_IsDeleted(obj))
+	{
+		FlareShot_Nuke(to_x, to_y);
+		CallSound(sndShot1);
+		ObjShot_FadeDelete(obj);
+	}
+}
+task FlareShot_Nuke(x, y)
+{
+	let obj = NuclearShot(x, y, [255, 0, 0], 48, 15);
+	ObjShot_SetDeleteFrame(obj, 15);
+}

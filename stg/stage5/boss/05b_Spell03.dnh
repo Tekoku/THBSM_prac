@@ -1,0 +1,364 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["王女稲荷"]
+#Text["王女稲荷"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Nezu.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(600);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(75);		}
+	BossEvent();
+}
+
+@Initialize {
+	dIni_Shot = 10;		//ダメージ透過率
+
+	bossDropItem = 80;	//アイテム数
+	bossHitToShot = 58;
+	bossDropStarItem = 120;
+	
+	bossDropStarItemR = 108;
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_NEZU);	//ボスセット
+	CheckLinkLife_Boss(objEnemy);	// 使い魔と体力連動
+	//スペカデータ・セット
+	SetSpellCardData(GetSpellCardID(46), [9,9,10,11][Difficult], 
+			GetCurrentScriptDirectory()~"05a_Background.dnh",
+			GetBossTexture(objEnemy, I_CUTIN), 1, CUTMOTION_NORMAL);
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 300);
+	wait(60);
+	NezuCharismaOption(objEnemy, false);
+	wait(180);
+	
+	CallSpellCard(true);	//スペカ起動
+	
+	TShot01();
+	
+	let st = 0;
+	while(eAlive)
+	{
+		let base_angle = GetAngleToPlayer(objEnemy)+180;
+		let wa_rate = rand(0.1, 1);
+		if (st > 0) { CallSound(sndBoon); }
+		ascent(i in 0 .. 5)
+		{
+			KyubiLaser(objEnemy, base_angle, base_angle+180-i*30, wa_rate, true);
+			KyubiLaser(objEnemy, base_angle, base_angle-180+i*30, wa_rate, (i!=0));
+			wait(10);
+		}
+		wait(270);
+		st++;
+	}
+}
+
+task TShot01
+{
+	wait(240);
+	
+	let wt = [360, 360, 360, 270][Difficult];
+	let muki = rand_dir();
+	while(eAlive)
+	{
+		FamilierSet01(muki);
+		wait(wt);
+		muki = -muki;
+	}
+}
+task FamilierSet01(muki)
+{
+	let wt_rate = [8, 8, 6, 2.5][Difficult];
+	
+	let base_wt = rand_int(0, wt_rate-1);
+	ascent(i in 0 .. 15)
+	{
+		if (!eAlive) { return; }
+		let tmp = i/14;
+		SetFamilier01(muki, 64+tmp*128, (i+base_wt)/wt_rate*(wt_rate-1), i);
+		wait(30);
+	}
+}
+
+// 回転するタイプ
+task SetFamilier01(iniMuki, iniOffsetY, iniOffsetShot, iniValue)
+{
+	let iniX = CenX;
+	let iniY = -384 + iniOffsetY;
+	let iniR = 384;
+	let iniTimer = 150;
+	let baseAngle = 90 - 30*iniMuki;
+	let addAngle = 30*2/iniTimer*iniMuki;
+	
+	let eSize = ENEMY_M;
+	let eColor = EFF_BLUE;
+	let item_count = 0;
+	let item_star = 0;
+	
+	let objFamilier = MakeEnemyFamilier(-256, -256, 200, eSize);
+	CheckLinkLife_Familier(objEnemy, objFamilier, 0.85);	// ボスと体力連動
+	NezuOption_SetDamageRate(objFamilier);	// ダメージ軽減率自機別設定
+	SetDropItemCount(objFamilier, item_count, item_star);
+	DrawHitodama(objFamilier, eColor);
+	TAct();
+	WaitForKilledFamilier(objFamilier, 24, 4);
+	ZakoFinalize(objFamilier, eColor);
+	
+	task TAct()
+	{
+		let t = 0;
+		TShot();
+		
+		while(CanShotBullet(objFamilier))
+		{
+			if (t > iniTimer)
+			{
+				EraseEnemy(objFamilier);
+				break;
+			}
+			let to_x = iniX + iniR*cos(baseAngle);
+			let to_y = iniY + iniR*sin(baseAngle);
+			ObjMove_SetPosition(objFamilier, to_x, to_y);
+			baseAngle += addAngle;
+			t++;
+			yield;
+		}
+	}
+	
+	task TShot()
+	{
+		let speed = [0.75, 1, 0.5, 0.75][Difficult];
+		let wt = 2;
+		let wt_count = [5, 6, 7, 9][Difficult];
+		let wt_span = [26, 20, 15, 30][Difficult];
+		let graphic = [ADD_BGB_SCALE_YELLOW, ADD_BGB_SCALE_ORANGE, ADD_BGB_SCALE_RED, ADD_BGB_SCALE_PURPLE, ADD_BGB_SCALE_BLUE, ADD_BGB_SCALE_SKY][iniValue%6];
+		
+		let st = round((iniOffsetShot%1)*wt_span);
+		if (Difficult <= D_NORM)
+		{
+			while(CanShotBullet(objFamilier))
+			{
+				let ss = speed;
+				let sa = baseAngle;
+				if (st%wt_span >= wt_count) { sa = -90; ss = 2; }
+				else { ss *= (1+(st%wt_span)*0.05); }
+				if (st%wt_span == 0) { CallSound(sndShot2); }
+				DarkShotS03(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), ss, sa, graphic, 0);
+				st++;
+				wait(wt);
+			}
+		}
+		else if (Difficult <= D_HARD)
+		{
+			while(CanShotBullet(objFamilier))
+			{
+				let ss = speed;
+				let sa = baseAngle;
+				let srate = 1;
+				if (st%wt_span >= wt_count) { sa = -90; ss = 2; }
+				else { ss *= (1+(st%wt_span)*0.02); srate += ((wt_count-1)/2-absolute((st%wt_span)-(wt_count-1)/2))*0.1; }
+				if (st%wt_span == 0) { CallSound(sndShot2); }
+				DarkShotS03_Hard(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), ss, sa, graphic, 0, srate);
+				st++;
+				wait(wt);
+			}
+		}
+		else if (Difficult <= D_LUNA)
+		{
+			while(CanShotBullet(objFamilier))
+			{
+				let ss = speed;
+				let sa = baseAngle;
+				let srate = 1;
+				if (st%wt_span >= wt_count) { sa = -90; ss = 2; }
+			//	else { ss *= (1-(st%wt_span)*0.015); }
+				if (st%wt_span == 0) { CallSound(sndShot2); }
+				DarkShotS03(ObjMove_GetX(objFamilier), ObjMove_GetY(objFamilier), ss, sa, graphic, 0);
+				st++;
+				wait(wt);
+			}
+		}
+	}
+}
+
+task DarkShotS03(x, y, speed, angle, graphic, delay)
+{
+	let obj = CreateShotA2(x, y, speed*2, angle, -speed/30, speed, graphic, 0);
+}
+task DarkShotS03_Hard(x, y, speed, angle, graphic, delay, srate)
+{
+	let obj = CreateShotA2(x, y, speed*2, angle, -speed/30, speed, graphic, 0);
+	ObjMove_AddPatternA2(obj, 240, NO_CHANGE, NO_CHANGE, speed*srate/30, 0, 99);
+}
+
+// KYUBI LASER!!!
+task KyubiLaser(objBase, from_angle, to_angle, wa_rate, shot_flg)
+{
+	let way = [3, 5, 5, 7][Difficult];
+	let way_angle = [75, 60, 60, 45][Difficult] * wa_rate;
+	let timer = 30;
+	
+	KyubiLaser_DelayEffect(objBase, from_angle, to_angle);
+	if (!shot_flg)
+	{
+		// 効果音鳴らし役も兼ねる
+		wait(180);
+		if (!eAlive) { return; }
+		CallSound(sndLaser1);
+		wait(90);
+		if (!eAlive) { return; }
+		CallSound(sndLaser2);
+		return;
+	}
+	wait(180);
+	if (!eAlive) { return; }
+	ascent(i in 0 .. way)
+	{
+		let x = ObjMove_GetX(objBase) + 64*cos(to_angle);
+		let y = ObjMove_GetY(objBase) + 64*sin(to_angle);
+		KyubiLaser_Main(x, y, to_angle, to_angle+(i-(way-1)/2)*way_angle, timer, (i==0));
+	}
+}
+
+task KyubiLaser_DelayEffect(objBase, from_angle, to_angle)
+{
+	let obj = CreateStraightLaserA1(ObjMove_GetX(objBase), ObjMove_GetY(objBase), 0, 0, 3, 99999, BGW_BEAM_YELLOW, 0);
+	ObjShot_SetAutoDelete(obj, false);
+	ObjShot_SetSpellResist(obj, true);
+	Obj_SetRenderPriorityI(obj, GetShotRenderPriorityI-2);
+	ObjShot_SetItemChange(obj, false);
+	ObjShot_SetIntersectionEnable(obj, false);
+	ObjStLaser_SetSource(obj, false);
+
+	// 先っちょ
+	let objEffect = CreateDelayEffect(obj);
+	let dscale = 0;
+
+	let tmp_r = 0;
+	let tmp_ang = from_angle;
+	let tmp_len = 0;
+
+	let t = 0;
+	while(!Obj_IsDeleted(objBase) && !Obj_IsDeleted(obj))
+	{
+		if (t < 60) {
+			let tmp = (t+1)/60;
+			tmp_len = tmp*600;
+			dscale = tmp*0.5;
+			tmp_r = 64;
+		}
+		if (t < 180) {
+			let tmp = (1-cos((t+1)/180*180))/2;
+			tmp_ang = from_angle*(1-tmp) + to_angle*tmp;
+		} else {
+			break;
+		}
+		
+		let lx = ObjMove_GetX(objBase) + cos(tmp_ang)*tmp_r;
+		let ly = ObjMove_GetY(objBase) + sin(tmp_ang)*tmp_r;
+		ObjStLaser_SetAngle(obj, tmp_ang);
+		ObjLaser_SetLength(obj, tmp_len);
+		ObjMove_SetPosition(obj, lx, ly);
+		// 先っちょ
+		let tmp_ds = (1 + (t%4)/8) * dscale;
+		ObjRender_SetScaleXYZ(objEffect, tmp_ds, tmp_ds, 1);
+		ObjRender_SetAngleZ(objEffect, t*166);
+		ObjRender_SetPosition(objEffect, lx, ly, 0);
+		
+		t++;
+		yield;
+	}
+	Obj_Delete(objEffect);
+	Obj_Delete(obj);
+}
+task KyubiLaser_Main(x, y, from_angle, to_angle, timer, draw_sourse)
+{
+	let obj = [CreateStraightLaserA1(x, y, 0, 0, 3, 99999, BGW_BEAM_YELLOW, 0),
+		CreateStraightLaserA1(x, y, 0, 0, 0, 99999, BGW_BEAM_SKY, 0)];
+	ascent(i in 0 .. 2)
+	{
+		ObjShot_SetAutoDelete(obj[i], false);
+		ObjShot_SetSpellResist(obj[i], true);
+		Obj_SetRenderPriorityI(obj[i], GetShotRenderPriorityI-2+(i%2));
+		ObjRender_SetBlendType(obj[i], [BLEND_ADD_ARGB, BLEND_SUBTRACT][i%2]);
+		if (i%2 == 1)
+		{
+			ObjShot_SetItemChange(obj[i], false);
+		}
+		ObjShot_SetIntersectionEnable(obj[i], false);
+		ObjStLaser_SetSource(obj[i], false);
+	}
+
+	// 先っちょ
+	let objEffect = CreateDelayEffect(obj[0]);
+	if (!draw_sourse) { Obj_SetVisible(objEffect, false); }
+	let dscale = 0;
+
+	let tmp_ang = from_angle;
+	let tmp_len = 600;
+	let tmp_w = 0;
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj[0]))
+	{
+		if (t < 45)
+		{
+			let tmp = (1-cos((t+1)/45*180))/2;
+			tmp_ang = from_angle*(1-tmp) + to_angle*tmp;
+			dscale = tmp*0.5+0.5;
+		} else if (t < 90) {
+		} else if (t <= 105) {
+			tmp_w = (t-90)/15;
+			ObjLaser_SetRenderWidth(obj[0], tmp_w*15+3);
+			ObjLaser_SetRenderWidth(obj[1], tmp_w*10);
+			ObjLaser_SetIntersectionWidth(obj[0], tmp_w*12/2);
+			if (t == 105) { ObjShot_SetIntersectionEnable(obj[0], true); }
+		} else if (t > 120+timer) {
+			break;
+		}
+		
+		ascent(i in 0 .. 2)
+		{
+			ObjStLaser_SetAngle(obj[i], tmp_ang);
+			ObjLaser_SetLength(obj[i], tmp_len);
+			ObjMove_SetPosition(obj[i], x, y);
+		}
+		// 先っちょ
+		let tmp_ds = (1 + (t%4)/8) * dscale;
+		ObjRender_SetScaleXYZ(objEffect, tmp_ds, tmp_ds, 1);
+		ObjRender_SetAngleZ(objEffect, t*166);
+		ObjRender_SetPosition(objEffect, x, y, 0);
+		
+		t++;
+		yield;
+	}
+	ObjShot_SetIntersectionEnable(obj[0], false);
+	while(tmp_w > 0)
+	{
+		ObjLaser_SetRenderWidth(obj[0], tmp_w*18);
+		ObjLaser_SetRenderWidth(obj[1], tmp_w*12);
+		ObjRender_SetScaleXYZ(objEffect, dscale*tmp_w, dscale*tmp_w, 1);
+		tmp_w -= 0.1;
+		yield;
+	}
+	ascent(i in 0 .. 2) { Obj_Delete(obj[i]); }
+	Obj_Delete(objEffect);
+}

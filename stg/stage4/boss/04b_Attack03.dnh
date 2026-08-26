@@ -1,0 +1,161 @@
+#東方弾幕風[Single]
+#ScriptVersion[3]
+#Title["一曜通常"]
+#Text["一曜通常3"]
+#Background[""]
+#System["./../../../system/System.dnh"]
+
+//---------------------------------------------------------------------
+
+// 関数取り込み
+#include"./../../../lib/lib_boss.dnh"
+#include"./lib_Ichiyou.dnh"
+
+@Event {
+	alternative(GetEventType())
+	case(EV_REQUEST_LIFE)		{ SetScriptResult(2800);	}
+	case(EV_REQUEST_TIMER)		{ SetScriptResult(50);		}
+	BossEvent();
+}
+
+@Initialize {
+	bossDropItem = 0;	//アイテム数
+	
+	Boss_Init();	//初期設定
+	objEnemy = CreateBoss(BOSS_ID_ICHIYOU);	//ボスセット
+
+	Task_Main();
+}
+
+@MainLoop {
+	yield;
+}
+
+// メインタスク
+task Task_Main
+{
+	standBy(objEnemy, CenX, 140, 60);
+	wait(90);
+//	TShot_sub();
+	TMove();
+	
+	let speed = [1.25, 1.5, 1.75, 1.75][Difficult];
+	let add_angle = [0.66, 0.9, 0.9, 1][Difficult];
+	let way = [5, 7, 9, 9][Difficult];
+	let way_angle = [35, 30, 30, 30][Difficult];
+	let suriken_way = [3, 3, 4, 5][Difficult];
+	let suriken_count = [1, 1, 1, 1][Difficult];
+	let wt = 5;
+	let wt2 = [180, 150, 120, 120][Difficult];
+	let graphic = [BGW_SHURIKEN_YELLOW, BGW_SHURIKEN_SKY, BGW_SHURIKEN_GREEN, BGW_SHURIKEN_BLUE, BGW_SHURIKEN_PURPLE, BGW_SHURIKEN_RED];
+	
+	let st = 0;
+	while(eAlive)
+	{
+		ascent(i in 0 .. way)
+		{
+			if (!eAlive) { return; }
+			let ss = speed * (1-i/way*0.5);
+			let sa = GetAngleToPlayer(objEnemy) + (i-(way-1)/2)*way_angle;
+			ascent(j in 0 .. suriken_count)
+			{
+				let oa = (j-(suriken_count-1)/2)*20;
+				A03SurikenCircle(ObjMove_GetX(objEnemy), ObjMove_GetY(objEnemy),
+					ss, sa, graphic[st%6], 30, add_angle, 0, suriken_way);
+			}
+			wait(wt);
+		}
+		way_angle = -way_angle;
+		add_angle = -add_angle;
+		st++;
+		wait(wt2);
+	}
+}
+
+task TShot_sub()
+{
+	wait(240);
+	
+	let way = 7;
+	let way_angle = 15;
+	let speed = 12;
+	let graphic = BGW_SHURIKEN_WHITE;
+	let wt = 5;
+	let wt2 = 90;
+	let muki = 1;
+	
+	let st = 0;
+	while(eAlive)
+	{
+		let sa = GetAngleToPlayer(objEnemy) + (st-(way-1)/2)*way_angle;
+		let sx = ObjMove_GetX(objEnemy) + 16*cos(sa);
+		let sy = ObjMove_GetY(objEnemy) + 16*sin(sa);
+		A03SurikenB(sx, sy, speed, sa, graphic, 45);
+		st++;
+		if (st >= way-1)
+		{
+			st -= (way-1);
+			way_angle = -way_angle;
+			wait(wt2);
+		}
+		wait(wt);
+	}
+}
+task TMove()
+{
+	wait(120);
+	while(eAlive)
+	{
+		EnemyRandomMove(objEnemy, 120, 48);
+		wait(120);
+	}
+}
+
+task A03SurikenCircle(x, y, speed, angle, graphic, delay, r_add, r_offset, way)
+{
+	ascent(i in 0 .. way)
+	{
+		let sa = angle;
+		A03Suriken(x, y, speed, sa, graphic, delay, sa+i*360/way+r_offset, r_add)
+	}
+	CallSound(sndShot2);
+}
+
+task A03Suriken(x, y, speed, angle, graphic, delay, r_angle, r_add)
+{
+	let bx = x;
+	let by = y;
+	let vx = speed*cos(angle);
+	let vy = speed*sin(angle);
+	let r = 0;
+	let add_r = speed/4;
+	let ra = r_angle;
+	
+	let obj = CreateShotA1(bx, by, 0, angle, graphic, 0);
+	My_RaiseShotEffectA(obj, delay);
+	RollShot(obj, 8);
+
+	let t = 0;
+	while(!Obj_IsDeleted(obj))
+	{
+		ObjMove_SetPosition(obj, bx+r*cos(ra), by+r*sin(ra));
+		r += add_r;
+		ra += r_add;
+		if (t < delay) {
+			let tmp = t/delay;
+			r += add_r*((1-tmp)*3+1);
+			bx += vx*tmp; by += vy*tmp;
+		} else {
+			bx += vx; by += vy;
+		}
+		t++;
+		yield;
+	}
+}
+task A03SurikenB(x, y, speed, angle, graphic, delay)
+{
+	let obj = SurikenShoot(x, y, speed, angle, graphic, delay, true);
+	if (Obj_IsDeleted(obj)) { return; }
+	CallSound(sndShuriken);
+}
+

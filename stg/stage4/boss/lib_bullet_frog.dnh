@@ -1,0 +1,41 @@
+#UserShotData
+
+//　テクスチャへのパス
+shot_image = "./shot_frog.png"
+delay_rect = (255, 255, 255, 255)
+delay_color = (255,255,255)
+
+// 蛙
+ShotData{
+	id = 593
+	render = ALPHA
+	collision = 8
+	fixed_angle=true
+	AnimationData{
+		animation_data = (6, 0, 0, 48, 48 )
+		animation_data = (6, 48, 0, 96, 48 )
+		animation_data = (12, 96, 0, 144, 48 )
+	}
+}
+ShotData{
+	id = 591
+	render = ALPHA
+	collision = 8
+	fixed_angle=true
+	AnimationData{
+		animation_data = (6, 0, 48, 48, 96 )
+		animation_data = (6, 48, 48, 96, 96 )
+		animation_data = (12, 96, 48, 144, 96 )
+	}
+}
+ShotData{
+	id = 592
+	render = ALPHA
+	collision = 8
+	fixed_angle=true
+	AnimationData{
+		animation_data = (6, 0, 96, 48, 144 )
+		animation_data = (6, 48, 96, 96, 144 )
+		animation_data = (12, 96, 96, 144, 144 )
+	}
+}
